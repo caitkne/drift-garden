@@ -230,7 +230,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
 <script>
 (() => {
-  const CELL = 200, GUT = 40, ROW = 40, W = 3400, H = 2600, EDGE = 1;
+  const CELL = 200, GUT = 40, ROW = 40, W = 3400, EDGE = 1; let H = 2600;
   const view = document.getElementById('view');
   const world = document.getElementById('world');
   world.style.width = W + 'px'; world.style.height = H + 'px';
@@ -403,7 +403,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
   // ---------- placement: random cells, snapped, fond of lining up ----------
   function hits(a, b, pad) { return a.x < b.x + b.w + pad && b.x < a.x + a.w + pad && a.y < b.y + b.h + pad && b.y < a.y + a.h + pad; }
-  function findSpot(w, h, near, span) {
+  function findSpot(w, h, near, span, others = plants) {
     const cols = Math.floor(W / CELL);
     const nearCol = Math.round(near.x / CELL), nearRow = Math.round(near.y / ROW);
     let best = null, bestScore = -Infinity;
@@ -412,15 +412,44 @@ a.btn { text-decoration: none; display: inline-block; }
         const col = Math.max(EDGE, Math.min(cols - EDGE - span, nearCol + Math.round(rand(-reach, reach)) - Math.floor(span / 2)));
         const row = Math.max(4, Math.min(Math.floor((H - h) / ROW) - 3, nearRow + Math.round(rand(-reach * 4, reach * 4)) - Math.round(h / ROW / 2)));
         const r = { x: col * CELL + GUT / 2, y: row * ROW, w, h };
-        if (reserved.some(q => hits(r, q, GUT - 1)) || plants.some(q => hits(r, q, GUT * 1.5))) continue;
+        if (reserved.some(q => hits(r, q, GUT - 1)) || others.some(q => hits(r, q, GUT * 1.5))) continue;
         let align = 0;
-        for (const q of plants) { if (q.y === r.y) align += 1.4; if (q.x === r.x) align += 1; if (Math.abs(q.y + q.h - (r.y + r.h)) < 2) align += .8; }
+        for (const q of others) { if (q.y === r.y) align += 1.4; if (q.x === r.x) align += 1; if (Math.abs(q.y + q.h - (r.y + r.h)) < 2) align += .8; }
         const score = Math.min(align, 4) * 1.6 + rand(0, 3.5) - Math.hypot(r.x + w / 2 - near.x, r.y + h / 2 - near.y) / 420;
         if (score > bestScore) { bestScore = score; best = r; }
       }
     }
-    return best || { x: CELL + GUT / 2, y: H - h - ROW * 3, w, h };
+    if (best) return best;
+    // crowded: check every cell, nearest first, before giving up
+    const free = r => !reserved.some(q => hits(r, q, GUT - 1)) && !others.some(q => hits(r, q, GUT));
+    let scan = null, sd = Infinity;
+    for (let col = EDGE; col <= cols - EDGE - span; col++) for (let row = 4; row <= Math.floor((H - h) / ROW) - 3; row++) {
+      const r = { x: col * CELL + GUT / 2, y: row * ROW, w, h }; const d = Math.hypot(r.x + w / 2 - near.x, r.y + h / 2 - near.y);
+      if (d < sd && free(r)) { sd = d; scan = r; } }
+    if (scan) return scan;
+    // still full: the field grows downward
+    growTo(H + 800);
+    return findSpot(w, h, near, span, others);
   }
+  function growTo(nh) { if (nh <= H) return; H = nh; world.style.height = H + 'px'; }
+  // Pieces can change height after planting (fonts, images). Re-measure, then move any piece that now overlaps an earlier one.
+  let settleT = 0;
+  function settleSoon() { clearTimeout(settleT); settleT = setTimeout(settle, 250); }
+  function settle() {
+    const order = plants.slice().sort((a, b) => (a.no || 0) - (b.no || 0)), placed = [];
+    let moved = false;
+    order.forEach(p => {
+      const el = world.querySelector(`[data-id="${p.id}"]`); if (!el) return;
+      const h = Math.ceil(el.offsetHeight / ROW) * ROW; if (h && h !== p.h) { p.h = h; moved = true; }
+      if (placed.some(q => hits(p, q, GUT - 1)) || reserved.some(q => hits(p, q, GUT - 1))) {
+        const span = Math.max(1, Math.round((p.w + GUT) / CELL));
+        Object.assign(p, findSpot(p.w, p.h, { x: p.x + p.w / 2, y: p.y + p.h / 2 }, span, placed)); place(el, p); moved = true;
+      }
+      placed.push(p);
+    });
+    if (moved) save();
+  }
+  world.addEventListener('load', e => { if (e.target.tagName === 'IMG') settleSoon(); }, true);
 
   // ---------- render ----------
   function build(p) {
@@ -497,7 +526,7 @@ a.btn { text-decoration: none; display: inline-block; }
     Object.assign(p, findSpot(p.w, p.h, near, span));
     place(el, p); el.style.visibility = '';
     if (animate) el.classList.add('new');
-    plants.push(p);
+    plants.push(p); settleSoon();
     return p;
   }
 
@@ -505,8 +534,9 @@ a.btn { text-decoration: none; display: inline-block; }
   function start() {
     reserved = [{ x: mast.offsetLeft, y: mast.offsetTop, w: mast.offsetWidth, h: mast.offsetHeight }];
     const stored = load(KEY);
-    if (stored && stored.length) { plants = stored; plants.forEach(p => { const el = build(p); place(el, p); world.appendChild(el); }); save(); }
+    if (stored && stored.length) { plants = stored; growTo(Math.max(...plants.map(p => p.y + p.h)) + 400); plants.forEach(p => { const el = build(p); place(el, p); world.appendChild(el); }); settle(); save(); }
     mastNote();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(settleSoon);
     cam.x = (CELL * .4) * S; cam.y = (ROW * 3) * S; last = { ...cam }; applyCam();
   }
   (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) : Promise.resolve()).then(() => { start(); fromAddress(); });
@@ -690,7 +720,38 @@ a.btn { text-decoration: none; display: inline-block; }
       return Object.values((d.query && d.query.pages) || {}).sort((x, y) => x.index - y.index).filter(p => p.extract && !/may refer to/.test(p.extract)).map(p => ({
         title: p.title, note: p.extract, img: p.thumbnail ? p.thumbnail.source : null, href: p.fullurl || ('https://en.wikipedia.org/?curid=' + p.pageid),
         ar: p.thumbnail ? p.thumbnail.height / p.thumbnail.width : 0 })); } },
+    { name: 'the Cleveland Museum of Art', async find(q) {
+      const d = await getJSON('https://openaccess-api.clevelandart.org/api/artworks/?q=' + encodeURIComponent(q) + '&has_image=1&cc0=1&limit=12');
+      return (d.data || []).filter(x => x.images && x.images.web && x.images.web.url).map(x => ({
+        title: x.title, note: [((x.creators || [])[0] || {}).description, x.creation_date].filter(Boolean).join(', '),
+        img: x.images.web.url, href: x.url || ('https://www.clevelandart.org/art/' + x.accession_number),
+        ar: x.images.web.width ? x.images.web.height / x.images.web.width : 0 })); } },
+    { name: 'the V&A', async find(q) {
+      const d = await getJSON('https://api.vam.ac.uk/v2/objects/search?q=' + encodeURIComponent(q) + '&images_exist=1&page_size=12');
+      return (d.records || []).filter(x => x._images && x._images._iiif_image_base_url).map(x => ({
+        title: x._primaryTitle || x.objectType || 'Untitled', note: [x._primaryTitle ? x.objectType : '', (x._primaryMaker || {}).name, x._primaryDate].filter(Boolean).join(', '),
+        img: x._images._iiif_image_base_url + 'full/600,/0/default.jpg', href: 'https://collections.vam.ac.uk/item/' + x.systemNumber + '/' })); } },
+    { name: 'Open Library', async find(q) {
+      const d = await getJSON('https://openlibrary.org/search.json?q=' + encodeURIComponent(q) + '&limit=12&fields=key,title,author_name,first_publish_year,cover_i');
+      return (d.docs || []).filter(x => x.title).map(x => ({
+        title: x.title, note: ['A book' + (x.author_name ? ' by ' + x.author_name.slice(0, 2).join(' and ') : ''), x.first_publish_year].filter(Boolean).join(', '),
+        img: x.cover_i ? 'https://covers.openlibrary.org/b/id/' + x.cover_i + '-L.jpg' : null, href: 'https://openlibrary.org' + x.key })); } },
+    { name: 'Wikimedia Commons', async find(q) {
+      const d = await getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=' + encodeURIComponent(q + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=600');
+      return Object.values((d.query && d.query.pages) || {}).sort((x, y) => x.index - y.index).map(p => ({ p, i: (p.imageinfo || [])[0] })).filter(o => o.i && o.i.thumburl).map(({ p, i }) => {
+        const md = i.extmetadata || {}, val = k => strip(md[k] && md[k].value);
+        return { title: (val('ObjectName') || p.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ')).slice(0, 120),
+          note: [val('ImageDescription').slice(0, 300), val('Artist')].filter(Boolean).join(' \u2014 '), img: i.thumburl, href: i.descriptionurl,
+          ar: i.thumbwidth ? i.thumbheight / i.thumbwidth : 0 }; }); } },
+    { name: 'the Internet Archive', async find(q) {
+      const d = await getJSON('https://archive.org/advancedsearch.php?q=' + encodeURIComponent('(' + q + ') AND mediatype:(texts OR movies OR audio OR image)') + '&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=year&fl[]=mediatype&rows=12&output=json');
+      const kind = { texts: 'Text', movies: 'Film', audio: 'Sound', image: 'Image' };
+      return ((d.response && d.response.docs) || []).filter(x => x.title).map(x => ({
+        title: String(x.title).slice(0, 120), note: [kind[x.mediatype], [].concat(x.creator || [])[0], x.year].filter(Boolean).join(', '),
+        img: 'https://archive.org/services/img/' + x.identifier, href: 'https://archive.org/details/' + x.identifier })); } },
   ];
+  // sources that fail this session (blocked, down) are tried last
+  const failed = {};
   const loadImg = src => new Promise((ok, no) => { const im = new Image(); if (CORS_IMG.test(src)) im.crossOrigin = 'anonymous'; im.onload = () => ok(im); im.onerror = no; im.src = src; setTimeout(no, 9000); });
   // Taste: keeping a wildflower makes its words and source likelier next time; pulling one up makes them less likely.
   const TASTE_KEY = 'drift-garden-taste';
@@ -702,7 +763,7 @@ a.btn { text-decoration: none; display: inline-block; }
     try { localStorage.setItem(TASTE_KEY, JSON.stringify(taste)); } catch (e) {}
   }
   const tasteW = w => { const t = taste.w[w] || 0; return t > 0 ? 1 + t : t < 0 ? Math.max(.15, 1 + t * .4) : 1; };
-  const tasteS = n => Math.max(.25, 1 + (taste.s[n] || 0) * .5);
+  const tasteS = n => Math.min(2, Math.max(.4, 1 + (taste.s[n] || 0) * .25));
   let sprouting = false;
   async function sprout(nearPlant) {
     if (sprouting) return;
@@ -716,10 +777,12 @@ a.btn { text-decoration: none; display: inline-block; }
       const a = pickWord(A.words), b = B ? pickWord(B.words.filter(w => w !== a).length ? B.words.filter(w => w !== a) : B.words) : null;
       const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href));
       const tries = (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
-      const sources = LIVE.map(x => ({ x, k: Math.random() ** (1 / tasteS(x.name)) })).sort((p, q) => q.k - p.k).map(o => o.x);
+      // fair rotation: a source that has already given lots of wildflowers is less likely to go first; kept ones get a gentle boost
+      const given = {}; plants.forEach(p => { if (p.wild && p.wild.source) given[p.wild.source] = (given[p.wild.source] || 0) + 1; });
+      const sources = LIVE.map(x => ({ x, k: Math.random() ** (1 / (tasteS(x.name) / (1 + (given[x.name] || 0) * .8) / (1 + (failed[x.name] || 0) * 4))) })).sort((p, q) => q.k - p.k).map(o => o.x).slice(0, 5);
       let found = null;
       outer: for (const words of tries) for (const src of sources) {
-        let res; try { res = await src.find(words.join(' ')); } catch (e) { continue; }
+        let res; try { res = await src.find(words.join(' ')); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
         res = res.filter(r => !used.has(r.href)).slice(0, 5);
         while (res.length) {
           const r = res.splice(Math.random() * Math.min(3, res.length) | 0, 1)[0];

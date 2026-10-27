@@ -18,7 +18,13 @@ Every third thing you plant (or whenever you press **✿ Wildflower**), the gard
 
 - [Art Institute of Chicago API](https://api.artic.edu/docs/) (public-domain artworks)
 - [The Met Collection API](https://metmuseum.github.io/)
-- [Wikipedia](https://www.mediawiki.org/wiki/API:Main_page)
+- [Wikipedia](https://www.mediawiki.org/wiki/API:Main_page) and [Wikimedia Commons](https://commons.wikimedia.org)
+- [Cleveland Museum of Art Open Access](https://openaccess-api.clevelandart.org/)
+- [V&A Collections](https://developers.vam.ac.uk/)
+- [Open Library](https://openlibrary.org/developers/api)
+- [Internet Archive](https://archive.org/advancedsearch.php)
+
+Sources take turns: one that has already given lots of wildflowers is less likely to go first, and one that fails is tried last.
 
 It plants one result as a card, with its picture, and links to the source. Keep a wildflower and its words and source become likelier next time. Pull one up and they become less likely. If those can't be reached, it picks from a small hand-gathered seed bank of articles from culture, film, literature, museum and archive sites.
 
