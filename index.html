@@ -114,6 +114,13 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .inkPreview span { font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .inkWhy { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font: 400 12px/1.5 var(--mono); }
 .inkWhy li::before { content: "◎ "; color: var(--pink); }
+.inkFound { display: grid; gap: 8px; }
+.inkThumbs { display: flex; gap: 4px; flex-wrap: wrap; }
+.inkThumbs img { width: 40px; height: 40px; object-fit: cover; display: block; }
+.inkBar { display: flex; height: 26px; }
+.inkBar i { display: block; height: 100%; position: relative; min-width: 3px; }
+.inkBar i b { position: absolute; top: 100%; left: 0; font: 500 10px/1.6 var(--mono); color: var(--ink); }
+.inkFound { padding-bottom: 14px; }
 .fontTry { display: grid; gap: 10px; font: 400 12px/1.5 var(--mono); }
 .fontTry summary { cursor: pointer; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--blue); }
 .fontTry[open] { padding-bottom: 6px; }
@@ -181,6 +188,16 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .proof { position: absolute; top: -24px; right: 0; font: 500 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--blue); white-space: nowrap; animation: proof 3.4s ease both; pointer-events: none; }
 .proof::before { content: "\25ce "; }
 @keyframes proof { 0% { opacity: 0; } 12%, 70% { opacity: 1; } 100% { opacity: 0; } }
+/* its own style: colours (and for webpages, a font) borrowed from the thing itself */
+.plant.set-borrowed .scr { font-family: var(--bf, var(--script)) !important; letter-spacing: var(--bls, -.015em) !important; text-transform: var(--btt, none); font-weight: var(--bw, 400) !important; --sz: .92; line-height: 1.06 !important; }
+.plant.set-borrowed:not([style*="--bf"]) .scr { font-family: var(--script) !important; --sz: .74; letter-spacing: 0 !important; font-weight: 400 !important; line-height: 1.18 !important; }
+.plant.set-borrowed[style*="--bf"] .ch { transform: none; }
+.plant.set-borrowed[style*="--bf"]:hover .ch { animation: none; }
+.kicker.owned { margin-bottom: 10px; letter-spacing: .1em; opacity: .9; }
+.plant.set-borrowed .duo.pic { background: none; }
+.plant.set-borrowed .duo.pic .b { display: none; }
+.plant.set-borrowed .duo.pic .p { background: none; transform: none; }
+.plant.set-borrowed .duo.pic .p img, .plant.set-borrowed .duo.pic .p canvas { filter: none; mix-blend-mode: normal; }
 .plant.resetting { transition: opacity .45s, filter .45s; opacity: 0; filter: blur(5px); }
 .keepRow { display: grid; gap: 10px; width: 100%; }
 .keepRow .row { flex-wrap: nowrap; }
@@ -285,6 +302,7 @@ a.btn { text-decoration: none; display: inline-block; }
     <label for="inkWord">Your word</label>
     <input type="text" id="inkWord" maxlength="40" autocomplete="off" placeholder="pansies">
     <div class="inkPreview" id="inkPreview"><b id="inkSample">pansies</b><span id="inkHex"></span></div>
+    <div class="inkFound" id="inkFound" hidden><div class="inkThumbs" id="inkThumbs"></div><div class="inkBar" id="inkBar"></div></div>
     <ul class="inkWhy" id="inkWhy"></ul>
     <details class="fontTry">
       <summary>Try a font from your device</summary>
@@ -350,6 +368,61 @@ a.btn { text-decoration: none; display: inline-block; }
   function maxC(L,h){let lo=0,hi=.4;for(let i=0;i<16;i++){const m=(lo+hi)/2;inG(okRGB(L,m,h))?lo=m:hi=m}return lo}
   const okHex=c=>'#'+c.map(x=>{x=Math.max(0,Math.min(1,x));x=x<=.0031308?12.92*x:1.055*x**(1/2.4)-.055;return Math.round(x*255).toString(16).padStart(2,'0')}).join('');
   const yellowish=h=>h>75&&h<125;
+  // ---- colours counted from pictures: plain counting, no AI ----
+  const toLin = x => (x /= 255) <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4;
+  function rgbLab(r, g, b) { r = toLin(r); g = toLin(g); b = toLin(b);
+    const l = Math.cbrt(.4122214708 * r + .5363325363 * g + .0514459929 * b), m = Math.cbrt(.2119034982 * r + .6806995451 * g + .1073969566 * b), s = Math.cbrt(.0883024619 * r + .2817188376 * g + .6299787005 * b);
+    return [.2104542553 * l + .793617785 * m - .0040720468 * s, 1.9779984951 * l - 2.428592205 * m + .4505937099 * s, .0259040371 * l + .7827717662 * m - .808675766 * s]; }
+  const hexLab = hx => rgbLab(...[1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16)));
+  const labLch = ([L, a, b]) => [L, Math.hypot(a, b), (Math.atan2(b, a) * 180 / Math.PI + 360) % 360];
+  const lchHex = (L, C, h) => okHex(okRGB(Math.max(0, Math.min(1, L)), Math.min(C, maxC(Math.max(.01, Math.min(.99, L)), h)), h));
+  const labDist = (x, y) => Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+  // Every picture is shrunk to about 64px and each pixel goes into a colour bin (8 lightness steps x 24 hues x 4 strengths, greys by lightness).
+  // Each picture counts equally, so one big image can't drown the rest. Returns bins, most common first.
+  function countColours(imgs) {
+    const bins = new Map(); let pics = 0;
+    for (const im of imgs) {
+      const k = 64 / Math.max(im.naturalWidth, im.naturalHeight), w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(im, 0, 0, w, h);
+      let d; try { d = g.getImageData(0, 0, w, h).data; } catch (e) { continue; }
+      pics++; const each = 1 / (w * h);
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 128) continue;
+        const lab = rgbLab(d[i], d[i + 1], d[i + 2]), [L, C, H] = labLch(lab);
+        const key = C < .035 ? 'n' + Math.round(L * 10) : Math.round(L * 8) + ':' + Math.round(H / 15) % 24 + ':' + Math.min(3, C / .06 | 0);
+        let bn = bins.get(key); if (!bn) bins.set(key, bn = { n: 0, L: 0, a: 0, b: 0 });
+        bn.n += each; bn.L += lab[0] * each; bn.a += lab[1] * each; bn.b += lab[2] * each;
+      }
+    }
+    const tot = [...bins.values()].reduce((t, x) => t + x.n, 0) || 1;
+    return { pics, bins: [...bins.values()].map(x => { const lab = [x.L / x.n, x.a / x.n, x.b / x.n]; return { lab, lch: labLch(lab), share: x.n / tot }; }).sort((x, y) => y.share - x.share) };
+  }
+  // From colours ranked by how often they occur (most common first), choose a trio:
+  // A, the most common colour with some colour in it; B, the next most common that's clearly different, set at A's lightness so they hum;
+  // F, the most common colour readable on both (4.5:1), or failing that the most common one darkened or lightened until it reads.
+  function trioFrom(cols, plainA) {
+    if (!cols.length) return null;
+    const why = [], pct = x => Math.max(1, Math.round(x.share * 100)) + '%';
+    const A = plainA ? cols[0] : cols.find(x => x.lch[1] >= .05) || cols[0];
+    const AL = Math.max(.32, Math.min(.88, A.lch[0])), Ah = lchHex(AL, A.lch[1], A.lch[2]);
+    // B must still look clearly different from A once it's moved to A's lightness
+    const hueGap = (x, y) => Math.abs(((x - y + 540) % 360) - 180);
+    const apart = x => { const t = hexLab(lchHex(AL, x.lch[1], x.lch[2])); return labDist(t, hexLab(Ah)) >= .07 && (hueGap(x.lch[2], A.lch[2]) >= 25 || Math.abs(x.lch[1] - A.lch[1]) >= .06); };
+    const Bc = cols.find(x => x !== A && x.lch[1] >= .04 && apart(x)) || cols.find(x => x !== A && apart(x));
+    why.push(`Ink A is the most common colour${plainA ? '' : ' with some colour in it'} (${pct(A)} of the pixels)` + (Math.abs(AL - A.lch[0]) > .02 ? ', brought a little toward the middle so text can sit on it' : ''));
+    let Bh;
+    if (Bc) { Bh = lchHex(AL, Bc.lch[1], Bc.lch[2]); why.push(`Ink B is the next most common colour that's clearly different (${pct(Bc)}), set at A's lightness so the two hum`); }
+    else { Bh = lchHex(AL, Math.max(.08, A.lch[1]), (A.lch[2] + 40) % 360); why.push('Every common colour was close to A, so ink B is A turned 40\u00b0 round the wheel'); }
+    let F = null;
+    for (const x of cols) { const T = lchHex(...x.lch); if (contrast(Ah, T) >= 4.5 && contrast(Bh, T) >= 4.5) { F = T; why.push(`The anchor is the most common colour that reads on both (${pct(x)})`); break; } }
+    if (!F) {
+      const goDark = lum(Ah) > .18, src = cols.slice().sort((x, y) => goDark ? x.lch[0] - y.lch[0] : y.lch[0] - x.lch[0])[0] || A;
+      for (let L = src.lch[0]; goDark ? L >= 0 : L <= 1; L += goDark ? -.02 : .02) { const T = lchHex(L, src.lch[1], src.lch[2]); if (contrast(Ah, T) >= 4.5 && contrast(Bh, T) >= 4.5) { F = T; break; } }
+      F = F || (goDark ? '#111111' : '#fafafa');
+      why.push(`No common colour read clearly on both, so the ${goDark ? 'darkest' : 'lightest'} one was ${goDark ? 'darkened' : 'lightened'} until it did`);
+    }
+    return { A: Ah, B: Bh, F, why };
+  }
   function makeAcid(rng){
     const R=(a,b)=>a+rng()*(b-a);
     for(let t=0;t<300;t++){
@@ -560,12 +633,16 @@ a.btn { text-decoration: none; display: inline-block; }
     const el = document.createElement('button'); el.type = 'button'; el.dataset.id = p.id;
     el.setAttribute('aria-label', (p.title || 'Untitled') + (p.example ? ', example' : ''));
     el.style.width = p.w + 'px';
-    inkUp(p); const ink = inksFor(p); ['A', 'B', 'F'].forEach(k => el.style.setProperty('--' + k, ink[k]));
+    inkUp(p); const own = p.set === 'borrowed' && p.borrow;
+    const ink = own ? { A: p.borrow.A, B: p.borrow.B, F: p.borrow.F, light: lum(p.borrow.F) > .4 } : inksFor(p); ['A', 'B', 'F'].forEach(k => el.style.setProperty('--' + k, ink[k]));
+    if (own && p.borrow.font) { useFont(p.borrow.href); el.style.setProperty('--bf', '"' + p.borrow.font + '", ' + (p.borrow.cat === 'serif' || p.borrow.cat === 'slab' ? 'Georgia, serif' : p.borrow.cat === 'mono' ? 'monospace' : 'system-ui, sans-serif'));
+      if (p.borrow.ls != null) el.style.setProperty('--bls', p.borrow.ls + 'em'); if (p.borrow.tt) el.style.setProperty('--btt', p.borrow.tt); if (p.borrow.w) el.style.setProperty('--bw', p.borrow.w); }
+    const ownNote = own ? `<span class="kicker owned">In its own ${p.borrow.font ? 'style' : 'colours'}${p.borrow.font ? ' \u00b7 ' + esc(p.borrow.font) + (p.borrow.name && p.borrow.name.toLowerCase() !== p.borrow.font.toLowerCase() ? ', standing in for ' + esc(p.borrow.name) : '') : ''}</span>` : '';
     const sc = 'scr', light = ink.light ? ' lightF' : '';
     if (p.img) {
       el.className = 'plant pic' + (p.w >= 500 ? ' wide' : '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const capt = p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '';
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + ownNote + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     } else {
       el.className = 'plant word ' + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const by = p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '';
@@ -573,7 +650,7 @@ a.btn { text-decoration: none; display: inline-block; }
       const body = p.set === 'quote'
         ? duoText('span', '<span class="mark">\u201c</span>' + jitter(p.note, seedOf(p.id)), 'pull ' + sc) + `<span class="src">${esc(p.title)}</span>` + by
         : duoText('h3', jitter(p.title || p.note, seedOf(p.id), p.set === 'drop'), sc) + by + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + head + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     }
     if (p.example) el.insertAdjacentHTML('beforeend', '<span class="ex">Example</span>');
     return el;
@@ -623,6 +700,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
   function plant(data, near, animate) {
     const p = { id: Math.random().toString(36).slice(2, 10), no: nextNo(), title: data.title || '', note: data.note || '', img: data.img || null, ar: data.ar || 1, link: data.link || null, example: !!data.example, wild: data.wild || null };
+    if (data.borrow) { p.borrow = data.borrow; p.set = 'borrowed'; }
     let span;
     if (p.img) span = data.span || pick([1, 2, 2, 3]);
     else {
@@ -637,6 +715,7 @@ a.btn { text-decoration: none; display: inline-block; }
     place(el, p); el.style.visibility = '';
     if (animate) el.classList.add('new');
     plants.push(p); settleSoon();
+    if (p.img && !p.borrow && !p.link) setTimeout(() => borrowPicture(p, true), 1200);
     return p;
   }
 
@@ -645,7 +724,7 @@ a.btn { text-decoration: none; display: inline-block; }
     reserved = [{ x: mast.offsetLeft, y: mast.offsetTop, w: mast.offsetWidth, h: mast.offsetHeight }];
     const stored = load(KEY);
     if (stored && stored.length) { plants = stored; growTo(Math.max(...plants.map(p => p.y + p.h)) + 400); plants.forEach(p => { const el = build(p); place(el, p); world.appendChild(el); }); settle(); save(); }
-    mastNote();
+    mastNote(); borrowAround();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(settleSoon);
     cam.x = (CELL * .4) * S; cam.y = (ROW * 3) * S; last = { ...cam }; applyCam();
   }
@@ -686,10 +765,10 @@ a.btn { text-decoration: none; display: inline-block; }
   // ---------- planting ----------
   const form = document.getElementById('plantForm'), drop = document.getElementById('drop'), dropText = document.getElementById('dropText'), file = document.getElementById('file');
   const DROP_TEXT = dropText.innerHTML;
-  let pending = null;
+  let pending = null, style = null;
   function openPlant() { document.getElementById('nextNo').textContent = 'Piece ' + fmtNo(nextNo()); plantSheet.hidden = false; document.getElementById('tTitle').focus(); }
   function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; document.getElementById('weedSheet').hidden = true; document.getElementById('lovesSheet').hidden = true; }
-  function resetForm() { form.reset(); pending = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
+  function resetForm() { form.reset(); pending = null; style = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
   function readImage(f) {
     if (!f || !f.type.startsWith('image/')) return;
     const fr = new FileReader();
@@ -713,17 +792,97 @@ a.btn { text-decoration: none; display: inline-block; }
   const tUrl = document.getElementById('tUrl');
   const isUrl = v => /^https?:\/\/\S+$/i.test((v || '').trim());
   let metaFor = '';
+  // ---------- borrowing a page's own style ----------
+  // Microlink hands back the page's main picture colours, its font links and inline styles. The heading font is read from those.
+  // A Google font is used exactly. Anything else (licensed fonts) gets a free stand-in of the same kind, and the piece says which.
+  const PAGE_RULES = ['fontLinks|link[href*="font"]|href', 'sheets|link[rel="stylesheet"]|href', 'styles|style|text', 'theme|meta[name="theme-color"]|content']
+    .map(r => { const [k, sel, at] = r.split('|'); return `&data.${k}.selectorAll=${encodeURIComponent(sel)}&data.${k}.attr=${at}`; }).join('');
+  const STAND = {
+    geometric: ['Jost', 'Jost:wght@300..800'], grotesk: ['Inter Tight', 'Inter+Tight:wght@300..800'], humanist: ['Figtree', 'Figtree:wght@300..800'],
+    serif: ['EB Garamond', 'EB+Garamond:wght@400..800'], didone: ['Playfair Display', 'Playfair+Display:wght@400..900'], soft: ['Fraunces', 'Fraunces:opsz,wght@9..144,300..800'],
+    slab: ['Roboto Slab', 'Roboto+Slab:wght@300..800'], mono: ['Space Mono', 'Space+Mono:wght@400;700'], condensed: ['Oswald', 'Oswald:wght@300..700'] };
+  const KINDS = [
+    ['mono', /mono|courier|consolas|menlo|code/], ['condensed', /condensed|compressed|narrow|oswald|bebas|league gothic|anton|impact|knockout/],
+    ['didone', /didot|bodoni|playfair|canela|domaine|noe |noe display|ogg|editorial new|gt super/], ['soft', /cooper|recoleta|fraunces|windsor|souvenir/],
+    ['slab', /slab|rockwell|arvo|clarendon|egyptienne/],
+    ['serif', /garamond|caslon|times|georgia|baskerville|merriweather|lora|crimson|tiempos|freight|minion|sabon|cormorant|libre|alpina|sectra|serif/],
+    ['geometric', /futura|avenir|gotham|montserrat|jost|poppins|sofia|proxima|circular|gilroy|brandon|nunito|raleway|quicksand|josefin|century gothic|apercu|campton|cera|tt norms|geomanist|outfit|urbanist|lexend|lato/],
+    ['humanist', /open sans|source sans|frutiger|myriad|gill|fira sans|noto sans|segoe|calibri|plex sans|figtree|tenor|optima|syne/],
+    ['grotesk', /helvetica|arial|inter|grotesk|grotesque|akzidenz|graphik|roboto|sf pro|system-ui|apple-system|blinkmacsystemfont|söhne|sohne|suisse|haas|univers|work sans|dm sans|manrope|karla|sans/]];
+  const fontsOn = new Set();
+  function useFont(href) { if (!href || fontsOn.has(href)) return; fontsOn.add(href); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l); }
+  const firstFamily = stack => (stack || '').split(',').map(x => x.trim().replace(/^["']|["']$/g, '').replace(/\s*!important/, '')).find(x => x && !/^var\(|^inherit$|^initial$|^(sans-serif|serif|monospace|cursive|system-ui)$/i.test(x) && !/icon|awesome|glyph|social|symbol|emoji|squarespace-ui/i.test(x)) || '';
+  function readCSS(css) {
+    const found = {}, vars = {}, add = (name, wt, extra) => { if (!name) return; const k = name.toLowerCase(); (found[k] = found[k] || { name, n: 0 }).n += wt; if (extra) Object.assign(found[k], extra); };
+    (css.match(/--[\w-]*font[\w-]*:\s*[^;}]+/gi) || []).forEach(d => { const [k, v] = d.split(/:\s*/); vars[k.trim()] = v; add(firstFamily(v), /head|title|display/i.test(k) ? 3 : 1); });
+    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sel = m[1], body = m[2], ff = body.match(/font-family\s*:\s*([^;}]+)/i); if (!ff) continue;
+      let stack = ff[1]; const v = stack.match(/var\((--[\w-]+)/); if (v && vars[v[1]]) stack = vars[v[1]];
+      const head = /(^|[\s,>])(h1|h2|\.?title|[\w-]*heading[\w-]*)\b/i.test(sel) && !/@font-face/i.test(sel);
+      if (/@font-face/i.test(sel)) { add(firstFamily(stack), .5); continue; }
+      const extra = head ? { w: +(body.match(/font-weight\s*:\s*(\d00)/) || [])[1] || undefined, tt: /text-transform\s*:\s*uppercase/i.test(body) ? 'uppercase' : undefined,
+        ls: (() => { const x = body.match(/letter-spacing\s*:\s*(-?[\d.]+)(em|px|rem)/); return x ? Math.max(-.06, Math.min(.2, x[2] === 'px' ? +x[1] / 40 : +x[1])) : undefined; })() } : null;
+      add(firstFamily(stack), head ? 4 : /body|^\s*p\b|html/i.test(sel) ? 1.5 : 1, extra);
+    }
+    return Object.values(found).sort((a, b) => b.n - a.n);
+  }
+  async function styleOf(u, m) {
+    const b = {};
+    // colours: the page picture's palette, most common first, then the theme colour
+    const pal = ((m.image && m.image.palette) || (m.logo && m.logo.palette) || []).slice(0, 8);
+    const hexes = [...pal, ...[].concat(m.theme || []).filter(x => /^#[0-9a-f]{6}$/i.test(x))];
+    if (hexes.length) { const t = trioFrom(hexes.map((hx, i) => { const lab = hexLab(hx); return { lab, lch: labLch(lab), share: 1 / (i + 2) }; }), true); if (t) Object.assign(b, { A: t.A, B: t.B, F: t.F }); }
+    // fonts: inline styles, plus any stylesheets that let us read them
+    let css = [].concat(m.styles || []).join('\n');
+    const sheets = [].concat(m.sheets || []).filter(h => /^https?:/.test(h) && !/fonts\.googleapis/.test(h)).slice(0, 3);
+    for (const h of sheets) { try { const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 5000); const r = await fetch(h, { signal: ctl.signal }); clearTimeout(t); if (r.ok) css += '\n' + (await r.text()).slice(0, 400000); } catch (e) {} }
+    const gHrefs = [].concat(m.fontLinks || [], m.sheets || []).filter(h => /fonts\.googleapis\.com\/css/.test(h || ''));
+    const gNames = gHrefs.flatMap(h => [...h.matchAll(/family=([^&:;]+)/g)].map(x => decodeURIComponent(x[1]).replace(/\+/g, ' ')));
+    const pretty = n => n.replace(/[-_]+/g, ' ').replace(/\b(pt|std|pro|web)\b/gi, x => x.toUpperCase()).replace(/\b\w/g, c => c.toUpperCase());
+    const ranked = readCSS(css), top = ranked[0] || (gNames[0] ? { name: gNames[0] } : null);
+    if (top) {
+      const name = pretty(top.name), g = gNames.find(x => x.toLowerCase() === name.toLowerCase());
+      const cat = (KINDS.find(([, re]) => re.test(name.toLowerCase())) || ['grotesk'])[0];
+      if (g) Object.assign(b, { font: g, href: gHrefs.find(h => h.includes(g.replace(/ /g, '+')) || h.includes(encodeURIComponent(g))) || 'https://fonts.googleapis.com/css2?family=' + g.replace(/ /g, '+') + '&display=swap', name, cat });
+      else Object.assign(b, { font: STAND[cat][0], href: 'https://fonts.googleapis.com/css2?family=' + STAND[cat][1] + '&display=swap', name, cat });
+      if (top.w) b.w = Math.max(300, Math.min(800, top.w)); if (top.tt) b.tt = top.tt; if (top.ls != null) b.ls = top.ls;
+    }
+    if (m.logo && m.logo.url) b.logo = m.logo.url;
+    return b.A || b.font ? b : null;
+  }
+  // pictures lend their own colours: the piece's image is counted just like the print run's pictures
+  async function borrowPicture(p, adopt) {
+    if (!p.img || p.borrow !== undefined) return;
+    p.borrow = 0;
+    try { const im = await loadImg(p.img); const c = countColours([im]); if (!c.pics) return; const t = trioFrom(c.bins, true); if (t) { p.borrow = { A: t.A, B: t.B, F: t.F }; if (adopt) adoptOwn(p); save(); } } catch (e) {}
+  }
+  // a piece just planted takes on its own style as soon as it's known
+  function adoptOwn(p) {
+    const el = world.querySelector(`[data-id="${p.id}"]`); if (!el || p.setPinned) return;
+    p.set = 'borrowed'; const nel = build(p); place(nel, p); el.replaceWith(nel); settle(true);
+  }
+  // older link pieces: borrow their page's style a few at a time (the lookup service allows about 50 a day)
+  async function borrowPage(p) {
+    if (!p.link || p.borrowTried) return; p.borrowTried = 1;
+    try { const d = await getJSON('https://api.microlink.io/?url=' + encodeURIComponent(p.link) + '&palette=true' + PAGE_RULES); const b = await styleOf(p.link, (d && d.data) || {}); if (b) { p.borrow = b; save(); } } catch (e) {}
+  }
+  function borrowAround() {
+    plants.filter(p => p.img && p.borrow === undefined && !p.link).forEach((p, i) => setTimeout(() => borrowPicture(p), 1500 + i * 300));
+    plants.filter(p => p.link && !p.borrowTried && !p.borrow).slice(0, 3).forEach((p, i) => setTimeout(() => borrowPage(p), 4000 + i * 2500));
+  }
+
   async function lookUp(u, hint) {
     u = (u || '').trim(); if (!isUrl(u) || u === metaFor) return; metaFor = u;
     const tT = document.getElementById('tTitle'), tN = document.getElementById('tNote');
     if (hint && hint.title && !tT.value) tT.value = hint.title.slice(0, 80);
     if (hint && hint.text && !tN.value) tN.value = hint.text.slice(0, 1200);
     let img = hint && hint.img;
-    if (!tT.value || !img) {
+    {
       tT.placeholder = 'Looking it up…';
       try {
-        const d = await getJSON('https://api.microlink.io/?url=' + encodeURIComponent(u)), m = (d && d.data) || {};
+        const d = await getJSON('https://api.microlink.io/?url=' + encodeURIComponent(u) + '&palette=true' + PAGE_RULES), m = (d && d.data) || {};
         if (metaFor !== u) return;
+        styleOf(u, m).then(b => { if (metaFor === u && b) style = { u, b }; }).catch(() => {});
         if (!tT.value && m.title) tT.value = m.title.slice(0, 80);
         if (!tN.value && m.description) tN.value = m.description.slice(0, 1200);
         img = img || (m.image && m.image.url);
@@ -757,7 +916,7 @@ a.btn { text-decoration: none; display: inline-block; }
     const title = document.getElementById('tTitle').value.trim(), note = document.getElementById('tNote').value.trim();
     const link = isUrl(tUrl.value) ? tUrl.value.trim() : null;
     if (!pending && !title && !note && !link) { toast('Add a link, an image, a title or some words first'); return; }
-    const p = plant({ title: title || (link ? hostOf(link) : ''), note, img: pending?.img, ar: pending?.ar, link }, viewCentre(), true);
+    const p = plant({ title: title || (link ? hostOf(link) : ''), note, img: pending?.img, ar: pending?.ar, link, borrow: link && style && style.u === link ? style.b : null }, viewCentre(), true);
     save(); closeSheets(); resetForm(); setTimeout(() => centreOn(p), 60); toast('Planted');
     plantedSince++; if (wildOn() && plantedSince % 3 === 0) setTimeout(() => sprout(p), 2200);
   });
@@ -1005,14 +1164,15 @@ a.btn { text-decoration: none; display: inline-block; }
   // Every piece is set in one layout from a small type specimen. The studio wanders the part of the garden you're looking at
   // and, every few seconds, re-sets one piece in a different layout, only if it still fits where it is. Pin a setting to keep it.
   const SET_NAMES = { plain: 'roman', drop: 'drop cap', stair: 'staircase', side: 'folio', rule: 'masthead', numeral: 'big numeral', right: 'ranged right', quote: 'pull quote', column: 'two columns',
-    under: 'caption below', over: 'caption over', plate: 'plate', beside: 'side by side', bleed: 'full bleed' };
+    under: 'caption below', over: 'caption over', plate: 'plate', beside: 'side by side', bleed: 'full bleed', borrowed: 'its own style' };
   const STUDIO_KEY = 'drift-garden-studio';
   const studio = (() => { try { const s = JSON.parse(localStorage.getItem(STUDIO_KEY)); if (s) return s; } catch (e) {} return { on: !reduceMotion, likes: {} }; })();
   const saveStudio = () => { try { localStorage.setItem(STUDIO_KEY, JSON.stringify(studio)); } catch (e) {} };
   function setsFor(p) {
-    if (p.img) return ['under', ...(p.title ? ['over', 'plate'] : []), ...(p.title && p.w >= 560 ? ['beside'] : []), ...(!p.wild ? ['bleed'] : [])];
+    const mine = p.borrow ? ['borrowed'] : [];
+    if (p.img) return [...mine, 'under', ...(p.title ? ['over', 'plate'] : []), ...(p.title && p.w >= 560 ? ['beside'] : []), ...(!p.wild ? ['bleed'] : [])];
     const text = p.title || p.note || '', ws = text.trim().split(/\s+/);
-    return ['plain', 'side', 'rule', 'numeral', 'right',
+    return [...mine, 'plain', 'side', 'rule', 'numeral', 'right',
       ...(/^\p{L}/u.test(text) && text.length > 3 ? ['drop'] : []),
       ...(ws.length >= 2 && ws.length <= 6 && ws.every(w => [...w].length <= 10) ? ['stair'] : []),
       ...(p.title && p.note && p.note.length >= 20 && p.note.length <= 160 ? ['quote'] : []),
@@ -1159,23 +1319,69 @@ a.btn { text-decoration: none; display: inline-block; }
   weedLabel();
 
   // ---------- print run from a word ----------
+  // The word is searched in open picture collections (Wikimedia Commons and the Art Institute of Chicago).
+  // Their pixels are counted into colour bins and the most frequent colours become the inks. If nothing can be found, the letters decide instead.
   const inkWord = document.getElementById('inkWord'), inkPreview = document.getElementById('inkPreview');
-  function showInk() {
-    const w = inkWord.value.trim() || inkWord.placeholder, ink = wordInks(w);
-    const why = document.getElementById('inkWhy'); why.innerHTML = '';
-    if (!ink) { document.getElementById('inkSample').textContent = w; document.getElementById('inkHex').textContent = 'Try a word with letters in it'; return null; }
-    ['A', 'B', 'F'].forEach(k => inkPreview.style.setProperty('--' + k, ink[k]));
-    document.getElementById('inkSample').textContent = w;
-    document.getElementById('inkHex').textContent = ink.A + ' \u00b7 ' + ink.B + ' \u00b7 ' + ink.F;
-    ink.why.forEach(t => { const li = document.createElement('li'); li.textContent = t; why.appendChild(li); });
-    return ink;
+  const picInks = new Map();
+  async function picturesFor(word) {
+    const q = encodeURIComponent(word);
+    const [aic, com] = await Promise.allSettled([
+      getJSON('https://api.artic.edu/api/v1/artworks/search?q=' + q + '&limit=8&fields=id,image_id,is_public_domain'),
+      getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch=' + encodeURIComponent(word + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url&iiurlwidth=96')]);
+    const urls = [];
+    if (com.status === 'fulfilled' && com.value.query) Object.values(com.value.query.pages).sort((a, b) => a.index - b.index).forEach(p => p.imageinfo && p.imageinfo[0].thumburl && urls.push(p.imageinfo[0].thumburl));
+    if (aic.status === 'fulfilled') (aic.value.data || []).filter(x => x.image_id).forEach(x => urls.push('https://www.artic.edu/iiif/2/' + x.image_id + '/full/96,/0/default.jpg'));
+    const got = await Promise.allSettled(urls.slice(0, 14).map(loadImg));
+    return got.filter(x => x.status === 'fulfilled').map(x => x.value);
   }
+  async function inksFromPictures(word) {
+    const key = word.toLowerCase();
+    if (!picInks.has(key)) picInks.set(key, (async () => {
+      const imgs = await picturesFor(word); if (!imgs.length) return null;
+      const counted = countColours(imgs); if (!counted.pics) return null;
+      const trio = trioFrom(counted.bins); if (!trio) return null;
+      trio.why.unshift(`Found ${counted.pics} pictures of \u201c${word}\u201d and counted their colours`);
+      return { ...trio, word, from: 'pictures', thumbs: imgs.map(i => i.src), bins: counted.bins.slice(0, 12).map(b => ({ hex: lchHex(...b.lch), share: b.share })) };
+    })().catch(() => null));
+    return picInks.get(key);
+  }
+  let inkTimer = null, inkWant = '';
+  function showFound(ink) {
+    const box = document.getElementById('inkFound'); box.hidden = !ink || !ink.thumbs;
+    if (box.hidden) return;
+    document.getElementById('inkThumbs').innerHTML = ink.thumbs.map(src => `<img alt="" src="${esc(src)}">`).join('');
+    const tot = ink.bins.reduce((t, b) => t + b.share, 0);
+    document.getElementById('inkBar').innerHTML = ink.bins.map((b, i) => `<i style="background:${b.hex};flex:${(b.share / tot).toFixed(4)}" title="${b.hex} \u00b7 ${Math.round(b.share * 100)}%">${i < 3 ? `<b>${Math.round(b.share * 100)}%</b>` : ''}</i>`).join('');
+  }
+  function paintInk(w, ink, note) {
+    const why = document.getElementById('inkWhy'); why.innerHTML = '';
+    document.getElementById('inkSample').textContent = w;
+    if (!ink) { document.getElementById('inkHex').textContent = note || 'Try a word with letters in it'; showFound(null); return; }
+    ['A', 'B', 'F'].forEach(k => inkPreview.style.setProperty('--' + k, ink[k]));
+    document.getElementById('inkHex').textContent = ink.A + ' \u00b7 ' + ink.B + ' \u00b7 ' + ink.F + (note ? ' \u00b7 ' + note : '');
+    ink.why.forEach(t => { const li = document.createElement('li'); li.textContent = t; why.appendChild(li); });
+    showFound(ink);
+  }
+  function showInk() {
+    const w = inkWord.value.trim() || inkWord.placeholder; inkWant = w;
+    clearTimeout(inkTimer);
+    const cached = picInks.get(w.toLowerCase());
+    paintInk(w, null, 'Looking for pictures of it\u2026');
+    inkTimer = setTimeout(async () => {
+      const ink = await inksFromPictures(w); if (inkWant !== w) return;
+      if (ink) paintInk(w, ink); else { const li = wordInks(w); if (li) li.why.unshift('No pictures could be found just now, so the letters decided'); paintInk(w, li, li ? 'from its letters' : ''); inkFallback.set(w.toLowerCase(), li); }
+    }, cached ? 0 : 700);
+  }
+  const inkFallback = new Map();
+  async function inkFor(w) { return (await inksFromPictures(w)) || inkFallback.get(w.toLowerCase()) || wordInks(w); }
   document.getElementById('reroll').addEventListener('click', () => { inkWord.value = RUN.word || ''; showInk(); inkSheet.hidden = false; inkWord.focus(); });
   inkWord.addEventListener('input', showInk);
   document.getElementById('inkCancel').addEventListener('click', closeSheets);
-  document.getElementById('inkForm').addEventListener('submit', e => {
-    e.preventDefault(); const ink = showInk(); if (!ink) return;
-    try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word })); } catch (e) {}
+  document.getElementById('inkForm').addEventListener('submit', async e => {
+    e.preventDefault(); const w = inkWord.value.trim() || inkWord.placeholder, btn = e.target.querySelector('.btn[type=submit]');
+    btn.textContent = 'Inking\u2026'; const ink = await inkFor(w); btn.textContent = 'Ink it';
+    if (!ink) { toast('Try a word with letters in it'); return; }
+    try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word || w, from: ink.from || 'letters' })); } catch (e) {}
     location.reload();
   });
   // ---------- trying a font from the viewer's own device (kept in this browser only) ----------

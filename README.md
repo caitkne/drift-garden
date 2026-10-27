@@ -10,7 +10,7 @@ A garden to wander. Drop in pictures and words and they land wherever they like 
 
 ## Print runs
 
-The whole garden is printed in one acid trio, worked out from a word you choose (top-right corner). Each step is shown when you type the word: the letters' balance point on the colour wheel sets the hue, the share of vowels sets how far apart the two inks sit, and the length sets light or deep inks.
+The whole garden is printed in one trio of inks, taken from a word you choose (top-right corner). The word is searched on Wikimedia Commons and the Art Institute of Chicago, and up to 14 small pictures come back. Every pixel is sorted into a colour bin (8 lightness steps, 24 hues, 4 strengths, greys by lightness), and each picture counts equally. Ink A is the most common colour with some colour in it. Ink B is the next most common one that's clearly different, set at A's lightness so they hum. The anchor is the most common colour that reads on both at 4.5:1, or the darkest or lightest one pushed until it does. The sheet shows the pictures, the colour counts, and each step. If no pictures can be found, the older letter rules decide instead: hue from the letters' balance point on the wheel, gap from the vowels, and so on.
 
 ## Wildflowers
 
@@ -41,6 +41,10 @@ Now and then (about 1 in 7, once you've planted six or more things), a wildflowe
 Every piece is set in one layout from a small type specimen. Words: roman, drop cap, staircase (one word per step), folio (running head up the edge), masthead (ruled and centred), big numeral, ranged right, pull quote (the note takes the stage), two columns. Pictures: caption below, caption over, numbered plate, side by side, full bleed. Each piece only gets layouts that suit it (a staircase needs a short title, a pull quote needs a short note, and so on).
 
 While **Studio on** (top left), the studio re-sets one piece you can see every 6 to 12 seconds, with a small proof mark saying what it tried. It only re-sets a piece if the new layout still fits in its spot, so nothing gets shoved about. Open a piece and **Pin it** to keep a layout; layouts you pin get tried more often. Studio off keeps everything still (it starts off for people who ask their device for reduced motion).
+
+### Its own style
+
+The studio has one more layout: **its own style**. A picture lends its own colours, counted the same way. A webpage lends the colours of its main picture and its heading font. If the page uses a Google font, that exact font is used. Licensed fonts can't be copied, so a free font of the same kind stands in (Jost for geometric sans like Futura, Inter Tight for grotesques like Helvetica, EB Garamond or Playfair for serifs, and so on), and the piece says what it's standing in for. New pieces start in their own style. The webpage lookup uses Microlink, which allows about 50 lookups a day.
 
 ## Fonts
 
