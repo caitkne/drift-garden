@@ -26,7 +26,7 @@ Every third thing you plant (or whenever you press **✿ Wildflower**), the gard
 
 Sources take turns: one that has already given lots of wildflowers is less likely to go first, and one that fails is tried last.
 
-It plants one result as a card, with its picture, and links to the source. Keep a wildflower and its words and source become likelier next time. Pull one up and it goes on the **weed pile**: it never sprouts again, results that share its words are passed over, and its source grows less often. You can forgive a weed from the pile. If those can't be reached, it picks from a small hand-gathered seed bank of articles from culture, film, literature, museum and archive sites.
+It plants one result as a card, with its picture, and links to the source. To keep a wildflower you give it a label, and each label becomes a **bed**. Most new wildflowers grow for a bed (bigger beds more often): one search word comes from the bed's label and its wildflowers, one from the things you planted, the sources the bed already holds are tried first, and the new one sprouts beside the bed. Kept wildflowers drift over to join their bed. Pull one up and it goes on the **weed pile**: it never sprouts again, results that share its words are passed over, and its source grows less often. You can forgive a weed from the pile. If those can't be reached, it picks from a small hand-gathered seed bank of articles from culture, film, literature, museum and archive sites.
 
 No AI runs anywhere in the garden. Matching is plain keyword search.
 

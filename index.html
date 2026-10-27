@@ -123,6 +123,11 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .weeds li b { font: 400 22px/1.15 var(--script); }
 .weeds li .row { justify-content: flex-start; gap: 18px; }
 #weedBtn { margin-left: 14px; }
+.keepRow { display: grid; gap: 10px; width: 100%; }
+.keepRow .row { flex-wrap: nowrap; }
+.keepRow input { margin-top: 0; }
+#keepBtn { white-space: nowrap; }
+.plant.moving { transition: left 1.1s cubic-bezier(.2,.8,.2,1), top 1.1s cubic-bezier(.2,.8,.2,1); }
 .reroll:hover { text-decoration: underline; text-underline-offset: 4px; }
 .link { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; background: none; border: 0; padding: 14px 2px; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 5px; }
 
@@ -235,7 +240,12 @@ a.btn { text-decoration: none; display: inline-block; }
     <p class="view-note" id="vNote"></p>
     <div class="wildrow" id="vWild" hidden>
       <a class="btn" id="vLink" target="_blank" rel="noopener noreferrer">Find it on the web ↗</a>
-      <button class="link" type="button" id="keepBtn">Keep this wildflower</button>
+      <form class="keepRow" id="keepForm">
+        <label for="keepLabel">To keep it, give it a label</label>
+        <div class="row"><input type="text" id="keepLabel" list="bedList" maxlength="30" autocomplete="off" placeholder="curiosity"><button class="link" type="submit" id="keepBtn">Keep it</button></div>
+        <datalist id="bedList"></datalist>
+        <p class="hint">Each label becomes a bed. Wildflowers you keep under it gather together, and the bed grows more like them.</p>
+      </form>
     </div>
     <div class="row">
       <button class="link" type="button" id="pullBtn">Pull it up</button>
@@ -294,6 +304,8 @@ a.btn { text-decoration: none; display: inline-block; }
     const letter = ch => `<span class="ch" style="--jr:${((r() - .5) * 4).toFixed(1)}deg;--jy:${((r() - .5) * 2.4).toFixed(1)}px">${esc(ch)}</span>`;
     return text.split('\n').map(line => line.split(/ +/).map(w => `<span class="wd">${[...w].map(letter).join('')}</span>`).join(' ')).join('<br>');
   }
+  const wildTag = p => p.wild.kept && p.wild.label ? '\u273f ' + p.wild.label + (p.wild.source ? ' \u00b7 from ' + p.wild.source : '')
+    : '\u273f Wildflower \u00b7 ' + (p.wild.query ? 'on Google' : p.wild.bed ? 'for \u201c' + p.wild.bed + '\u201d' : p.wild.kind);
   const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } };
   const seedOf = id => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
   // A word becomes a print run. The rules, in order:
@@ -476,10 +488,10 @@ a.btn { text-decoration: none; display: inline-block; }
     const sc = 'scr', light = ink.light ? ' lightF' : '';
     if (p.img) {
       el.className = 'plant pic' + (p.w >= 500 ? ' wide' : '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">✿ Wildflower · ${esc(p.wild.kind)}</span>` : '') + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '') + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '') + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     } else {
       el.className = 'plant word ' + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">✿ Wildflower · ${esc(p.wild.query ? 'on Google' : p.wild.kind)}</span>` : '') + duoText('h3', jitter(p.title || p.note, seedOf(p.id)), sc) + (p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '') + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + duoText('h3', jitter(p.title || p.note, seedOf(p.id)), sc) + (p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '') + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     }
     if (p.example) el.insertAdjacentHTML('beforeend', '<span class="ex">Example</span>');
     return el;
@@ -800,13 +812,26 @@ a.btn { text-decoration: none; display: inline-block; }
     try {
       const counts = {}; pool.forEach(o => o.words.forEach(w => counts[w] = (counts[w] || 0) + 1));
       const pickWord = ws => { const wt = ws.map(w => w.length / counts[w] * tasteW(w)); let r = Math.random() * wt.reduce((a, b) => a + b, 0); for (let i = 0; i < ws.length; i++) { r -= wt[i]; if (r <= 0) return ws[i]; } return ws[0]; };
-      const [A, B] = pool.slice().sort(() => Math.random() - .5);
+      // Beds: each label you keep wildflowers under. Most sprouts grow for a bed (bigger beds more often):
+      // one word from the bed's own wildflowers, one from the things you planted, sources the bed likes first, and it grows beside the bed.
+      const beds = bedsNow(), labels = Object.keys(beds);
+      let bed = null;
+      if (labels.length && Math.random() < .7) { let r = Math.random() * labels.reduce((t, l) => t + beds[l].length, 0); bed = labels.find(l => (r -= beds[l].length) <= 0) || labels[0]; }
+      let A, B;
+      if (bed) {
+        const members = beds[bed], vocab = [...new Set([...bed.split(' ').filter(w => w.length > 2), ...members.flatMap(m => wordsOf(m))])];
+        vocab.forEach(w => counts[w] = counts[w] || 1);
+        const planted = pool.filter(o => !o.p.wild);
+        A = { p: pick(members), words: vocab.length ? vocab : [bed] };
+        B = planted.length ? pick(planted) : pick(pool);
+      } else [A, B] = pool.slice().sort(() => Math.random() - .5);
       const a = pickWord(A.words), b = B ? pickWord(B.words.filter(w => w !== a).length ? B.words.filter(w => w !== a) : B.words) : null;
       const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href).concat(weeds.map(w => w.href)));
       const tries = (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
       // fair rotation: a source that has already given lots of wildflowers is less likely to go first; kept ones get a gentle boost
       const given = {}; plants.forEach(p => { if (p.wild && p.wild.source) given[p.wild.source] = (given[p.wild.source] || 0) + 1; });
-      const sources = LIVE.map(x => ({ x, k: Math.random() ** (1 / (tasteS(x.name) / (1 + (given[x.name] || 0) * .8) / (1 + (failed[x.name] || 0) * 4))) })).sort((p, q) => q.k - p.k).map(o => o.x).slice(0, 5);
+      const bedLikes = {}; if (bed) beds[bed].forEach(m => { if (m.wild.source) bedLikes[m.wild.source] = (bedLikes[m.wild.source] || 0) + 1; });
+      const sources = LIVE.map(x => ({ x, k: Math.random() ** (1 / ((1 + (bedLikes[x.name] || 0)) * tasteS(x.name) / (1 + (given[x.name] || 0) * .8) / (1 + (failed[x.name] || 0) * 4))) })).sort((p, q) => q.k - p.k).map(o => o.x).slice(0, 5);
       let found = null;
       outer: for (const words of tries) for (const src of sources) {
         let res; try { res = await src.find(words.join(' ')); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
@@ -819,10 +844,10 @@ a.btn { text-decoration: none; display: inline-block; }
       }
       if (!found) { sproutFromBank(nearPlant); return; }
       const { r, src, words, from } = found, name = t => t.title || t.note.slice(0, 40);
-      const verb = i => from[i].wild ? 'kept' : 'planted';
-      const by = 'Because you ' + words.map((w, i) => (i && verb(i) === verb(0) ? '' : verb(i) + ' ') + '\u201c' + w + '\u201d').join(' and ');
-      const near = nearPlant || from[0];
-      const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words, from: from.map(name) } };
+      const verb = i => from[i] && from[i].wild ? 'kept' : 'planted';
+      const by = (bed ? 'For your \u201c' + bed + '\u201d bed, because you ' : 'Because you ') + words.map((w, i) => (i && verb(i) === verb(0) ? '' : verb(i) + ' ') + '\u201c' + w + '\u201d').join(' and ');
+      const near = bed ? pick(beds[bed]) : (nearPlant || from[0]);
+      const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words, bed, from: from.map(name) } };
       if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
       const p = plant(data, { x: near.x + near.w / 2, y: near.y + near.h / 2 }, true);
       save(); try { localStorage.setItem('wander-wild', 'on'); } catch (e) {}
@@ -830,11 +855,26 @@ a.btn { text-decoration: none; display: inline-block; }
     } finally { sprouting = false; wildBtn.textContent = '✿ Wildflower'; }
   }
   wildBtn.addEventListener('click', () => sprout(null));
-  document.getElementById('keepBtn').addEventListener('click', () => {
+  function bedsNow() { const b = {}; plants.forEach(p => { if (p.wild && p.wild.kept && p.wild.label) (b[p.wild.label] = b[p.wild.label] || []).push(p); }); return b; }
+  document.getElementById('keepForm').addEventListener('submit', e => {
+    e.preventDefault();
     if (!current?.wild) return;
-    current.wild.kept = true; save(); nudgeTaste(current, 1);
+    const label = document.getElementById('keepLabel').value.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!label) { toast('Give it a label to keep it'); document.getElementById('keepLabel').focus(); return; }
+    const mates = (bedsNow()[label] || []).filter(m => m !== current);
+    current.wild.kept = true; current.wild.label = label; nudgeTaste(current, 1);
     const old = world.querySelector(`[data-id="${current.id}"]`); const el = build(current); place(el, current); old?.replaceWith(el);
-    document.getElementById('keepBtn').hidden = true; toast('Kept');
+    if (mates.length) {
+      // it drifts over to join its bed
+      const m = pick(mates), span = Math.max(1, Math.round((current.w + GUT) / CELL));
+      const near = { x: m.x + m.w / 2, y: m.y + m.h / 2 }, others = plants.filter(q => q !== current), dist = r => Math.hypot(r.x + r.w / 2 - near.x, r.y + r.h / 2 - near.y);
+      let spot = findSpot(current.w, current.h, near, span, others);
+      for (let i = 0; i < 6; i++) { const t = findSpot(current.w, current.h, near, span, others); if (dist(t) < dist(spot)) spot = t; }
+      const moved = current; Object.assign(moved, { x: spot.x, y: spot.y });
+      el.classList.add('moving'); void el.offsetWidth; place(el, moved); setTimeout(() => { el.classList.remove('moving'); centreOn(moved); }, 1150);
+    }
+    save(); closeSheets();
+    toast(mates.length ? 'Kept in \u201c' + label + '\u201d' : 'Kept. A new bed: \u201c' + label + '\u201d');
   });
 
   // ---------- reading a piece ----------
@@ -845,12 +885,13 @@ a.btn { text-decoration: none; display: inline-block; }
     const fig = document.getElementById('vFig');
     fig.innerHTML = p.img ? duoPic(p.img, 500, Math.round(500 * (p.ar || 1))).replace(/width="500"/g, 'style="width:100%"') : '';
     fig.style.setProperty('--dx', '2px'); fig.style.setProperty('--dy', '1.2px');
-    document.getElementById('vNo').textContent = p.wild ? '✿ Wildflower · ' + (p.wild.query ? 'on Google' : p.wild.kind) : 'Piece ' + fmtNo(p.no) + (p.example ? ' · Example' : '');
+    document.getElementById('vNo').textContent = p.wild ? wildTag(p) : 'Piece ' + fmtNo(p.no) + (p.example ? ' · Example' : '');
     document.getElementById('vTitle').textContent = p.title || 'Untitled';
     const n = document.getElementById('vNote'); n.textContent = (p.note || '') + (p.wild && !p.wild.query ? '\n\n' + p.wild.by + (p.wild.source ? ' \u00b7 ' + p.wild.source : '') : ''); n.hidden = !n.textContent;
     const vw = document.getElementById('vWild'); vw.hidden = !p.wild && !p.link;
-    if (!p.wild && p.link) { const L = document.getElementById('vLink'); L.href = p.link; L.textContent = 'Visit ' + hostOf(p.link) + ' \u2197'; document.getElementById('keepBtn').hidden = true; }
-    if (p.wild) { const L = document.getElementById('vLink'); if (p.wild.query) { L.href = 'https://www.google.com/search?q=' + encodeURIComponent(p.wild.query); L.textContent = 'Search Google for \u201c' + p.wild.query + '\u201d \u2197'; } else { L.href = p.wild.href; L.textContent = 'Wander over to ' + p.wild.source + ' \u2197'; } document.getElementById('keepBtn').hidden = !!p.wild.kept; }
+    if (!p.wild && p.link) { const L = document.getElementById('vLink'); L.href = p.link; L.textContent = 'Visit ' + hostOf(p.link) + ' \u2197'; document.getElementById('keepForm').hidden = true; }
+    if (p.wild) { const L = document.getElementById('vLink'); if (p.wild.query) { L.href = 'https://www.google.com/search?q=' + encodeURIComponent(p.wild.query); L.textContent = 'Search Google for \u201c' + p.wild.query + '\u201d \u2197'; } else { L.href = p.wild.href; L.textContent = 'Wander over to ' + p.wild.source + ' \u2197'; } const kf = document.getElementById('keepForm'); kf.hidden = !!p.wild.kept; document.getElementById('keepLabel').value = p.wild.bed || '';
+      document.getElementById('bedList').innerHTML = Object.keys(bedsNow()).map(l => `<option value="${esc(l)}">`).join(''); }
     viewSheet.hidden = false; document.getElementById('closeView').focus();
   }
   document.getElementById('closeView').addEventListener('click', closeSheets);
