@@ -822,12 +822,14 @@ a.btn { text-decoration: none; display: inline-block; }
         const members = beds[bed], vocab = [...new Set([...bed.split(' ').filter(w => w.length > 2), ...members.flatMap(m => wordsOf(m))])];
         vocab.forEach(w => counts[w] = counts[w] || 1);
         const planted = pool.filter(o => !o.p.wild);
-        A = { p: pick(members), words: vocab.length ? vocab : [bed] };
+        A = { p: pick(members), words: vocab.length ? vocab : [bed], bedWords: vocab.filter(w => !bed.split(' ').includes(w)) };
         B = planted.length ? pick(planted) : pick(pool);
       } else [A, B] = pool.slice().sort(() => Math.random() - .5);
       const a = pickWord(A.words), b = B ? pickWord(B.words.filter(w => w !== a).length ? B.words.filter(w => w !== a) : B.words) : null;
       const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href).concat(weeds.map(w => w.href)));
-      const tries = (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
+      // a bed's label is always one of the search words: label + something you planted, then label + a word from the bed, then the label alone
+      const v = bed && A.bedWords.length ? pickWord(A.bedWords) : null;
+      const tries = bed ? [b && [bed, b], v && [bed, v], [bed]].filter(Boolean) : (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
       // fair rotation: a source that has already given lots of wildflowers is less likely to go first; kept ones get a gentle boost
       const given = {}; plants.forEach(p => { if (p.wild && p.wild.source) given[p.wild.source] = (given[p.wild.source] || 0) + 1; });
       const bedLikes = {}; if (bed) beds[bed].forEach(m => { if (m.wild.source) bedLikes[m.wild.source] = (bedLikes[m.wild.source] || 0) + 1; });
@@ -839,13 +841,14 @@ a.btn { text-decoration: none; display: inline-block; }
         while (res.length) {
           const r = res.splice(Math.random() * Math.min(3, res.length) | 0, 1)[0];
           if (r.img) { try { const im = await loadImg(r.img); r.ar = im.naturalHeight / im.naturalWidth; } catch (e) { r.img = null; } }
-          found = { r, src, words, from: words.map(w => (w === a ? A : B).p) }; break outer;
+          found = { r, src, words, from: words.map(w => (bed ? (w === b ? B : A) : (w === a ? A : B)).p) }; break outer;
         }
       }
       if (!found) { sproutFromBank(nearPlant); return; }
       const { r, src, words, from } = found, name = t => t.title || t.note.slice(0, 40);
       const verb = i => from[i] && from[i].wild ? 'kept' : 'planted';
-      const by = (bed ? 'For your \u201c' + bed + '\u201d bed, because you ' : 'Because you ') + words.map((w, i) => (i && verb(i) === verb(0) ? '' : verb(i) + ' ') + '\u201c' + w + '\u201d').join(' and ');
+      const by = bed ? 'Grown for your \u201c' + bed + '\u201d bed' + (words[1] ? ', with \u201c' + words[1] + '\u201d, which you ' + (from[1] && from[1].wild ? 'kept' : 'planted') : '')
+        : 'Because you ' + words.map((w, i) => (i && verb(i) === verb(0) ? '' : verb(i) + ' ') + '\u201c' + w + '\u201d').join(' and ');
       const near = bed ? pick(beds[bed]) : (nearPlant || from[0]);
       const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words, bed, from: from.map(name) } };
       if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
