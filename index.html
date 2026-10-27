@@ -22,7 +22,7 @@
   --ink: #1b1d3a;
   --mark: rgba(47, 79, 216, .35);
   --wide: "Anybody", "Arial Black", sans-serif;
-  --script: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --script: "Blush", "Fraunces", "Iowan Old Style", Georgia, serif;
   --mono: "Spline Sans Mono", ui-monospace, Menlo, monospace;
   color-scheme: light;
 }
@@ -62,15 +62,16 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
   transform: translate(calc(12px - var(--dx) * 1.4), calc(12px - var(--dy) * 1.4)); }
 
 .mast { position: absolute; pointer-events: none; isolation: isolate; }
-.mast .card { padding: 36px 44px 30px; }
-.mast h1 { margin: 0; font-size: 180px; line-height: .9; }
+.mast .card { padding: 60px 44px 30px; }
+.mast h1 { margin: 0; font-size: 128px; line-height: 1.12; }
 .wd { white-space: nowrap; }
 .ch { display: inline-block; transform: translate(0, var(--jy)) rotate(var(--jr)); white-space: pre; }
 .plant:hover .ch, .plant:focus-visible .ch { animation: shiver .18s steps(2) infinite alternate; }
 @keyframes shiver { to { transform: translate(.6px, calc(var(--jy) - .8px)) rotate(calc(var(--jr) * -.6)); } }
 @media (prefers-reduced-motion: reduce) { .plant:hover .ch, .plant:focus-visible .ch { animation: none; } }
 /* one script for everything: a soft, wonky italic serif, with each letter set very slightly off true */
-.scr, .mast h1, .sheet h2, #tTitle { font-family: var(--script) !important; font-style: italic; font-weight: 300; font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; --sz: .86; letter-spacing: -.015em; word-spacing: .2em; }
+@font-face { font-family: "Blush"; src: url(fonts/blush.woff2) format("woff2"); font-display: swap; }
+.scr, .mast h1, .sheet h2, #tTitle { font-family: var(--script) !important; font-style: normal; font-weight: 400; --sz: .74; letter-spacing: 0; word-spacing: .1em; line-height: 1.18 !important; }
 .mast .sub { display: flex; justify-content: space-between; gap: 24px; margin-top: 26px; font: 500 13px/1.5 var(--mono); color: var(--F); text-transform: uppercase; letter-spacing: .06em; }
 
 .plant { position: absolute; padding: 0; border: 0; background: none; color: var(--F); font: inherit; text-align: left; cursor: pointer; display: block; isolation: isolate; }
@@ -109,7 +110,7 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .bm { color: var(--pink); font-weight: 500; cursor: grab; }
 .meta .host { opacity: .85; }
 .inkPreview { display: grid; gap: 8px; padding: 22px 22px 18px; background: var(--A); color: var(--F); box-shadow: 12px 12px 0 var(--B); margin: 4px 12px 14px 0; }
-.inkPreview b { font: 300 italic 48px/1 var(--script); font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; overflow-wrap: anywhere; }
+.inkPreview b { font: 400 48px/1 var(--script); overflow-wrap: anywhere; }
 .inkPreview span { font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .inkWhy { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font: 400 12px/1.5 var(--mono); }
 .inkWhy li::before { content: "◎ "; color: var(--pink); }
@@ -117,6 +118,11 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .fontTry summary { cursor: pointer; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--blue); }
 .fontTry[open] { padding-bottom: 6px; }
 .fontTry label { display: block; margin-top: 8px; }
+.weeds { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.weeds li { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px dashed var(--blue); font: 400 13px/1.45 var(--mono); }
+.weeds li b { font: 400 22px/1.15 var(--script); }
+.weeds li .row { justify-content: flex-start; gap: 18px; }
+#weedBtn { margin-left: 14px; }
 .reroll:hover { text-decoration: underline; text-underline-offset: 4px; }
 .link { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; background: none; border: 0; padding: 14px 2px; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 5px; }
 
@@ -157,7 +163,7 @@ a.btn { text-decoration: none; display: inline-block; }
   <div id="world"><div class="marks"></div></div>
 </div>
 
-<div class="top"><span>Drift Garden</span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
+<div class="top"><span>Drift Garden <button class="reroll" id="weedBtn" type="button" hidden></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
 
 <div class="bottom">
   <button class="btn" id="plantBtn" type="button">Plant something</button>
@@ -185,6 +191,16 @@ a.btn { text-decoration: none; display: inline-block; }
       <button class="btn" type="submit" id="doPlant">Plant it</button>
     </div>
   </form>
+</div>
+
+<div class="scrim" id="weedSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="weedTitle">
+    <span class="kick">The weed pile</span>
+    <h2 id="weedTitle">Weeds</h2>
+    <p class="hint">Wildflowers you pulled up. Nothing from here will sprout again, and their words and sources grow less often. Forgive one if you change your mind.</p>
+    <ul class="weeds" id="weedList"></ul>
+    <div class="row"><span></span><button class="btn" type="button" id="weedClose">Back to the garden</button></div>
+  </div>
 </div>
 
 <div class="scrim" id="inkSheet" hidden>
@@ -562,7 +578,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
   const plantSheet = document.getElementById('plantSheet'), viewSheet = document.getElementById('viewSheet'), inkSheet = document.getElementById('inkSheet');
   addEventListener('keydown', e => {
-    if (!plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden) { if (e.key === 'Escape') closeSheets(); return; }
+    if (!plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden || !document.getElementById('weedSheet').hidden) { if (e.key === 'Escape') closeSheets(); return; }
     const k = { ArrowLeft: [-80, 0], ArrowRight: [80, 0], ArrowUp: [0, -80], ArrowDown: [0, 80] }[e.key];
     if (k) { e.preventDefault(); cam.x += k[0]; cam.y += k[1]; applyCam(); }
   });
@@ -578,7 +594,7 @@ a.btn { text-decoration: none; display: inline-block; }
   const DROP_TEXT = dropText.innerHTML;
   let pending = null;
   function openPlant() { document.getElementById('nextNo').textContent = 'Piece ' + fmtNo(nextNo()); plantSheet.hidden = false; document.getElementById('tTitle').focus(); }
-  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; }
+  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; document.getElementById('weedSheet').hidden = true; }
   function resetForm() { form.reset(); pending = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
   function readImage(f) {
     if (!f || !f.type.startsWith('image/')) return;
@@ -673,7 +689,7 @@ a.btn { text-decoration: none; display: inline-block; }
     const vocab = {};
     pool.forEach(p => wordsOf(p).forEach(w => { const k = stem(w); if (k.length < 3) return; (vocab[k] = vocab[k] || { w, from: [] }).from.push(p); }));
     if (!Object.keys(vocab).length) { toast('Plant a few things with words first'); return; }
-    const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href));
+    const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href).concat(weeds.map(w => w.href)));
     // score each unused piece by the planted words it shares, rarer shared words count more
     const scored = [];
     LIB.forEach((x, i) => { if (used.has(x[2])) return; let sc = 0; const hit = [];
@@ -762,6 +778,17 @@ a.btn { text-decoration: none; display: inline-block; }
     if (p.wild.source) taste.s[p.wild.source] = (taste.s[p.wild.source] || 0) + amt;
     try { localStorage.setItem(TASTE_KEY, JSON.stringify(taste)); } catch (e) {}
   }
+  // Weeds: pulled-up wildflowers are remembered. They never sprout again, results that share their words are passed over, and their source grows less often.
+  const WEED_KEY = 'drift-garden-weeds';
+  let weeds = (() => { try { return JSON.parse(localStorage.getItem(WEED_KEY)) || []; } catch (e) { return []; } })();
+  const saveWeeds = () => { try { localStorage.setItem(WEED_KEY, JSON.stringify(weeds)); } catch (e) {} weedLabel(); };
+  const weedWords = () => { const c = {}; weeds.forEach(w => (w.words || []).forEach(x => c[x] = (c[x] || 0) + 1)); return c; };
+  function weedLabel() { const b = document.getElementById('weedBtn'); b.hidden = !weeds.length; b.textContent = '\u00b7 Weed pile (' + weeds.length + ')'; }
+  function looksLikeWeed(r) {
+    if (!weeds.length) return false;
+    const ww = weedWords(), mine = wordsOf({ title: r.title, note: r.note });
+    return mine.filter(w => ww[w]).length >= 2 || weeds.some(w => w.title && w.title.toLowerCase() === (r.title || '').toLowerCase());
+  }
   const tasteW = w => { const t = taste.w[w] || 0; return t > 0 ? 1 + t : t < 0 ? Math.max(.15, 1 + t * .4) : 1; };
   const tasteS = n => Math.min(2, Math.max(.4, 1 + (taste.s[n] || 0) * .25));
   let sprouting = false;
@@ -775,7 +802,7 @@ a.btn { text-decoration: none; display: inline-block; }
       const pickWord = ws => { const wt = ws.map(w => w.length / counts[w] * tasteW(w)); let r = Math.random() * wt.reduce((a, b) => a + b, 0); for (let i = 0; i < ws.length; i++) { r -= wt[i]; if (r <= 0) return ws[i]; } return ws[0]; };
       const [A, B] = pool.slice().sort(() => Math.random() - .5);
       const a = pickWord(A.words), b = B ? pickWord(B.words.filter(w => w !== a).length ? B.words.filter(w => w !== a) : B.words) : null;
-      const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href));
+      const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href).concat(weeds.map(w => w.href)));
       const tries = (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
       // fair rotation: a source that has already given lots of wildflowers is less likely to go first; kept ones get a gentle boost
       const given = {}; plants.forEach(p => { if (p.wild && p.wild.source) given[p.wild.source] = (given[p.wild.source] || 0) + 1; });
@@ -783,7 +810,7 @@ a.btn { text-decoration: none; display: inline-block; }
       let found = null;
       outer: for (const words of tries) for (const src of sources) {
         let res; try { res = await src.find(words.join(' ')); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
-        res = res.filter(r => !used.has(r.href)).slice(0, 5);
+        res = res.filter(r => !used.has(r.href) && !looksLikeWeed(r)).slice(0, 5);
         while (res.length) {
           const r = res.splice(Math.random() * Math.min(3, res.length) | 0, 1)[0];
           if (r.img) { try { const im = await loadImg(r.img); r.ar = im.naturalHeight / im.naturalWidth; } catch (e) { r.img = null; } }
@@ -814,7 +841,7 @@ a.btn { text-decoration: none; display: inline-block; }
   const pullBtn = document.getElementById('pullBtn'); let confirmPull = false;
   function open(id) {
     const p = plants.find(q => q.id === id); if (!p) return;
-    current = p; confirmPull = false; pullBtn.textContent = 'Pull it up';
+    current = p; confirmPull = false; pullBtn.textContent = p.wild ? 'Pull it up as a weed' : 'Pull it up';
     const fig = document.getElementById('vFig');
     fig.innerHTML = p.img ? duoPic(p.img, 500, Math.round(500 * (p.ar || 1))).replace(/width="500"/g, 'style="width:100%"') : '';
     fig.style.setProperty('--dx', '2px'); fig.style.setProperty('--dy', '1.2px');
@@ -829,11 +856,35 @@ a.btn { text-decoration: none; display: inline-block; }
   document.getElementById('closeView').addEventListener('click', closeSheets);
   pullBtn.addEventListener('click', () => {
     if (!current) return;
-    if (!confirmPull) { confirmPull = true; pullBtn.textContent = 'Tap again to pull it up'; return; }
-    if (current.wild) nudgeTaste(current, -1);
+    if (!confirmPull) { confirmPull = true; pullBtn.textContent = current.wild ? 'Tap again: it goes on the weed pile' : 'Tap again to pull it up'; return; }
+    const wasWild = !!current.wild;
+    if (wasWild) {
+      nudgeTaste(current, current.wild.kept ? -2 : -1.5);
+      weeds.unshift({ title: current.title, note: current.note, href: current.wild.href, source: current.wild.source, words: [...new Set([...(current.wild.words || []), ...wordsOf(current).slice(0, 6)])], at: Date.now() });
+      saveWeeds();
+    }
     plants = plants.filter(p => p !== current); world.querySelector(`[data-id="${current.id}"]`)?.remove();
-    save(); closeSheets(); toast('Pulled up');
+    save(); closeSheets(); toast(wasWild ? 'Weeded. Less like this will grow' : 'Pulled up');
   });
+  // ---------- the weed pile ----------
+  const weedSheet = document.getElementById('weedSheet');
+  function showWeeds() {
+    const ul = document.getElementById('weedList'); ul.innerHTML = '';
+    weeds.forEach((w, i) => {
+      const li = document.createElement('li');
+      const b = document.createElement('b'); b.textContent = w.title; li.appendChild(b);
+      const m = document.createElement('span'); m.textContent = [w.source && 'from ' + w.source, w.words && w.words.length ? 'words: ' + w.words.slice(0, 5).join(', ') : ''].filter(Boolean).join(' \u00b7 '); li.appendChild(m);
+      const row = document.createElement('div'); row.className = 'row';
+      if (w.href) { const a = document.createElement('a'); a.className = 'link'; a.href = w.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = 'Look again \u2197'; row.appendChild(a); }
+      const re = document.createElement('button'); re.type = 'button'; re.className = 'link'; re.textContent = 'Forgive it';
+      re.addEventListener('click', () => { weeds.splice(i, 1); nudgeTaste({ title: w.title, note: w.note, wild: { words: w.words, source: w.source } }, 1.5); saveWeeds(); showWeeds(); toast('Forgiven. It can sprout again'); if (!weeds.length) closeSheets(); });
+      row.appendChild(re); li.appendChild(row); ul.appendChild(li);
+    });
+  }
+  document.getElementById('weedBtn').addEventListener('click', () => { showWeeds(); weedSheet.hidden = false; });
+  document.getElementById('weedClose').addEventListener('click', closeSheets);
+  weedLabel();
+
   // ---------- print run from a word ----------
   const inkWord = document.getElementById('inkWord'), inkPreview = document.getElementById('inkPreview');
   function showInk() {
@@ -873,7 +924,7 @@ a.btn { text-decoration: none; display: inline-block; }
   }));
   document.getElementById('fontReset').addEventListener('click', () => { Object.values(FONT_KEYS).forEach(k => localStorage.removeItem(k)); location.reload(); });
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  [plantSheet, viewSheet, inkSheet].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
+  [plantSheet, viewSheet, inkSheet, document.getElementById('weedSheet')].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
 })();
 </script>
 

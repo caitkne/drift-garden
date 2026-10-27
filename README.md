@@ -26,9 +26,13 @@ Every third thing you plant (or whenever you press **✿ Wildflower**), the gard
 
 Sources take turns: one that has already given lots of wildflowers is less likely to go first, and one that fails is tried last.
 
-It plants one result as a card, with its picture, and links to the source. Keep a wildflower and its words and source become likelier next time. Pull one up and they become less likely. If those can't be reached, it picks from a small hand-gathered seed bank of articles from culture, film, literature, museum and archive sites.
+It plants one result as a card, with its picture, and links to the source. Keep a wildflower and its words and source become likelier next time. Pull one up and it goes on the **weed pile**: it never sprouts again, results that share its words are passed over, and its source grows less often. You can forgive a weed from the pile. If those can't be reached, it picks from a small hand-gathered seed bank of articles from culture, film, literature, museum and archive sites.
 
 No AI runs anywhere in the garden. Matching is plain keyword search.
+
+## Fonts
+
+Titles are set in Blush TM (`fonts/blush.woff2`). The print run sheet can also try a font file from your own device, kept in that browser only.
 
 ## Running it
 
