@@ -30,6 +30,12 @@ It plants one result as a card, with its picture, and links to the source. To ke
 
 No AI runs anywhere in the garden. Matching is plain keyword search.
 
+### Loves and echoes
+
+**Loves** (top left) is a list you can dump favourites into, one per line. About one wildflower in four brings a love back: an exact match when a source has one (its title carries the whole phrase), otherwise the closest thing found. Loves that have come back less often are tried first.
+
+Now and then (about 1 in 7, once you've planted six or more things), a wildflower is an **echo**: a very close match to one of the first third of things you planted. The planting itself never comes back, and if nothing close enough turns up, an ordinary wildflower grows instead.
+
 ## Fonts
 
 Titles are set in Blush TM (`fonts/blush.woff2`). The print run sheet can also try a font file from your own device, kept in that browser only.

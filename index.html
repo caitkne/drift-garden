@@ -122,7 +122,7 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .weeds li { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px dashed var(--blue); font: 400 13px/1.45 var(--mono); }
 .weeds li b { font: 400 22px/1.15 var(--script); }
 .weeds li .row { justify-content: flex-start; gap: 18px; }
-#weedBtn { margin-left: 14px; }
+#weedBtn, #lovesBtn { margin-left: 10px; }
 .keepRow { display: grid; gap: 10px; width: 100%; }
 .keepRow .row { flex-wrap: nowrap; }
 .keepRow input { margin-top: 0; }
@@ -168,7 +168,7 @@ a.btn { text-decoration: none; display: inline-block; }
   <div id="world"><div class="marks"></div></div>
 </div>
 
-<div class="top"><span>Drift Garden <button class="reroll" id="weedBtn" type="button" hidden></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
+<div class="top"><span>Drift Garden <button class="reroll" id="lovesBtn" type="button">· Loves</button> <button class="reroll" id="weedBtn" type="button" hidden></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
 
 <div class="bottom">
   <button class="btn" id="plantBtn" type="button">Plant something</button>
@@ -195,6 +195,17 @@ a.btn { text-decoration: none; display: inline-block; }
       <button class="link" type="button" id="cancelPlant">Cancel</button>
       <button class="btn" type="submit" id="doPlant">Plant it</button>
     </div>
+  </form>
+</div>
+
+<div class="scrim" id="lovesSheet" hidden>
+  <form class="sheet" id="lovesForm" aria-labelledby="lovesTitle">
+    <span class="kick">Things you love</span>
+    <h2 id="lovesTitle">Loves</h2>
+    <label for="lovesText">One per line: people, places, films, books, words, anything</label>
+    <textarea id="lovesText" rows="8" placeholder="Kate Bush&#10;moths&#10;Agnès Varda&#10;Piha"></textarea>
+    <p class="hint">Every so often a wildflower brings one of these back: an exact match when it can find one, or something close.</p>
+    <div class="row"><button class="link" type="button" id="lovesCancel">Cancel</button><button class="btn" type="submit">Keep these</button></div>
   </form>
 </div>
 
@@ -305,6 +316,8 @@ a.btn { text-decoration: none; display: inline-block; }
     return text.split('\n').map(line => line.split(/ +/).map(w => `<span class="wd">${[...w].map(letter).join('')}</span>`).join(' ')).join('<br>');
   }
   const wildTag = p => p.wild.kept && p.wild.label ? '\u273f ' + p.wild.label + (p.wild.source ? ' \u00b7 from ' + p.wild.source : '')
+    : p.wild.love ? '\u273f A love returns' + (p.wild.source ? ' \u00b7 from ' + p.wild.source : '')
+    : p.wild.echo ? '\u273f An echo' + (p.wild.source ? ' \u00b7 from ' + p.wild.source : '')
     : '\u273f Wildflower \u00b7 ' + (p.wild.query ? 'on Google' : p.wild.bed ? 'for \u201c' + p.wild.bed + '\u201d' : p.wild.kind);
   const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } };
   const seedOf = id => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
@@ -590,7 +603,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
   const plantSheet = document.getElementById('plantSheet'), viewSheet = document.getElementById('viewSheet'), inkSheet = document.getElementById('inkSheet');
   addEventListener('keydown', e => {
-    if (!plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden || !document.getElementById('weedSheet').hidden) { if (e.key === 'Escape') closeSheets(); return; }
+    if (!plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden || !document.getElementById('weedSheet').hidden || !document.getElementById('lovesSheet').hidden) { if (e.key === 'Escape') closeSheets(); return; }
     const k = { ArrowLeft: [-80, 0], ArrowRight: [80, 0], ArrowUp: [0, -80], ArrowDown: [0, 80] }[e.key];
     if (k) { e.preventDefault(); cam.x += k[0]; cam.y += k[1]; applyCam(); }
   });
@@ -606,7 +619,7 @@ a.btn { text-decoration: none; display: inline-block; }
   const DROP_TEXT = dropText.innerHTML;
   let pending = null;
   function openPlant() { document.getElementById('nextNo').textContent = 'Piece ' + fmtNo(nextNo()); plantSheet.hidden = false; document.getElementById('tTitle').focus(); }
-  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; document.getElementById('weedSheet').hidden = true; }
+  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; document.getElementById('weedSheet').hidden = true; document.getElementById('lovesSheet').hidden = true; }
   function resetForm() { form.reset(); pending = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
   function readImage(f) {
     if (!f || !f.type.startsWith('image/')) return;
@@ -807,7 +820,16 @@ a.btn { text-decoration: none; display: inline-block; }
   async function sprout(nearPlant) {
     if (sprouting) return;
     const pool = plants.filter(p => !p.wild || p.wild.kept).map(p => ({ p, words: wordsOf(p) })).filter(o => o.words.length);
-    if (!pool.length) { toast('Plant a few things with words first'); return; }
+    // every so often (about 1 in 4), one of your loves comes back
+    if (loves.length && (!pool.length || Math.random() < .25)) return sproutMatch(loveTerms(), nearPlant);
+    if (!pool.length) { toast('Plant a few things with words first, or add some loves'); return; }
+    // now and then, a very close match to one of the first things you planted (never the thing itself)
+    const firsts = plants.filter(p => !p.wild && (p.title || '').trim().length > 2).sort((x, y) => (x.no || 0) - (y.no || 0));
+    if (firsts.length > 5 && Math.random() < .15) {
+      const echoed = {}; plants.forEach(p => { if (p.wild && p.wild.echo) echoed[p.wild.echo] = (echoed[p.wild.echo] || 0) + 1; });
+      const old = firsts.slice(0, Math.ceil(firsts.length / 3)).map(p => ({ p, k: Math.random() ** (1 + (echoed[p.title.trim()] || 0)) })).sort((x, y) => y.k - x.k).slice(0, 3).map(o => o.p);
+      if (await sproutMatch(old.map(p => ({ t: p.title.trim().split(/\s+/).slice(0, 6).join(' '), echo: p })), nearPlant, true)) return;
+    }
     sprouting = true; wildBtn.textContent = '✿ Sprouting…';
     try {
       const counts = {}; pool.forEach(o => o.words.forEach(w => counts[w] = (counts[w] || 0) + 1));
@@ -826,7 +848,7 @@ a.btn { text-decoration: none; display: inline-block; }
         B = planted.length ? pick(planted) : pick(pool);
       } else [A, B] = pool.slice().sort(() => Math.random() - .5);
       const a = pickWord(A.words), b = B ? pickWord(B.words.filter(w => w !== a).length ? B.words.filter(w => w !== a) : B.words) : null;
-      const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href).concat(weeds.map(w => w.href)));
+      const used = usedHrefs();
       // a bed's label is always one of the search words: label + something you planted, then label + a word from the bed, then the label alone
       const v = bed && A.bedWords.length ? pickWord(A.bedWords) : null;
       const tries = bed ? [b && [bed, b], v && [bed, v], [bed]].filter(Boolean) : (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
@@ -910,6 +932,70 @@ a.btn { text-decoration: none; display: inline-block; }
     plants = plants.filter(p => p !== current); world.querySelector(`[data-id="${current.id}"]`)?.remove();
     save(); closeSheets(); toast(wasWild ? 'Weeded. Less like this will grow' : 'Pulled up');
   });
+  // ---------- loves, and echoes of your first plantings ----------
+  const LOVES_KEY = 'drift-garden-loves';
+  let loves = (() => { try { return JSON.parse(localStorage.getItem(LOVES_KEY)) || []; } catch (e) { return []; } })();
+  const lovesSheet = document.getElementById('lovesSheet'), lovesBtn = document.getElementById('lovesBtn');
+  const lovesLabel = () => lovesBtn.textContent = '\u00b7 Loves' + (loves.length ? ' (' + loves.length + ')' : '');
+  lovesLabel();
+  lovesBtn.addEventListener('click', () => { document.getElementById('lovesText').value = loves.join('\n'); lovesSheet.hidden = false; document.getElementById('lovesText').focus(); });
+  document.getElementById('lovesCancel').addEventListener('click', closeSheets);
+  document.getElementById('lovesForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const seen = new Set();
+    loves = document.getElementById('lovesText').value.split('\n').map(t => t.trim()).filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase())).slice(0, 200);
+    try { localStorage.setItem(LOVES_KEY, JSON.stringify(loves)); } catch (err) {}
+    lovesLabel(); closeSheets(); toast(loves.length ? loves.length + (loves.length === 1 ? ' love' : ' loves') + ' kept' : 'Loves cleared');
+  });
+  const usedHrefs = () => new Set(plants.map(p => (p.wild && p.wild.href) || p.link).filter(Boolean).concat(weeds.map(w => w.href)));
+  // loves that have come back less often go first
+  const loveTerms = () => {
+    const back = {}; plants.forEach(p => { if (p.wild && p.wild.love) back[p.wild.love] = (back[p.wild.love] || 0) + 1; });
+    return loves.map(t => ({ t, k: Math.random() ** (1 + (back[t] || 0)) })).sort((x, y) => y.k - x.k).slice(0, 3).map(o => ({ t: o.t }));
+  };
+  const norm = t => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  // how much of the term's wording a result carries (1 = all of it)
+  const closeness = (term, r) => {
+    const hay = ' ' + norm(r.title + ' ' + (r.note || '')) + ' ', all = norm(term).split(' '), ws = all.length === 1 ? all : all.filter(w => w.length > 2);
+    if (hay.includes(' ' + norm(term) + ' ')) return 1;
+    return ws.length ? ws.filter(w => hay.includes(' ' + w)).length / ws.length : 0;
+  };
+  // terms: [{ t, echo? }]. Loves take an exact match, else something close. Echoes must be very close, or nothing sprouts.
+  async function sproutMatch(terms, nearPlant, echo) {
+    sprouting = true; wildBtn.textContent = '\u273f Sprouting\u2026';
+    try {
+      const used = usedHrefs();
+      let found = null;
+      for (const { t, echo: from } of terms) {
+        const srcs = LIVE.slice().sort(() => Math.random() - .5).sort((x, y) => (failed[x.name] || 0) - (failed[y.name] || 0)).slice(0, 5);
+        let close = null;
+        for (const src of srcs) {
+          let res; try { res = await src.find(t); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
+          res = res.filter(r => r.title && !used.has(r.href) && !looksLikeWeed(r) && !(from && norm(r.title) === norm(from.title)));
+          const best = res.map(r => ({ r, c: closeness(t, r) })).sort((x, y) => y.c - x.c)[0];
+          if (!best) continue;
+          if (best.c === 1 && norm(best.r.title).includes(norm(t))) { found = { r: best.r, src, t, from, exact: true }; break; }
+          if (!close || best.c > close.c) close = { r: best.r, c: best.c, src, t, from, exact: false };
+        }
+        if (!found && close && (!echo || close.c >= .75)) found = close;
+        if (found) break;
+      }
+      if (!found) { if (!echo) toast('None of your loves could be found just now'); return false; }
+      const { r, src, t, from, exact } = found;
+      if (r.img) { try { const im = await loadImg(r.img); r.ar = im.naturalHeight / im.naturalWidth; } catch (e) { r.img = null; } }
+      const by = from ? 'A close match to \u201c' + from.title.trim() + '\u201d, one of the first things you planted'
+        : 'You love \u201c' + t + '\u201d. ' + (exact ? 'Here it is' : 'Here\u2019s something close');
+      const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words: wordsOf({ title: t }) } };
+      if (from) data.wild.echo = from.title.trim(); else data.wild.love = t;
+      if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
+      const near = from || nearPlant || (plants.length ? pick(plants) : null), at = near ? { x: near.x + near.w / 2, y: near.y + near.h / 2 } : viewCentre();
+      const p = plant(data, at, true);
+      save(); try { localStorage.setItem('wander-wild', 'on'); } catch (e) {}
+      setTimeout(() => centreOn(p), 60); toast(from ? 'An echo of something you planted early on' : 'A love came back: \u201c' + t + '\u201d');
+      return true;
+    } finally { sprouting = false; wildBtn.textContent = '\u273f Wildflower'; }
+  }
+
   // ---------- the weed pile ----------
   const weedSheet = document.getElementById('weedSheet');
   function showWeeds() {
@@ -968,7 +1054,7 @@ a.btn { text-decoration: none; display: inline-block; }
   }));
   document.getElementById('fontReset').addEventListener('click', () => { Object.values(FONT_KEYS).forEach(k => localStorage.removeItem(k)); location.reload(); });
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  [plantSheet, viewSheet, inkSheet, document.getElementById('weedSheet')].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
+  [plantSheet, viewSheet, inkSheet, document.getElementById('weedSheet'), document.getElementById('lovesSheet')].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
 })();
 </script>
 
