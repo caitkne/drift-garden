@@ -36,6 +36,12 @@ No AI runs anywhere in the garden. Matching is plain keyword search.
 
 Now and then (about 1 in 7, once you've planted six or more things), a wildflower is an **echo**: a very close match to one of the first third of things you planted. The planting itself never comes back, and if nothing close enough turns up, an ordinary wildflower grows instead.
 
+## The studio
+
+Every piece is set in one layout from a small type specimen. Words: roman, drop cap, staircase (one word per step), folio (running head up the edge), masthead (ruled and centred), big numeral, ranged right, pull quote (the note takes the stage), two columns. Pictures: caption below, caption over, numbered plate, side by side, full bleed. Each piece only gets layouts that suit it (a staircase needs a short title, a pull quote needs a short note, and so on).
+
+While **Studio on** (top left), the studio re-sets one piece you can see every 6 to 12 seconds, with a small proof mark saying what it tried. It only re-sets a piece if the new layout still fits in its spot, so nothing gets shoved about. Open a piece and **Pin it** to keep a layout; layouts you pin get tried more often. Studio off keeps everything still (it starts off for people who ask their device for reduced motion).
+
 ## Fonts
 
 Titles are set in Blush TM (`fonts/blush.woff2`). The print run sheet can also try a font file from your own device, kept in that browser only.

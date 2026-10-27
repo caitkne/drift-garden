@@ -122,7 +122,66 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .weeds li { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px dashed var(--blue); font: 400 13px/1.45 var(--mono); }
 .weeds li b { font: 400 22px/1.15 var(--script); }
 .weeds li .row { justify-content: flex-start; gap: 18px; }
-#weedBtn, #lovesBtn { margin-left: 10px; }
+#weedBtn, #lovesBtn, #studioBtn { margin-left: 10px; }
+
+/* ---------- the studio: every piece is set in one of several layouts, and the studio keeps trying new ones ---------- */
+.frame { display: block; position: relative; }
+.kicker { display: block; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .16em; color: var(--F); }
+.folio { display: none; }
+/* drop cap */
+.set-drop h3 .cap { float: left; font-size: 2.7em; line-height: .82; margin: .06em .1em -.04em 0; }
+/* staircase: one word per step */
+.set-stair h3 .wd { display: block; }
+.set-stair h3 .wd:nth-child(2) { margin-left: 12%; } .set-stair h3 .wd:nth-child(3) { margin-left: 24%; }
+.set-stair h3 .wd:nth-child(4) { margin-left: 14%; } .set-stair h3 .wd:nth-child(5) { margin-left: 30%; } .set-stair h3 .wd:nth-child(6) { margin-left: 6%; }
+/* folio: running head turned up the left edge */
+.set-side .card { padding-left: 54px; min-height: 120px; }
+.set-side .folio { display: block; position: absolute; left: 16px; top: 18px; max-height: calc(100% - 36px); overflow: hidden; writing-mode: vertical-rl; transform: rotate(180deg); font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .18em; color: var(--F); white-space: nowrap; }
+.set-side .meta .n { display: none; }
+/* masthead: ruled, centred, like the top of a broadsheet */
+.set-rule .card { text-align: center; }
+.set-rule .kicker { border-top: 3px solid var(--F); border-bottom: 1px solid var(--F); padding: 7px 0 6px; margin-bottom: 16px; }
+.set-rule h3 { text-wrap: balance; }
+.set-rule p { margin-inline: auto; }
+.set-rule .meta { justify-content: center; border-top: 1px solid var(--F); padding-top: 9px; }
+/* big numeral */
+.numeral { display: block; font: 400 calc(132px * var(--sz, 1))/.86 var(--script); color: transparent; -webkit-text-stroke: 1.5px var(--F); margin: -4px 0 6px -4px; }
+.set-numeral .meta .n { display: none; }
+/* ranged right, set large */
+.set-right .card { text-align: right; }
+.set-right h3 { font-size: calc(72px * var(--sz, 1)) !important; line-height: .98 !important; }
+.set-right.narrow h3 { font-size: calc(54px * var(--sz, 1)) !important; }
+.set-right p { margin-left: auto; }
+.set-right .meta { justify-content: flex-end; }
+/* pull quote: the note takes the stage, the title becomes the byline */
+.pull { display: block; font-size: calc(40px * var(--sz, 1)); line-height: 1.1 !important; }
+.pull .mark { display: block; font-size: 2.4em; line-height: 1; height: .6em; margin-top: .1em; color: var(--F); }
+.src { display: block; margin-top: 14px; font: 500 12px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+.src::before { content: "\2014 "; }
+/* two columns of note */
+.set-column p { column-count: 2; column-gap: 26px; column-rule: 1px solid var(--F); max-width: none; display: block; -webkit-line-clamp: unset; }
+/* pictures: caption over the image */
+.set-over .overcap { position: absolute; left: -18px; bottom: -2px; width: 78%; background: var(--A); padding: 12px 16px 4px 18px; box-sizing: border-box; }
+.set-over .overcap .capt { margin: 0; }
+/* pictures: a numbered plate */
+.set-plate .card { padding: 24px 26px 18px; text-align: center; }
+.set-plate .kicker { letter-spacing: .32em; margin-bottom: 14px; }
+.set-plate .capt { font-size: calc(26px * var(--sz, 1)); margin-top: 14px; }
+.set-plate .meta { justify-content: center; }
+/* pictures: image and caption side by side */
+.set-beside .card { display: grid; grid-template-columns: 58% minmax(0, 1fr); column-gap: 18px; align-items: end; }
+.set-beside .wildtag, .set-beside .by { grid-column: 1 / -1; }
+.set-beside .frame { min-width: 0; }
+.set-beside .capt { margin-top: 0; font-size: calc(30px * var(--sz, 1)) !important; overflow-wrap: anywhere; }
+.set-beside .capt .wd { white-space: normal; }
+.set-beside .meta { grid-column: 1 / -1; }
+/* pictures: full bleed */
+.set-bleed .frame { margin: -18px -18px 0; }
+/* the proof mark: a little note when the studio re-sets a piece */
+.proof { position: absolute; top: -24px; right: 0; font: 500 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--blue); white-space: nowrap; animation: proof 3.4s ease both; pointer-events: none; }
+.proof::before { content: "\25ce "; }
+@keyframes proof { 0% { opacity: 0; } 12%, 70% { opacity: 1; } 100% { opacity: 0; } }
+.plant.resetting { transition: opacity .45s, filter .45s; opacity: 0; filter: blur(5px); }
 .keepRow { display: grid; gap: 10px; width: 100%; }
 .keepRow .row { flex-wrap: nowrap; }
 .keepRow input { margin-top: 0; }
@@ -168,7 +227,7 @@ a.btn { text-decoration: none; display: inline-block; }
   <div id="world"><div class="marks"></div></div>
 </div>
 
-<div class="top"><span>Drift Garden <button class="reroll" id="lovesBtn" type="button">· Loves</button> <button class="reroll" id="weedBtn" type="button" hidden></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
+<div class="top"><span>Drift Garden <button class="reroll" id="lovesBtn" type="button">· Loves</button> <button class="reroll" id="weedBtn" type="button" hidden></button> <button class="reroll" id="studioBtn" type="button" title="The studio keeps re-setting pieces in new layouts"></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
 
 <div class="bottom">
   <button class="btn" id="plantBtn" type="button">Plant something</button>
@@ -260,6 +319,7 @@ a.btn { text-decoration: none; display: inline-block; }
     </div>
     <div class="row">
       <button class="link" type="button" id="pullBtn">Pull it up</button>
+      <button class="link" type="button" id="pinSet"></button>
       <button class="btn" type="button" id="closeView">Keep wandering</button>
     </div>
   </div>
@@ -310,9 +370,9 @@ a.btn { text-decoration: none; display: inline-block; }
     return{A:'#ff34a9',B:'#7aa900',F:'#01008d'};
   }
   // hand-drawn letters, each knocked a little off true (same seed for both inks)
-  function jitter(text, seed) {
-    const r = mulberry(seed);
-    const letter = ch => `<span class="ch" style="--jr:${((r() - .5) * 4).toFixed(1)}deg;--jy:${((r() - .5) * 2.4).toFixed(1)}px">${esc(ch)}</span>`;
+  function jitter(text, seed, cap) {
+    const r = mulberry(seed); let first = !!cap;
+    const letter = ch => `<span class="ch${first && !(first = false) ? ' cap' : ''}" style="--jr:${((r() - .5) * 4).toFixed(1)}deg;--jy:${((r() - .5) * 2.4).toFixed(1)}px">${esc(ch)}</span>`;
     return text.split('\n').map(line => line.split(/ +/).map(w => `<span class="wd">${[...w].map(letter).join('')}</span>`).join(' ')).join('<br>');
   }
   const wildTag = p => p.wild.kept && p.wild.label ? '\u273f ' + p.wild.label + (p.wild.source ? ' \u00b7 from ' + p.wild.source : '')
@@ -377,6 +437,7 @@ a.btn { text-decoration: none; display: inline-block; }
   function inkUp(p) {
     if (p.arr == null) p.arr = p.img ? Math.random() * 2 | 0 : Math.random() * 3 | 0;
     p.script = 0;
+    if (!p.set || !setsFor(p).includes(p.set)) p.set = pickSet(p);
   }
   function inksFor(p) {
     if (p.arr === 2) return { A: PAPER, B: RUN.A, F: darkF, light: false };
@@ -476,7 +537,7 @@ a.btn { text-decoration: none; display: inline-block; }
   // Pieces can change height after planting (fonts, images). Re-measure, then move any piece that now overlaps an earlier one.
   let settleT = 0;
   function settleSoon() { clearTimeout(settleT); settleT = setTimeout(settle, 250); }
-  function settle() {
+  function settle(glide) {
     const order = plants.slice().sort((a, b) => (a.no || 0) - (b.no || 0)), placed = [];
     let moved = false;
     order.forEach(p => {
@@ -484,7 +545,9 @@ a.btn { text-decoration: none; display: inline-block; }
       const h = Math.ceil(el.offsetHeight / ROW) * ROW; if (h && h !== p.h) { p.h = h; moved = true; }
       if (placed.some(q => hits(p, q, GUT - 1)) || reserved.some(q => hits(p, q, GUT - 1))) {
         const span = Math.max(1, Math.round((p.w + GUT) / CELL));
-        Object.assign(p, findSpot(p.w, p.h, { x: p.x + p.w / 2, y: p.y + p.h / 2 }, span, placed)); place(el, p); moved = true;
+        Object.assign(p, findSpot(p.w, p.h, { x: p.x + p.w / 2, y: p.y + p.h / 2 }, span, placed));
+        if (glide === true && !reduceMotion) { el.classList.add('moving'); setTimeout(() => el.classList.remove('moving'), 1300); }
+        place(el, p); moved = true;
       }
       placed.push(p);
     });
@@ -500,11 +563,17 @@ a.btn { text-decoration: none; display: inline-block; }
     inkUp(p); const ink = inksFor(p); ['A', 'B', 'F'].forEach(k => el.style.setProperty('--' + k, ink[k]));
     const sc = 'scr', light = ink.light ? ' lightF' : '';
     if (p.img) {
-      el.className = 'plant pic' + (p.w >= 500 ? ' wide' : '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '') + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.className = 'plant pic' + (p.w >= 500 ? ' wide' : '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
+      const capt = p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '';
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     } else {
-      el.className = 'plant word ' + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + duoText('h3', jitter(p.title || p.note, seedOf(p.id)), sc) + (p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '') + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.className = 'plant word ' + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
+      const by = p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '';
+      const head = p.set === 'rule' ? `<span class="kicker">Drift Garden \u00b7 No. ${fmtNo(p.no)}</span>` : p.set === 'numeral' ? `<span class="numeral" aria-hidden="true">${p.no}</span>` : '';
+      const body = p.set === 'quote'
+        ? duoText('span', '<span class="mark">\u201c</span>' + jitter(p.note, seedOf(p.id)), 'pull ' + sc) + `<span class="src">${esc(p.title)}</span>` + by
+        : duoText('h3', jitter(p.title || p.note, seedOf(p.id), p.set === 'drop'), sc) + by + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '');
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + head + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     }
     if (p.example) el.insertAdjacentHTML('beforeend', '<span class="ex">Example</span>');
     return el;
@@ -917,7 +986,7 @@ a.btn { text-decoration: none; display: inline-block; }
     if (!p.wild && p.link) { const L = document.getElementById('vLink'); L.href = p.link; L.textContent = 'Visit ' + hostOf(p.link) + ' \u2197'; document.getElementById('keepForm').hidden = true; }
     if (p.wild) { const L = document.getElementById('vLink'); if (p.wild.query) { L.href = 'https://www.google.com/search?q=' + encodeURIComponent(p.wild.query); L.textContent = 'Search Google for \u201c' + p.wild.query + '\u201d \u2197'; } else { L.href = p.wild.href; L.textContent = 'Wander over to ' + p.wild.source + ' \u2197'; } const kf = document.getElementById('keepForm'); kf.hidden = !!p.wild.kept; document.getElementById('keepLabel').value = p.wild.bed || '';
       document.getElementById('bedList').innerHTML = Object.keys(bedsNow()).map(l => `<option value="${esc(l)}">`).join(''); }
-    viewSheet.hidden = false; document.getElementById('closeView').focus();
+    pinLabel(); viewSheet.hidden = false; document.getElementById('closeView').focus();
   }
   document.getElementById('closeView').addEventListener('click', closeSheets);
   pullBtn.addEventListener('click', () => {
@@ -932,6 +1001,80 @@ a.btn { text-decoration: none; display: inline-block; }
     plants = plants.filter(p => p !== current); world.querySelector(`[data-id="${current.id}"]`)?.remove();
     save(); closeSheets(); toast(wasWild ? 'Weeded. Less like this will grow' : 'Pulled up');
   });
+  // ---------- the studio ----------
+  // Every piece is set in one layout from a small type specimen. The studio wanders the part of the garden you're looking at
+  // and, every few seconds, re-sets one piece in a different layout, only if it still fits where it is. Pin a setting to keep it.
+  const SET_NAMES = { plain: 'roman', drop: 'drop cap', stair: 'staircase', side: 'folio', rule: 'masthead', numeral: 'big numeral', right: 'ranged right', quote: 'pull quote', column: 'two columns',
+    under: 'caption below', over: 'caption over', plate: 'plate', beside: 'side by side', bleed: 'full bleed' };
+  const STUDIO_KEY = 'drift-garden-studio';
+  const studio = (() => { try { const s = JSON.parse(localStorage.getItem(STUDIO_KEY)); if (s) return s; } catch (e) {} return { on: !reduceMotion, likes: {} }; })();
+  const saveStudio = () => { try { localStorage.setItem(STUDIO_KEY, JSON.stringify(studio)); } catch (e) {} };
+  function setsFor(p) {
+    if (p.img) return ['under', ...(p.title ? ['over', 'plate'] : []), ...(p.title && p.w >= 560 ? ['beside'] : []), ...(!p.wild ? ['bleed'] : [])];
+    const text = p.title || p.note || '', ws = text.trim().split(/\s+/);
+    return ['plain', 'side', 'rule', 'numeral', 'right',
+      ...(/^\p{L}/u.test(text) && text.length > 3 ? ['drop'] : []),
+      ...(ws.length >= 2 && ws.length <= 6 && ws.every(w => [...w].length <= 10) ? ['stair'] : []),
+      ...(p.title && p.note && p.note.length >= 20 && p.note.length <= 160 ? ['quote'] : []),
+      ...(p.note && p.note.length > 220 && p.w >= 560 ? ['column'] : [])];
+  }
+  // layouts you pin are tried more often
+  function pickSet(p, not) {
+    const opts = setsFor(p).filter(x => x !== not);
+    return opts.map(x => ({ x, k: Math.random() ** (1 / (1 + (studio.likes[x] || 0) * .5)) })).sort((a, b) => b.k - a.k)[0].x;
+  }
+  const roman = n => { let r = '', v = Math.max(1, n | 0); [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']].forEach(([k, s]) => { while (v >= k) { r += s; v -= k; } }); return r; };
+  const studioBtn = document.getElementById('studioBtn');
+  const studioLabel = () => studioBtn.textContent = '\u00b7 Studio ' + (studio.on ? 'on' : 'off');
+  studioLabel();
+  studioBtn.addEventListener('click', () => { studio.on = !studio.on; saveStudio(); studioLabel(); toast(studio.on ? 'The studio is re-setting pieces as you wander' : 'The studio is resting. Layouts stay as they are'); if (studio.on) studioSoon(800); });
+  const lastSet = new Map();
+  function inView(p) { const x0 = cam.x / S, y0 = cam.y / S, x1 = (cam.x + view.clientWidth) / S, y1 = (cam.y + view.clientHeight) / S; return p.x < x1 && p.x + p.w > x0 && p.y < y1 && p.y + p.h > y0; }
+  function resetPiece(p) {
+    const el = world.querySelector(`[data-id="${p.id}"]`); if (!el) return false;
+    const was = p.set, others = plants.filter(q => q !== p);
+    // try up to three new layouts; take the first that still fits in its spot
+    for (let i = 0; i < 3; i++) {
+      const next = pickSet(p, was); if (next === was) return false;
+      p.set = next; const test = build(p); test.style.visibility = 'hidden'; test.style.left = '-9999px'; world.appendChild(test);
+      const h = Math.ceil(test.offsetHeight / ROW) * ROW; test.remove();
+      const box = { x: p.x, y: p.y, w: p.w, h };
+      if (h <= p.h || !(others.some(q => hits(box, q, GUT - 1)) || reserved.some(q => hits(box, q, GUT - 1)))) {
+        el.classList.add('resetting');
+        setTimeout(() => {
+          const nel = build(p); place(nel, p); nel.classList.add('new'); el.replaceWith(nel);
+          nel.insertAdjacentHTML('beforeend', `<span class="proof">Re-set as ${SET_NAMES[p.set]}</span>`);
+          setTimeout(() => nel.querySelector('.proof')?.remove(), 3600);
+          p.h = h; lastSet.set(p.id, Date.now()); save(); settle(true);
+        }, 460);
+        return true;
+      }
+      p.set = was;
+    }
+    return false;
+  }
+  let studioT = null;
+  function studioSoon(ms) { clearTimeout(studioT); studioT = setTimeout(studioTick, ms == null ? 6000 + Math.random() * 6000 : ms); }
+  function studioTick() {
+    if (!studio.on || reduceMotion) return;
+    const busy = document.hidden || drag || !plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden || !document.getElementById('weedSheet').hidden || !document.getElementById('lovesSheet').hidden;
+    if (!busy) {
+      const now = Date.now(), hover = tw && tw.el && tw.el.dataset.id;
+      const cands = plants.filter(p => !p.setPinned && p.id !== hover && inView(p) && now - (lastSet.get(p.id) || 0) > 20000);
+      if (cands.length) for (const p of cands.sort(() => Math.random() - .5).slice(0, 4)) if (resetPiece(p)) break;
+    }
+    studioSoon();
+  }
+  studioSoon(4000);
+  const pinSet = document.getElementById('pinSet');
+  const pinLabel = () => { if (current) pinSet.textContent = current.setPinned ? 'Unpin: let the studio re-set it' : 'Pin it as ' + SET_NAMES[current.set]; };
+  pinSet.addEventListener('click', () => {
+    if (!current) return;
+    current.setPinned = !current.setPinned;
+    if (current.setPinned) { studio.likes[current.set] = (studio.likes[current.set] || 0) + 1; saveStudio(); }
+    save(); pinLabel(); toast(current.setPinned ? 'Pinned. The studio will try ' + SET_NAMES[current.set] + ' more often' : 'Unpinned');
+  });
+
   // ---------- loves, and echoes of your first plantings ----------
   const LOVES_KEY = 'drift-garden-loves';
   let loves = (() => { try { return JSON.parse(localStorage.getItem(LOVES_KEY)) || []; } catch (e) { return []; } })();
