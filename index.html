@@ -113,6 +113,10 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .inkPreview span { font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .inkWhy { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font: 400 12px/1.5 var(--mono); }
 .inkWhy li::before { content: "◎ "; color: var(--pink); }
+.fontTry { display: grid; gap: 10px; font: 400 12px/1.5 var(--mono); }
+.fontTry summary { cursor: pointer; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--blue); }
+.fontTry[open] { padding-bottom: 6px; }
+.fontTry label { display: block; margin-top: 8px; }
 .reroll:hover { text-decoration: underline; text-underline-offset: 4px; }
 .link { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; background: none; border: 0; padding: 14px 2px; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 5px; }
 
@@ -191,6 +195,15 @@ a.btn { text-decoration: none; display: inline-block; }
     <input type="text" id="inkWord" maxlength="40" autocomplete="off" placeholder="pansies">
     <div class="inkPreview" id="inkPreview"><b id="inkSample">pansies</b><span id="inkHex"></span></div>
     <ul class="inkWhy" id="inkWhy"></ul>
+    <details class="fontTry">
+      <summary>Try a font from your device</summary>
+      <p class="hint">The font file stays in this browser only. It's never uploaded or published.</p>
+      <label for="fontTitle">Titles</label>
+      <input type="file" id="fontTitle" accept=".otf,.ttf,.woff,.woff2">
+      <label for="fontSmall">Small text</label>
+      <input type="file" id="fontSmall" accept=".otf,.ttf,.woff,.woff2">
+      <button class="link" type="button" id="fontReset">Back to the usual fonts</button>
+    </details>
     <div class="row">
       <button class="link" type="button" id="inkCancel">Cancel</button>
       <button class="btn" type="submit">Ink it</button>
@@ -778,6 +791,24 @@ a.btn { text-decoration: none; display: inline-block; }
     try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word })); } catch (e) {}
     location.reload();
   });
+  // ---------- trying a font from the viewer's own device (kept in this browser only) ----------
+  const FONT_KEYS = { title: 'drift-garden-font-title', small: 'drift-garden-font-small' };
+  function applyLocalFonts() {
+    let css = '';
+    const t = localStorage.getItem(FONT_KEYS.title), m = localStorage.getItem(FONT_KEYS.small);
+    if (t) css += '@font-face{font-family:"DriftLocalTitle";src:url(' + t + ')}:root{--script:"DriftLocalTitle","Fraunces",Georgia,serif}.scr,.mast h1,.sheet h2,#tTitle{font-style:normal!important;font-weight:400!important;font-variation-settings:normal!important;--sz:1!important;letter-spacing:-.01em!important;word-spacing:.05em!important}';
+    if (m) css += '@font-face{font-family:"DriftLocalSmall";src:url(' + m + ')}:root{--mono:"DriftLocalSmall","Spline Sans Mono",monospace}';
+    let el = document.getElementById('localFonts'); if (!el) { el = document.createElement('style'); el.id = 'localFonts'; document.head.appendChild(el); }
+    el.textContent = css;
+  }
+  try { applyLocalFonts(); } catch (e) {}
+  [['fontTitle', 'title'], ['fontSmall', 'small']].forEach(([id, k]) => document.getElementById(id).addEventListener('change', e => {
+    const fl = e.target.files[0]; if (!fl) return;
+    const fr = new FileReader();
+    fr.onload = () => { try { localStorage.setItem(FONT_KEYS[k], fr.result); applyLocalFonts(); toast('Trying ' + fl.name.replace(/\.[a-z0-9]+$/i, '')); setTimeout(() => location.reload(), 900); } catch (err) { toast('That font is too big to keep in this browser'); } };
+    fr.readAsDataURL(fl);
+  }));
+  document.getElementById('fontReset').addEventListener('click', () => { Object.values(FONT_KEYS).forEach(k => localStorage.removeItem(k)); location.reload(); });
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   [plantSheet, viewSheet, inkSheet].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
 })();
