@@ -7,6 +7,9 @@
 <title>Drift Garden</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#f3f1ec">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,300..900&family=Spline+Sans+Mono:wght@400;500&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,250..600,0..100,0..1&display=swap">
 <style>
 /* Layout: an open field with a hidden grid. Things land in random cells and line up with neighbours.
@@ -103,6 +106,13 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .btn.ghost { background: var(--paper); color: var(--blue); box-shadow: inset 0 0 0 2px var(--blue); }
 .btn:focus-visible { outline: 2px solid var(--pink); outline-offset: 6px; }
 .reroll { pointer-events: auto; font: inherit; text-transform: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 6px 0; cursor: pointer; }
+.bm { color: var(--pink); font-weight: 500; cursor: grab; }
+.meta .host { opacity: .85; }
+.inkPreview { display: grid; gap: 8px; padding: 22px 22px 18px; background: var(--A); color: var(--F); box-shadow: 12px 12px 0 var(--B); margin: 4px 12px 14px 0; }
+.inkPreview b { font: 300 italic 48px/1 var(--script); font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144; overflow-wrap: anywhere; }
+.inkPreview span { font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+.inkWhy { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font: 400 12px/1.5 var(--mono); }
+.inkWhy li::before { content: "◎ "; color: var(--pink); }
 .reroll:hover { text-decoration: underline; text-underline-offset: 4px; }
 .link { font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; background: none; border: 0; padding: 14px 2px; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 5px; }
 
@@ -117,9 +127,9 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .drop img { max-height: 220px; }
 .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 label { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--blue); }
-input[type=text], textarea { font: 400 17px/1.45 var(--mono); color: var(--ink); background: transparent; border: 0; border-bottom: 2px solid var(--blue); border-radius: 0; padding: 8px 0; width: 100%; box-sizing: border-box; margin-top: -8px; }
+input[type=text], input[type=url], textarea { font: 400 17px/1.45 var(--mono); color: var(--ink); background: transparent; border: 0; border-bottom: 2px solid var(--blue); border-radius: 0; padding: 8px 0; width: 100%; box-sizing: border-box; margin-top: -8px; }
 #tTitle { font-size: 30px; line-height: 1.2; }
-input[type=text]:focus, textarea:focus { outline: none; border-bottom-color: var(--pink); }
+input[type=text]:focus, input[type=url]:focus, textarea:focus { outline: none; border-bottom-color: var(--pink); }
 textarea { min-height: 96px; resize: vertical; font-size: 15px; }
 .row { display: flex; gap: 14px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
 .hint { margin: 0; font: 400 12px/1.5 var(--mono); color: var(--ink); opacity: .75; }
@@ -143,7 +153,7 @@ a.btn { text-decoration: none; display: inline-block; }
   <div id="world"><div class="marks"></div></div>
 </div>
 
-<div class="top"><span>Drift Garden</span><button class="r reroll" id="reroll" type="button" title="Pick a new pair of inks for the whole garden">New print run ↻</button></div>
+<div class="top"><span>Drift Garden</span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
 
 <div class="bottom">
   <button class="btn" id="plantBtn" type="button">Plant something</button>
@@ -159,14 +169,31 @@ a.btn { text-decoration: none; display: inline-block; }
       <span id="dropText">Drop, paste or choose an image<br>or leave it and plant words</span>
       <input type="file" id="file" accept="image/*" aria-label="Choose an image">
     </div>
+    <label for="tUrl">Link</label>
+    <input type="url" id="tUrl" inputmode="url" autocomplete="off" placeholder="Paste a webpage address">
     <label for="tTitle">Title</label>
     <input type="text" id="tTitle" maxlength="80" placeholder="Moth on the porch light">
     <label for="tNote">Words</label>
     <textarea id="tNote" maxlength="1200" placeholder="Whatever you'd like someone to find when they wander past."></textarea>
-    <p class="hint">It lands in a free spot and lines up with whatever's near. Kept in this browser only for now.</p>
+    <p class="hint">It lands in a free spot and lines up with whatever's near. Kept in this browser only for now.<br>Plant from any page: drag <a class="bm" id="bm" href="#">✿ Plant in Drift</a> to your bookmarks bar.</p>
     <div class="row">
       <button class="link" type="button" id="cancelPlant">Cancel</button>
       <button class="btn" type="submit" id="doPlant">Plant it</button>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="inkSheet" hidden>
+  <form class="sheet" id="inkForm" aria-labelledby="inkTitle">
+    <span class="kick">Print run</span>
+    <h2 id="inkTitle">Ink the garden with a word</h2>
+    <label for="inkWord">Your word</label>
+    <input type="text" id="inkWord" maxlength="40" autocomplete="off" placeholder="pansies">
+    <div class="inkPreview" id="inkPreview"><b id="inkSample">pansies</b><span id="inkHex"></span></div>
+    <ul class="inkWhy" id="inkWhy"></ul>
+    <div class="row">
+      <button class="link" type="button" id="inkCancel">Cancel</button>
+      <button class="btn" type="submit">Ink it</button>
     </div>
   </form>
 </div>
@@ -238,7 +265,56 @@ a.btn { text-decoration: none; display: inline-block; }
     const letter = ch => `<span class="ch" style="--jr:${((r() - .5) * 4).toFixed(1)}deg;--jy:${((r() - .5) * 2.4).toFixed(1)}px">${esc(ch)}</span>`;
     return text.split('\n').map(line => line.split(/ +/).map(w => `<span class="wd">${[...w].map(letter).join('')}</span>`).join(' ')).join('<br>');
   }
+  const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } };
   const seedOf = id => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+  // A word becomes a print run. The rules, in order:
+  // 1 hue: each letter is a point on the colour wheel (a at 0°, z near 346°). Ink A's hue is where the letters balance.
+  // 2 gap: the more vowels, the closer ink B sits to A (30–45°, they hum). Mostly consonants push it far round (120–150°, they clash).
+  // 3 direction: B turns clockwise if the last letter comes later in the alphabet than the first, otherwise anticlockwise.
+  // 4 depth: short words (5 letters or fewer) get light, bright inks with a dark anchor. Longer words get deeper inks with a light anchor.
+  // 5 exact lightness: the letters' alphabet positions are added up; the last digit sets where in that band the inks sit.
+  // 6 no yellows: a hue landing in the yellows slides to the nearest edge. The anchor F is then found as in C's logic (4.5:1 on both).
+  function inksAt(h1, h2, darkAnchor, L) {
+    const c1 = maxC(L, h1), c2 = maxC(L, h2); if (Math.min(c1, c2) < .12) return null;
+    const A = okHex(okRGB(L, c1, h1)), B = okHex(okRGB(L, c2, h2));
+    const mid = (h1 + (((h2 - h1 + 540) % 360) - 180) / 2 + 360) % 360, opp = (mid + 180) % 360;
+    let best = null;
+    for (let dh = -60; dh <= 60; dh += 5) { const ha = (opp + dh + 360) % 360;
+      for (let i = 0; i < 40; i++) { const La = darkAnchor ? .32 - i * .01 : .86 + i * .003; if (La < .12 || La > .985) break;
+        const C = maxC(La, ha), T = okHex(okRGB(La, C, ha));
+        if (contrast(A, T) >= 4.5 && contrast(B, T) >= 4.5) { const sc = C - Math.abs(dh) / 600; if (!best || sc > best.sc) best = { sc, T }; break; } } }
+    return best ? { A, B, F: best.T } : null;
+  }
+  function wordInks(word) {
+    const ls = [...(word || '').toLowerCase().normalize('NFD').replace(/[^a-z]/g, '')];
+    if (!ls.length) return null;
+    const pos = ls.map(c => c.charCodeAt(0) - 96);
+    let x = 0, y = 0; pos.forEach(p => { const a = (p - 1) / 26 * 2 * Math.PI; x += Math.cos(a); y += Math.sin(a); });
+    const balanced = Math.hypot(x, y) > 1e-6;
+    let h1 = balanced ? (Math.atan2(y, x) * 180 / Math.PI + 360) % 360 : (pos[0] - 1) / 26 * 360;
+    const vowels = ls.filter(c => 'aeiouy'.includes(c)).length, vs = vowels / ls.length;
+    const gap = vs >= .4 ? 45 - Math.min(1, (vs - .4) / .4) * 15 : 150 - (vs / .4) * 30;
+    const dir = pos[pos.length - 1] >= pos[0] ? 1 : -1;
+    const slide = h => h > 75 && h < 125 ? (h < 100 ? 75 : 125) : h;
+    let h2 = slide((h1 + dir * gap + 360) % 360); h1 = slide(h1);
+    const darkAnchor = ls.length <= 5, sum = pos.reduce((a, b) => a + b, 0), t = (sum % 10) / 9;
+    const L = darkAnchor ? .64 + t * .10 : .50 + t * .08;
+    // if the screen can't make those inks vivid enough, nudge lightness first, then hue, the smallest step that works
+    let ink = null, shift = 0, flipped = false;
+    search: for (const dark of [darkAnchor, !darkAnchor]) for (const dh of [0, 10, -10, 20, -20, 30, -30, 40, -40]) for (const dL of [0, .03, -.03, .06, -.06, .09, -.09]) {
+      ink = inksAt(slide((h1 + dh + 360) % 360), slide((h2 + dh + 360) % 360), dark, (dark === darkAnchor ? L : dark ? .69 : .54) + dL);
+      if (ink) { shift = dh; flipped = dark !== darkAnchor; break search; } }
+    if (!ink) return null;
+    const why = [
+      `Hue ${Math.round(h1)}°: where the letters of “${ls.join('')}” balance on the wheel` + (balanced ? '' : ' (they cancel out, so the first letter decides)'),
+      `${vowels} of ${ls.length} letters are vowels, so ink B sits ${Math.round(gap)}° away: ` + (vs >= .4 ? 'close, so they hum' : 'far round, so they clash'),
+      ls[ls.length - 1] === ls[0] ? `It turns clockwise, because it starts and ends on “${ls[0]}”` : `It turns ${dir > 0 ? 'clockwise' : 'anticlockwise'}, because “${ls[ls.length - 1]}” comes ${dir > 0 ? 'after' : 'before'} “${ls[0]}”`,
+      ls.length <= 5 ? `${ls.length} letters, a short word: light inks with a dark anchor` : `${ls.length} letters, a long word: deep inks with a light anchor`,
+      `The letters add up to ${sum}, so the inks sit ${sum % 10 < 4 ? 'low' : sum % 10 < 7 ? 'mid' : 'high'} in that band`,
+    ];
+    if (shift || flipped) why.push(`Screens can't print that pair vividly at that depth, so it ${flipped ? 'swapped depth' : ''}${flipped && shift ? ' and ' : ''}${shift ? 'turned ' + Math.abs(shift) + '°' : ''} to stay acid`);
+    return { ...ink, word: ls.join(''), why };
+  }
   // One print run per garden: a single acid trio (C's OKLCH logic) that every piece shares, in three arrangements.
   const RUN_KEY = 'drift-garden-run';
   const RUN = (() => { try { const s = JSON.parse(localStorage.getItem(RUN_KEY)); if (s && s.A) return s; } catch (e) {} const t = makeAcid(Math.random); try { localStorage.setItem(RUN_KEY, JSON.stringify(t)); } catch (e) {} return t; })();
@@ -252,7 +328,7 @@ a.btn { text-decoration: none; display: inline-block; }
     if (p.arr === 2) return { A: PAPER, B: RUN.A, F: darkF, light: false };
     return p.arr === 1 ? { A: RUN.B, B: RUN.A, F: RUN.F, light: runLight } : { A: RUN.A, B: RUN.B, F: RUN.F, light: runLight };
   }
-  document.getElementById('reroll').addEventListener('click', () => { try { localStorage.removeItem(RUN_KEY); } catch (e) {} location.reload(); });
+  if (RUN.word) document.getElementById('reroll').textContent = 'Print run: ' + RUN.word + ' ↻';
   document.documentElement.style.setProperty('--pink', RUN.A);
   document.documentElement.style.setProperty('--blue', darkF);
   const CORS_IMG = /^https:\/\/(www\.artic\.edu|upload\.wikimedia\.org)\//;
@@ -342,10 +418,10 @@ a.btn { text-decoration: none; display: inline-block; }
     const sc = 'scr', light = ink.light ? ' lightF' : '';
     if (p.img) {
       el.className = 'plant pic' + (p.w >= 500 ? ' wide' : '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">✿ Wildflower · ${esc(p.wild.kind)}</span>` : '') + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '') + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span></span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">✿ Wildflower · ${esc(p.wild.kind)}</span>` : '') + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '') + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     } else {
       el.className = 'plant word ' + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">✿ Wildflower · ${esc(p.wild.query ? 'on Google' : p.wild.kind)}</span>` : '') + duoText('h3', jitter(p.title || p.note, seedOf(p.id)), sc) + (p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '') + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span></span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">✿ Wildflower · ${esc(p.wild.query ? 'on Google' : p.wild.kind)}</span>` : '') + duoText('h3', jitter(p.title || p.note, seedOf(p.id)), sc) + (p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '') + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     }
     if (p.example) el.insertAdjacentHTML('beforeend', '<span class="ex">Example</span>');
     return el;
@@ -394,7 +470,7 @@ a.btn { text-decoration: none; display: inline-block; }
   function place(el, p) { el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; }
 
   function plant(data, near, animate) {
-    const p = { id: Math.random().toString(36).slice(2, 10), no: nextNo(), title: data.title || '', note: data.note || '', img: data.img || null, ar: data.ar || 1, example: !!data.example, wild: data.wild || null };
+    const p = { id: Math.random().toString(36).slice(2, 10), no: nextNo(), title: data.title || '', note: data.note || '', img: data.img || null, ar: data.ar || 1, link: data.link || null, example: !!data.example, wild: data.wild || null };
     let span;
     if (p.img) span = data.span || pick([1, 2, 2, 3]);
     else {
@@ -420,7 +496,7 @@ a.btn { text-decoration: none; display: inline-block; }
     mastNote();
     cam.x = (CELL * .4) * S; cam.y = (ROW * 3) * S; last = { ...cam }; applyCam();
   }
-  (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) : Promise.resolve()).then(start);
+  (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) : Promise.resolve()).then(() => { start(); fromAddress(); });
   addEventListener('resize', () => { const c = viewCentre(); setScale(); cam.x = c.x * S - view.clientWidth / 2; cam.y = c.y * S - view.clientHeight / 2; last = { ...cam }; applyCam(); });
 
   // ---------- moving around ----------
@@ -441,9 +517,9 @@ a.btn { text-decoration: none; display: inline-block; }
   world.addEventListener('keydown', e => { const t = e.target.closest('.plant'); if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(t.dataset.id); } });
   world.addEventListener('focusin', e => { const t = e.target.closest('.plant'); const p = t && plants.find(q => q.id === t.dataset.id); if (p) centreOn(p); });
 
-  const plantSheet = document.getElementById('plantSheet'), viewSheet = document.getElementById('viewSheet');
+  const plantSheet = document.getElementById('plantSheet'), viewSheet = document.getElementById('viewSheet'), inkSheet = document.getElementById('inkSheet');
   addEventListener('keydown', e => {
-    if (!plantSheet.hidden || !viewSheet.hidden) { if (e.key === 'Escape') closeSheets(); return; }
+    if (!plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden) { if (e.key === 'Escape') closeSheets(); return; }
     const k = { ArrowLeft: [-80, 0], ArrowRight: [80, 0], ArrowUp: [0, -80], ArrowDown: [0, 80] }[e.key];
     if (k) { e.preventDefault(); cam.x += k[0]; cam.y += k[1]; applyCam(); }
   });
@@ -459,8 +535,8 @@ a.btn { text-decoration: none; display: inline-block; }
   const DROP_TEXT = dropText.innerHTML;
   let pending = null;
   function openPlant() { document.getElementById('nextNo').textContent = 'Piece ' + fmtNo(nextNo()); plantSheet.hidden = false; document.getElementById('tTitle').focus(); }
-  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; }
-  function resetForm() { form.reset(); pending = null; dropText.innerHTML = DROP_TEXT; }
+  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; }
+  function resetForm() { form.reset(); pending = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
   function readImage(f) {
     if (!f || !f.type.startsWith('image/')) return;
     const fr = new FileReader();
@@ -479,13 +555,56 @@ a.btn { text-decoration: none; display: inline-block; }
   ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('over')));
   drop.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); readImage(e.dataTransfer.files[0]); });
   view.addEventListener('dragover', e => e.preventDefault());
-  view.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) { openPlant(); readImage(f); } });
+  view.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) { openPlant(); readImage(f); return; } const u = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '').split('\n').find(isUrl); if (u) plantLink(u.trim()); });
+  // ---------- planting webpages: paste a link, drop a link, the bookmark, or share to the installed app ----------
+  const tUrl = document.getElementById('tUrl');
+  const isUrl = v => /^https?:\/\/\S+$/i.test((v || '').trim());
+  let metaFor = '';
+  async function lookUp(u, hint) {
+    u = (u || '').trim(); if (!isUrl(u) || u === metaFor) return; metaFor = u;
+    const tT = document.getElementById('tTitle'), tN = document.getElementById('tNote');
+    if (hint && hint.title && !tT.value) tT.value = hint.title.slice(0, 80);
+    if (hint && hint.text && !tN.value) tN.value = hint.text.slice(0, 1200);
+    let img = hint && hint.img;
+    if (!tT.value || !img) {
+      tT.placeholder = 'Looking it up…';
+      try {
+        const d = await getJSON('https://api.microlink.io/?url=' + encodeURIComponent(u)), m = (d && d.data) || {};
+        if (metaFor !== u) return;
+        if (!tT.value && m.title) tT.value = m.title.slice(0, 80);
+        if (!tN.value && m.description) tN.value = m.description.slice(0, 1200);
+        img = img || (m.image && m.image.url);
+      } catch (e) {}
+      tT.placeholder = 'Moth on the porch light';
+    }
+    if (!tT.value) tT.value = hostOf(u);
+    if (img && !pending) { try { const im = await loadImg(img); if (metaFor !== u || pending) return; pending = { img, ar: im.naturalHeight / im.naturalWidth }; dropText.innerHTML = ''; const pv = new Image(); pv.src = img; pv.alt = ''; dropText.appendChild(pv); } catch (e) {} }
+  }
+  function plantLink(u, hint) { if (plantSheet.hidden) openPlant(); tUrl.value = u; lookUp(u, hint); }
+  tUrl.addEventListener('change', () => lookUp(tUrl.value));
+  tUrl.addEventListener('paste', () => setTimeout(() => lookUp(tUrl.value), 0));
+  document.addEventListener('paste', e => {
+    const txt = (e.clipboardData?.getData('text') || '').trim();
+    if (isUrl(txt) && !e.target.closest('input, textarea') && ![...(e.clipboardData?.items || [])].some(i => i.type.startsWith('image/'))) { e.preventDefault(); plantLink(txt); }
+  });
+  const bm = document.getElementById('bm'), home = location.origin + location.pathname;
+  bm.href = "javascript:(()=>{const m=n=>{const e=document.querySelector('meta[property=\"'+n+'\"],meta[name=\"'+n+'\"]');return e?e.content:''};let i=m('og:image');try{i=i?new URL(i,location.href).href:''}catch(x){i=''}const q=new URLSearchParams({url:location.href,title:m('og:title')||document.title,text:String(getSelection()).trim()||m('og:description')||m('description'),img:i});window.open('" + home + "?'+q,'_blank')})()";
+  bm.addEventListener('click', e => { e.preventDefault(); toast('Drag it to your bookmarks bar, then press it on any page'); });
+  function fromAddress() {
+    const q = new URLSearchParams(location.search); if (![...q.keys()].length) return;
+    let u = q.get('url') || q.get('plant') || '', text = q.get('text') || '', title = q.get('title') || '';
+    if (!isUrl(u)) { const m = (text + ' ' + title).match(/https?:\/\/\S+/); if (m) { u = m[0]; text = text.replace(u, '').trim(); } }
+    history.replaceState(null, '', location.pathname);
+    if (isUrl(u)) plantLink(u, { title, text, img: q.get('img') || '' });
+    else if (title || text) { openPlant(); document.getElementById('tTitle').value = title.slice(0, 80); document.getElementById('tNote').value = text.slice(0, 1200); }
+  }
   document.addEventListener('paste', e => { const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/')); if (it) { e.preventDefault(); if (plantSheet.hidden) openPlant(); readImage(it.getAsFile()); } });
   form.addEventListener('submit', e => {
     e.preventDefault();
     const title = document.getElementById('tTitle').value.trim(), note = document.getElementById('tNote').value.trim();
-    if (!pending && !title && !note) { toast('Add an image, a title or some words first'); return; }
-    const p = plant({ title, note, img: pending?.img, ar: pending?.ar }, viewCentre(), true);
+    const link = isUrl(tUrl.value) ? tUrl.value.trim() : null;
+    if (!pending && !title && !note && !link) { toast('Add a link, an image, a title or some words first'); return; }
+    const p = plant({ title: title || (link ? hostOf(link) : ''), note, img: pending?.img, ar: pending?.ar, link }, viewCentre(), true);
     save(); closeSheets(); resetForm(); setTimeout(() => centreOn(p), 60); toast('Planted');
     plantedSince++; if (wildOn() && plantedSince % 3 === 0) setTimeout(() => sprout(p), 2200);
   });
@@ -560,20 +679,31 @@ a.btn { text-decoration: none; display: inline-block; }
         ar: p.thumbnail ? p.thumbnail.height / p.thumbnail.width : 0 })); } },
   ];
   const loadImg = src => new Promise((ok, no) => { const im = new Image(); if (CORS_IMG.test(src)) im.crossOrigin = 'anonymous'; im.onload = () => ok(im); im.onerror = no; im.src = src; setTimeout(no, 9000); });
+  // Taste: keeping a wildflower makes its words and source likelier next time; pulling one up makes them less likely.
+  const TASTE_KEY = 'drift-garden-taste';
+  const taste = (() => { try { const t = JSON.parse(localStorage.getItem(TASTE_KEY)); if (t && t.w) return t; } catch (e) {} return { w: {}, s: {} }; })();
+  function nudgeTaste(p, amt) {
+    const ws = new Set([...(p.wild.words || []), ...wordsOf(p).slice(0, 6)]);
+    ws.forEach(w => taste.w[w] = (taste.w[w] || 0) + amt);
+    if (p.wild.source) taste.s[p.wild.source] = (taste.s[p.wild.source] || 0) + amt;
+    try { localStorage.setItem(TASTE_KEY, JSON.stringify(taste)); } catch (e) {}
+  }
+  const tasteW = w => { const t = taste.w[w] || 0; return t > 0 ? 1 + t : t < 0 ? Math.max(.15, 1 + t * .4) : 1; };
+  const tasteS = n => Math.max(.25, 1 + (taste.s[n] || 0) * .5);
   let sprouting = false;
   async function sprout(nearPlant) {
     if (sprouting) return;
-    const pool = plants.filter(p => !p.wild).map(p => ({ p, words: wordsOf(p) })).filter(o => o.words.length);
+    const pool = plants.filter(p => !p.wild || p.wild.kept).map(p => ({ p, words: wordsOf(p) })).filter(o => o.words.length);
     if (!pool.length) { toast('Plant a few things with words first'); return; }
     sprouting = true; wildBtn.textContent = '✿ Sprouting…';
     try {
       const counts = {}; pool.forEach(o => o.words.forEach(w => counts[w] = (counts[w] || 0) + 1));
-      const pickWord = ws => { const wt = ws.map(w => w.length / counts[w]); let r = Math.random() * wt.reduce((a, b) => a + b, 0); for (let i = 0; i < ws.length; i++) { r -= wt[i]; if (r <= 0) return ws[i]; } return ws[0]; };
+      const pickWord = ws => { const wt = ws.map(w => w.length / counts[w] * tasteW(w)); let r = Math.random() * wt.reduce((a, b) => a + b, 0); for (let i = 0; i < ws.length; i++) { r -= wt[i]; if (r <= 0) return ws[i]; } return ws[0]; };
       const [A, B] = pool.slice().sort(() => Math.random() - .5);
       const a = pickWord(A.words), b = B ? pickWord(B.words.filter(w => w !== a).length ? B.words.filter(w => w !== a) : B.words) : null;
       const used = new Set(plants.filter(p => p.wild && p.wild.href).map(p => p.wild.href));
       const tries = (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
-      const sources = LIVE.slice().sort(() => Math.random() - .5);
+      const sources = LIVE.map(x => ({ x, k: Math.random() ** (1 / tasteS(x.name)) })).sort((p, q) => q.k - p.k).map(o => o.x);
       let found = null;
       outer: for (const words of tries) for (const src of sources) {
         let res; try { res = await src.find(words.join(' ')); } catch (e) { continue; }
@@ -586,7 +716,8 @@ a.btn { text-decoration: none; display: inline-block; }
       }
       if (!found) { sproutFromBank(nearPlant); return; }
       const { r, src, words, from } = found, name = t => t.title || t.note.slice(0, 40);
-      const by = 'Because you planted “' + words.join('” and “') + '”';
+      const verb = i => from[i].wild ? 'kept' : 'planted';
+      const by = 'Because you ' + words.map((w, i) => (i && verb(i) === verb(0) ? '' : verb(i) + ' ') + '\u201c' + w + '\u201d').join(' and ');
       const near = nearPlant || from[0];
       const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words, from: from.map(name) } };
       if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
@@ -598,7 +729,7 @@ a.btn { text-decoration: none; display: inline-block; }
   wildBtn.addEventListener('click', () => sprout(null));
   document.getElementById('keepBtn').addEventListener('click', () => {
     if (!current?.wild) return;
-    current.wild.kept = true; save();
+    current.wild.kept = true; save(); nudgeTaste(current, 1);
     const old = world.querySelector(`[data-id="${current.id}"]`); const el = build(current); place(el, current); old?.replaceWith(el);
     document.getElementById('keepBtn').hidden = true; toast('Kept');
   });
@@ -614,7 +745,8 @@ a.btn { text-decoration: none; display: inline-block; }
     document.getElementById('vNo').textContent = p.wild ? '✿ Wildflower · ' + (p.wild.query ? 'on Google' : p.wild.kind) : 'Piece ' + fmtNo(p.no) + (p.example ? ' · Example' : '');
     document.getElementById('vTitle').textContent = p.title || 'Untitled';
     const n = document.getElementById('vNote'); n.textContent = (p.note || '') + (p.wild && !p.wild.query ? '\n\n' + p.wild.by + (p.wild.source ? ' \u00b7 ' + p.wild.source : '') : ''); n.hidden = !n.textContent;
-    const vw = document.getElementById('vWild'); vw.hidden = !p.wild;
+    const vw = document.getElementById('vWild'); vw.hidden = !p.wild && !p.link;
+    if (!p.wild && p.link) { const L = document.getElementById('vLink'); L.href = p.link; L.textContent = 'Visit ' + hostOf(p.link) + ' \u2197'; document.getElementById('keepBtn').hidden = true; }
     if (p.wild) { const L = document.getElementById('vLink'); if (p.wild.query) { L.href = 'https://www.google.com/search?q=' + encodeURIComponent(p.wild.query); L.textContent = 'Search Google for \u201c' + p.wild.query + '\u201d \u2197'; } else { L.href = p.wild.href; L.textContent = 'Wander over to ' + p.wild.source + ' \u2197'; } document.getElementById('keepBtn').hidden = !!p.wild.kept; }
     viewSheet.hidden = false; document.getElementById('closeView').focus();
   }
@@ -622,10 +754,32 @@ a.btn { text-decoration: none; display: inline-block; }
   pullBtn.addEventListener('click', () => {
     if (!current) return;
     if (!confirmPull) { confirmPull = true; pullBtn.textContent = 'Tap again to pull it up'; return; }
+    if (current.wild) nudgeTaste(current, -1);
     plants = plants.filter(p => p !== current); world.querySelector(`[data-id="${current.id}"]`)?.remove();
     save(); closeSheets(); toast('Pulled up');
   });
-  [plantSheet, viewSheet].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
+  // ---------- print run from a word ----------
+  const inkWord = document.getElementById('inkWord'), inkPreview = document.getElementById('inkPreview');
+  function showInk() {
+    const w = inkWord.value.trim() || inkWord.placeholder, ink = wordInks(w);
+    const why = document.getElementById('inkWhy'); why.innerHTML = '';
+    if (!ink) { document.getElementById('inkSample').textContent = w; document.getElementById('inkHex').textContent = 'Try a word with letters in it'; return null; }
+    ['A', 'B', 'F'].forEach(k => inkPreview.style.setProperty('--' + k, ink[k]));
+    document.getElementById('inkSample').textContent = w;
+    document.getElementById('inkHex').textContent = ink.A + ' \u00b7 ' + ink.B + ' \u00b7 ' + ink.F;
+    ink.why.forEach(t => { const li = document.createElement('li'); li.textContent = t; why.appendChild(li); });
+    return ink;
+  }
+  document.getElementById('reroll').addEventListener('click', () => { inkWord.value = RUN.word || ''; showInk(); inkSheet.hidden = false; inkWord.focus(); });
+  inkWord.addEventListener('input', showInk);
+  document.getElementById('inkCancel').addEventListener('click', closeSheets);
+  document.getElementById('inkForm').addEventListener('submit', e => {
+    e.preventDefault(); const ink = showInk(); if (!ink) return;
+    try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word })); } catch (e) {}
+    location.reload();
+  });
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  [plantSheet, viewSheet, inkSheet].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
 })();
 </script>
 
