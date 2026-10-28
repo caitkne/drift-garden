@@ -380,14 +380,24 @@ a.btn { text-decoration: none; display: inline-block; }
   // Every picture is shrunk to about 64px and each pixel goes into a colour bin (8 lightness steps x 24 hues x 4 strengths, greys by lightness).
   // Each picture counts equally, so one big image can't drown the rest. Returns bins, most common first.
   function countColours(imgs) {
-    const bins = new Map(); let pics = 0;
+    const bins = new Map(), read = []; let pics = 0;
     for (const im of imgs) {
       const k = 64 / Math.max(im.naturalWidth, im.naturalHeight), w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
       const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(im, 0, 0, w, h);
       let d; try { d = g.getImageData(0, 0, w, h).data; } catch (e) { continue; }
-      pics++; const each = 1 / (w * h);
+      pics++; read.push(im);
+      // the subject is usually in the middle: pixels count more towards the centre,
+      // and when the edges are a plain backdrop, pixels matching it count much less
+      const edge = [0, 0, 0]; let ne = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (x === 0 || y === 0 || x === w - 1 || y === h - 1) { const i = (y * w + x) * 4, l = rgbLab(d[i], d[i + 1], d[i + 2]); edge[0] += l[0]; edge[1] += l[1]; edge[2] += l[2]; ne++; }
+      edge.forEach((v, j) => edge[j] = v / ne);
+      const plainEdge = Math.hypot(edge[1], edge[2]) < .04; // only a white, grey or black backdrop is set aside; a mossy or sky edge is part of the picture
+      const wts = new Float32Array(w * h); let wsum = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; if (d[i + 3] < 128) continue; const dx = (x + .5) / w - .5, dy = (y + .5) / h - .5;
+        let wt = Math.exp(-(dx * dx + dy * dy) / (2 * .3 * .3)); if (plainEdge && labDist(rgbLab(d[i], d[i + 1], d[i + 2]), edge) < .06) wt *= .12; wts[y * w + x] = wt; wsum += wt; }
       for (let i = 0; i < d.length; i += 4) {
         if (d[i + 3] < 128) continue;
+        const each = wts[i / 4] / (wsum || 1);
         const lab = rgbLab(d[i], d[i + 1], d[i + 2]), [L, C, H] = labLch(lab);
         const key = C < .035 ? 'n' + Math.round(L * 10) : Math.round(L * 8) + ':' + Math.round(H / 15) % 24 + ':' + Math.min(3, C / .06 | 0);
         let bn = bins.get(key); if (!bn) bins.set(key, bn = { n: 0, L: 0, a: 0, b: 0 });
@@ -395,7 +405,25 @@ a.btn { text-decoration: none; display: inline-block; }
       }
     }
     const tot = [...bins.values()].reduce((t, x) => t + x.n, 0) || 1;
-    return { pics, bins: [...bins.values()].map(x => { const lab = [x.L / x.n, x.a / x.n, x.b / x.n]; return { lab, lch: labLch(lab), share: x.n / tot }; }).sort((x, y) => y.share - x.share) };
+    return { pics, read, bins: [...bins.values()].map(x => { const lab = [x.L / x.n, x.a / x.n, x.b / x.n]; return { lab, lch: labLch(lab), share: x.n / tot }; }).sort((x, y) => y.share - x.share) };
+  }
+  // Pictures: greys and whites are set aside, and the coloured bins are gathered into 12 hue families (30\u00b0 each),
+  // so one red split across shades still counts as one red. Families are ranked by how much of the coloured part they cover.
+  function familiesOf(counted) {
+    const chroma = counted.bins.filter(b => b.lch[1] >= .04), grey = counted.bins.filter(b => b.lch[1] < .04);
+    const cTot = chroma.reduce((t, b) => t + b.share, 0), gTot = 1 - cTot;
+    const fam = new Map();
+    chroma.forEach(b => { const k = Math.round(b.lch[2] / 30) % 12; const f = fam.get(k) || { share: 0, top: b }; f.share += b.share; if (b.share > f.top.share) f.top = b; fam.set(k, f); });
+    const fams = [...fam.values()].sort((a, b) => b.share - a.share).map(f => ({ lab: f.top.lab, lch: f.top.lch, share: f.share / (cTot || 1) }));
+    return { fams, grey: grey.map(b => ({ ...b, share: b.share })), cTot, gTot };
+  }
+  function trioFromPictures(counted) {
+    const F = familiesOf(counted);
+    if (F.cTot < .04) { const t = trioFrom(counted.bins, true); if (t) t.why.unshift('These pictures are almost all greys and whites, so those were used'); return t && { ...t, bar: counted.bins.slice(0, 10).map(b => ({ hex: lchHex(...b.lch), share: b.share })) }; }
+    const t = trioFrom([...F.fams, ...F.grey.map(b => ({ ...b, share: b.share }))], true); if (!t) return null;
+    t.why[0] = t.why[0].replace('of the pixels', 'of the coloured part');
+    t.why.unshift(`Greys, whites and backgrounds (${Math.round(F.gTot * 100)}% of the pixels) were set aside, and the rest gathered into hue families`);
+    return { ...t, bar: F.fams.slice(0, 8).map(b => ({ hex: lchHex(...b.lch), share: b.share * F.cTot, pct: b.share })).concat(F.gTot > .01 ? [{ hex: '#d8d6d0', share: F.gTot, grey: true }] : []) };
   }
   // From colours ranked by how often they occur (most common first), choose a trio:
   // A, the most common colour with some colour in it; B, the next most common that's clearly different, set at A's lightness so they hum;
@@ -404,22 +432,30 @@ a.btn { text-decoration: none; display: inline-block; }
     if (!cols.length) return null;
     const why = [], pct = x => Math.max(1, Math.round(x.share * 100)) + '%';
     const A = plainA ? cols[0] : cols.find(x => x.lch[1] >= .05) || cols[0];
-    const AL = Math.max(.32, Math.min(.88, A.lch[0])), Ah = lchHex(AL, A.lch[1], A.lch[2]);
+    const AL = Math.max(.32, Math.min(.88, A.lch[0])); let Ah = lchHex(AL, A.lch[1], A.lch[2]);
     // B must still look clearly different from A once it's moved to A's lightness
     const hueGap = (x, y) => Math.abs(((x - y + 540) % 360) - 180);
-    const apart = x => { const t = hexLab(lchHex(AL, x.lch[1], x.lch[2])); return labDist(t, hexLab(Ah)) >= .07 && (hueGap(x.lch[2], A.lch[2]) >= 25 || Math.abs(x.lch[1] - A.lch[1]) >= .06); };
+    const apart = x => { const t = hexLab(lchHex(x.lch[0] + Math.max(-.1, Math.min(.1, AL - x.lch[0])), x.lch[1], x.lch[2])); return labDist(t, hexLab(Ah)) >= .07 && (hueGap(x.lch[2], A.lch[2]) >= 25 || Math.abs(x.lch[1] - A.lch[1]) >= .06); };
     const Bc = cols.find(x => x !== A && x.lch[1] >= .04 && apart(x)) || cols.find(x => x !== A && apart(x));
     why.push(`Ink A is the most common colour${plainA ? '' : ' with some colour in it'} (${pct(A)} of the pixels)` + (Math.abs(AL - A.lch[0]) > .02 ? ', brought a little toward the middle so text can sit on it' : ''));
     let Bh;
-    if (Bc) { Bh = lchHex(AL, Bc.lch[1], Bc.lch[2]); why.push(`Ink B is the next most common colour that's clearly different (${pct(Bc)}), set at A's lightness so the two hum`); }
+    if (Bc) { const BL = Bc.lch[0] + Math.max(-.1, Math.min(.1, AL - Bc.lch[0])); Bh = lchHex(BL, Bc.lch[1], Bc.lch[2]); why.push(`Ink B is the next most common colour that's clearly different (${pct(Bc)})` + (Math.abs(BL - Bc.lch[0]) > .02 ? ', nudged a little toward A\u2019s lightness so the two sit together' : '')); }
     else { Bh = lchHex(AL, Math.max(.08, A.lch[1]), (A.lch[2] + 40) % 360); why.push('Every common colour was close to A, so ink B is A turned 40\u00b0 round the wheel'); }
     let F = null;
     for (const x of cols) { const T = lchHex(...x.lch); if (contrast(Ah, T) >= 4.5 && contrast(Bh, T) >= 4.5) { F = T; why.push(`The anchor is the most common colour that reads on both (${pct(x)})`); break; } }
     if (!F) {
-      const goDark = lum(Ah) > .18, src = cols.slice().sort((x, y) => goDark ? x.lch[0] - y.lch[0] : y.lch[0] - x.lch[0])[0] || A;
-      for (let L = src.lch[0]; goDark ? L >= 0 : L <= 1; L += goDark ? -.02 : .02) { const T = lchHex(L, src.lch[1], src.lch[2]); if (contrast(Ah, T) >= 4.5 && contrast(Bh, T) >= 4.5) { F = T; break; } }
-      F = F || (goDark ? '#111111' : '#fafafa');
-      why.push(`No common colour read clearly on both, so the ${goDark ? 'darkest' : 'lightest'} one was ${goDark ? 'darkened' : 'lightened'} until it did`);
+      // push the most common dark (or light) colour darker (or lighter) until it reads; if neither can, lift A and B a little and try again
+      const darkest = cols.slice().sort((x, y) => x.lch[0] - y.lch[0])[0] || A, lightest = cols.slice().sort((x, y) => y.lch[0] - x.lch[0])[0] || A;
+      const slide = (src, dir, a, b) => { for (let L = src.lch[0]; L >= 0 && L <= 1; L += dir * .02) { const T = lchHex(L, src.lch[1], src.lch[2]); if (contrast(a, T) >= 4.5 && contrast(b, T) >= 4.5) return T; } return null; };
+      const lift = (hx, dL) => { const [L, C, h] = labLch(hexLab(hx)); return lchHex(L + dL, C, h); };
+      let how = '';
+      outer: for (let k = 0; k <= 10; k++) for (const dir of [1, -1]) {
+        const a = k ? lift(Ah, dir * k * .03) : Ah, b = k ? lift(Bh, dir * k * .03) : Bh;
+        const T = slide(darkest, -1, a, b) || slide(lightest, 1, a, b);
+        if (T) { if (k) { Ah = a; Bh = b; how = `, and A and B were ${dir > 0 ? 'lightened' : 'deepened'} a touch so it could`; } F = T; why.push(`No common colour read clearly on both, so the ${lum(T) < .2 ? 'darkest one was darkened' : 'lightest one was lightened'} until it did${how}`); break outer; }
+        if (!k) break;
+      }
+      if (!F) { F = contrast(Ah, '#111111') + contrast(Bh, '#111111') > contrast(Ah, '#fafafa') + contrast(Bh, '#fafafa') ? '#111111' : '#fafafa'; why.push('Nothing quite read on both, so the anchor is near-black or near-white'); }
     }
     return { A: Ah, B: Bh, F, why };
   }
@@ -1326,12 +1362,15 @@ a.btn { text-decoration: none; display: inline-block; }
   async function picturesFor(word) {
     const q = encodeURIComponent(word);
     const [aic, com] = await Promise.allSettled([
-      getJSON('https://api.artic.edu/api/v1/artworks/search?q=' + q + '&limit=8&fields=id,image_id,is_public_domain'),
-      getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch=' + encodeURIComponent(word + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url&iiurlwidth=96')]);
+      getJSON('https://api.artic.edu/api/v1/artworks/search?q=' + q + '&limit=40&fields=id,image_id,title'),
+      getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20&gsrsearch=' + encodeURIComponent(word + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url&iiurlwidth=96')]);
+    // keep only pictures whose title names the word (toys, toy), so a search that matched a catalogue note doesn't bring in vases
+    const stemW = w => w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/(ies|es|s)$/, ''), want = word.split(/\s+/).map(stemW).filter(Boolean);
+    const names = t => want.every(w => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(w));
     const urls = [];
-    if (com.status === 'fulfilled' && com.value.query) Object.values(com.value.query.pages).sort((a, b) => a.index - b.index).forEach(p => p.imageinfo && p.imageinfo[0].thumburl && urls.push(p.imageinfo[0].thumburl));
-    if (aic.status === 'fulfilled') (aic.value.data || []).filter(x => x.image_id).forEach(x => urls.push('https://www.artic.edu/iiif/2/' + x.image_id + '/full/96,/0/default.jpg'));
-    const got = await Promise.allSettled(urls.slice(0, 14).map(loadImg));
+    if (com.status === 'fulfilled' && com.value.query) Object.values(com.value.query.pages).sort((a, b) => a.index - b.index).filter(p => names(p.title)).forEach(p => p.imageinfo && p.imageinfo[0].thumburl && urls.push(p.imageinfo[0].thumburl));
+    if (aic.status === 'fulfilled') (aic.value.data || []).filter(x => x.image_id && names(x.title)).slice(0, 8).forEach(x => urls.push('https://www.artic.edu/iiif/2/' + x.image_id + '/full/96,/0/default.jpg'));
+    const got = await Promise.allSettled([...urls.filter((u, i) => i % 2 === 0), ...urls.filter((u, i) => i % 2)].slice(0, 16).map(loadImg));
     return got.filter(x => x.status === 'fulfilled').map(x => x.value);
   }
   async function inksFromPictures(word) {
@@ -1339,9 +1378,9 @@ a.btn { text-decoration: none; display: inline-block; }
     if (!picInks.has(key)) picInks.set(key, (async () => {
       const imgs = await picturesFor(word); if (!imgs.length) return null;
       const counted = countColours(imgs); if (!counted.pics) return null;
-      const trio = trioFrom(counted.bins); if (!trio) return null;
-      trio.why.unshift(`Found ${counted.pics} pictures of \u201c${word}\u201d and counted their colours`);
-      return { ...trio, word, from: 'pictures', thumbs: imgs.map(i => i.src), bins: counted.bins.slice(0, 12).map(b => ({ hex: lchHex(...b.lch), share: b.share })) };
+      const trio = trioFromPictures(counted); if (!trio) return null;
+      trio.why.unshift(`Found ${counted.pics} pictures with \u201c${word}\u201d in their titles and counted their colours` + (counted.pics < imgs.length ? ` (${imgs.length - counted.pics} more wouldn't let their pixels be read)` : ''));
+      return { ...trio, word, from: 'pictures', thumbs: counted.read.map(i => i.src), bins: trio.bar };
     })().catch(() => null));
     return picInks.get(key);
   }
@@ -1351,7 +1390,7 @@ a.btn { text-decoration: none; display: inline-block; }
     if (box.hidden) return;
     document.getElementById('inkThumbs').innerHTML = ink.thumbs.map(src => `<img alt="" src="${esc(src)}">`).join('');
     const tot = ink.bins.reduce((t, b) => t + b.share, 0);
-    document.getElementById('inkBar').innerHTML = ink.bins.map((b, i) => `<i style="background:${b.hex};flex:${(b.share / tot).toFixed(4)}" title="${b.hex} \u00b7 ${Math.round(b.share * 100)}%">${i < 3 ? `<b>${Math.round(b.share * 100)}%</b>` : ''}</i>`).join('');
+    document.getElementById('inkBar').innerHTML = ink.bins.map((b, i) => `<i style="background:${b.hex};flex:${(b.share / tot).toFixed(4)}${b.grey ? ';background-image:repeating-linear-gradient(45deg,transparent 0 4px,rgba(0,0,0,.08) 4px 8px)' : ''}" title="${b.grey ? 'greys and whites' : b.hex} \u00b7 ${Math.round(b.share * 100)}%">${i < 3 || b.grey ? `<b>${b.grey ? 'greys set aside' : Math.round((b.pct || b.share) * 100) + '%'}</b>` : ''}</i>`).join('');
   }
   function paintInk(w, ink, note) {
     const why = document.getElementById('inkWhy'); why.innerHTML = '';
