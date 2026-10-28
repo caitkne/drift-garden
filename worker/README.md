@@ -17,9 +17,9 @@ eBay listings can grow as wildflowers, but eBay only answers searches made with 
 
 To check it's working, visit the worker address with `?q=moth` on the end. It should say `not allowed`. That's right: it only answers the garden.
 
-# Garden accounts (passkeys, saved gardens, allotments)
+# Garden accounts (garden keys, saved gardens, allotments)
 
-A second worker holds accounts and saved gardens, so you can keep your garden in your account, plant it in an **allotment** (a garden space shared with friends) and take **cuttings** from theirs. People sign in with a passkey (face, fingerprint or phone lock): no passwords and no emails are stored. Allotments are invite-only: a member makes a link, it works for a week and for up to ten people, and the keeper can remove anyone (their gardens leave with them). A garden is only visible to you and to members of allotments you've planted it in.
+A second worker holds accounts and saved gardens, so you can keep your garden in your account, plant it in an **allotment** (a garden space shared with friends) and take **cuttings** from theirs. People sign in with a garden key: four words picked at random from the EFF wordlist (4-7 letter words, about 48 bits) and shown once when they make an account. Only a hash of the key is stored, and ten wrong tries in ten minutes pause sign-ins from that address. No passwords and no emails are stored. Older accounts made with a passkey can still use it, and can get a garden key from the account sheet. Allotments are invite-only: a member makes a link, it works for a week and for up to ten people, and the keeper can remove anyone (their gardens leave with them). A garden is only visible to you and to members of allotments you've planted it in.
 
 ## Setting it up (about 10 minutes, free)
 
@@ -33,4 +33,4 @@ A second worker holds accounts and saved gardens, so you can keep your garden in
 
 No secrets are needed for this one. Visiting the address in a browser tab says `not allowed`, which is right: it only answers the garden.
 
-`garden-api.js` is built from `garden/api.js` (run `npm install` then `npm run build` in `worker/garden`). It uses the SimpleWebAuthn library to check passkeys.
+`garden-api.js` is built from `garden/api.js` (run `npm install` then `npm run build` in `worker/garden`). It uses the SimpleWebAuthn library to check passkeys for older accounts, and `garden/words.js` (the EFF large wordlist, CC BY 3.0, eff.org/dice) for garden keys.

@@ -4,6 +4,7 @@
 // Build: npm run build (bundles this file into ../garden-api.js, the one file you paste into Cloudflare).
 import { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
+import WORDS from './words.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT NOT NULL, created INTEGER NOT NULL)`,
@@ -17,13 +18,17 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS invites (code TEXT PRIMARY KEY, allotment_id TEXT NOT NULL, made_by TEXT NOT NULL, expires INTEGER NOT NULL, uses_left INTEGER NOT NULL)`,
 ];
 // columns added after the first version; adding one that's already there just fails quietly
-const LATER = [`ALTER TABLE gardens ADD COLUMN public INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE gardens ADD COLUMN summary TEXT`];
+const LATER = [`ALTER TABLE gardens ADD COLUMN public INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE gardens ADD COLUMN summary TEXT`, `ALTER TABLE users ADD COLUMN key_hash TEXT`, `CREATE INDEX IF NOT EXISTS users_key ON users (key_hash)`, `CREATE TABLE IF NOT EXISTS tries (ip TEXT PRIMARY KEY, n INTEGER NOT NULL, reset INTEGER NOT NULL)`];
 let ready = null;
 const DAY = 86400000, SESSION_DAYS = 60, MAX_GARDEN = 20 * 1024 * 1024;
 
 const rand = (n = 16) => isoBase64URL.fromBuffer(crypto.getRandomValues(new Uint8Array(n)));
 const sha = async s => isoBase64URL.fromBuffer(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))));
 const clean = (s, max) => String(s || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+// a garden key: four words from a long list (about 48 bits), easy to write down
+const pickWord = () => { const r = new Uint32Array(1); const lim = Math.floor(2 ** 32 / WORDS.length) * WORDS.length; do crypto.getRandomValues(r); while (r[0] >= lim); return WORDS[r[0] % WORDS.length]; };
+const newKey = () => [0, 1, 2, 3].map(pickWord).join(' ');
+const tidyKey = k => String(k || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
 class Oops extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 
 export default {
@@ -37,7 +42,7 @@ export default {
     if (!ok) return json({ error: 'not allowed' }, 403);
     if (!env.DB || !env.GARDENS) return json({ error: 'The worker needs its DB and GARDENS bindings' }, 500);
     try {
-      ready = ready || env.DB.batch(SCHEMA.map(s => env.DB.prepare(s))).then(() => Promise.all(LATER.map(s => env.DB.prepare(s).run().catch(() => null)))).catch(e => { ready = null; throw e; });
+      ready = ready || env.DB.batch(SCHEMA.map(s => env.DB.prepare(s))).then(() => LATER.reduce((p, s) => p.then(() => env.DB.prepare(s).run().catch(() => null)), Promise.resolve())).catch(e => { ready = null; throw e; });
       await ready;
       return json(await route(req, env, { rpID: env.RP_ID || 'selvedge.garden', origin, origins }));
     } catch (e) {
@@ -78,7 +83,37 @@ async function route(req, env, ctx) {
   const allotment = async aid => { const a = await one('SELECT * FROM allotments WHERE id = ?', aid); if (!a || !(await isMember(aid, need().id))) throw new Oops(404, 'No such allotment'); return a; };
   const seg = path.split('/').filter(Boolean);
 
-  // ---------- passkeys ----------
+  // ---------- garden keys ----------
+  const slow = async () => {  // a few wrong keys, then a pause
+    const ip = req.headers.get('CF-Connecting-IP') || 'local';
+    const t = await one('SELECT * FROM tries WHERE ip = ?', ip);
+    if (t && t.reset > now && t.n >= 10) throw new Oops(429, 'Too many tries. Wait a few minutes');
+    if (!t || t.reset <= now) await run('INSERT OR REPLACE INTO tries (ip, n, reset) VALUES (?, 1, ?)', ip, now + 10 * 60000);
+    else await run('UPDATE tries SET n = n + 1 WHERE ip = ?', ip);
+  };
+  if (m === 'POST' && path === '/auth/key/new') {
+    const { name } = await body(); const n = clean(name, 40);
+    if (!n) throw new Oops(400, 'Choose a name your friends will see');
+    const key = newKey(), user = { id: rand(16), name: n };
+    await run('INSERT INTO users (id, name, created, key_hash) VALUES (?, ?, ?, ?)', user.id, user.name, now, await sha(key));
+    return { ...(await startSession(user)), key };
+  }
+  if (m === 'POST' && path === '/auth/key') {
+    const { key } = await body(); const k = tidyKey(key);
+    if (k.split(' ').length !== 4) throw new Oops(400, 'A garden key is four words');
+    await slow();
+    const user = await one('SELECT * FROM users WHERE key_hash = ?', await sha(k));
+    if (!user) throw new Oops(400, 'That key doesn’t open any garden');
+    return startSession(user);
+  }
+  // signed in another way: get a key, or a fresh one
+  if (m === 'POST' && path === '/me/key') {
+    need(); const key = newKey();
+    await run('UPDATE users SET key_hash = ? WHERE id = ?', await sha(key), me.id);
+    return { key };
+  }
+
+  // ---------- passkeys (older accounts) ----------
   if (m === 'POST' && path === '/auth/register/start') {
     const { name } = await body(); const n = clean(name, 40);
     if (!n) throw new Oops(400, 'Choose a name your friends will see');

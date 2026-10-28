@@ -14,137 +14,178 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#e3e5c9">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,300..600,0..100,0..1&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Federant&family=Grenze+Gotisch:wght@400;700&family=Handjet:wght@300;600&family=Bonbon&family=Coral+Pixels&family=Faster+One&family=Ballet&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,300..600,0..100,0..1&family=Spline+Sans+Mono:wght@400;500&display=swap">
 <style>
 @font-face { font-family: "Blush"; src: url(fonts/blush.woff2) format("woff2"); font-display: swap; }
-:root {
-  --ground: #e3e5c9; --packet: #f4a7bf; --ink: #3a1630; --paper: #fbf5e8; --stake: #efe6cf; --leaf: #6f7d3c;
-  --script: "Blush", "Fraunces", Georgia, serif;
-  --soft: "Fraunces", Georgia, serif;
-  --mono: "Spline Sans Mono", ui-monospace, monospace;
-  color-scheme: light;
-}
+:root { --paper: #fbf5e8; --ink: #24121e; --mono: "Spline Sans Mono", ui-monospace, monospace; --soft: "Fraunces", Georgia, serif; color-scheme: light; }
 [hidden] { display: none !important; }
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100svh; background: var(--ground); color: var(--ink); font: 400 12px/1.55 var(--mono); letter-spacing: .02em; overflow-x: hidden; }
+html { background: var(--ground, #f4a7bf); }
+body { margin: 0; color: var(--ink); font: 400 12px/1.5 var(--mono); letter-spacing: .02em; overflow-x: hidden; }
 a { color: inherit; }
-.soft { font-family: var(--soft); font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; letter-spacing: 0; }
-.tiny { font: 500 10px/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
-.bed { display: flex; justify-content: center; align-items: flex-end; gap: clamp(14px, 3vw, 34px); padding: clamp(40px, 9vh, 110px) 16px 0; }
+/* the paste-up: everything below is cut and stuck down by the script */
+.board { position: relative; height: max(1400px, 190svh); overflow: hidden; background: var(--ground, #f4a7bf); cursor: crosshair; touch-action: pan-y; }
+.bit { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; cursor: grab; user-select: none; -webkit-user-select: none; }
+.bit.held { cursor: grabbing; }
+.bit > i { position: absolute; inset: 0; background: var(--bg, transparent); clip-path: var(--cut, none); }
+.bit > i::after { content: ""; position: absolute; inset: var(--pad, 0); background: var(--c); -webkit-mask: var(--img) var(--mp) / var(--ms) no-repeat; mask: var(--img) var(--mp) / var(--ms) no-repeat; }
+.bit.multiply { mix-blend-mode: multiply; }
+.word { position: absolute; left: 0; top: 0; white-space: nowrap; line-height: .95; padding: .08em .22em .12em; transform-origin: 0 0; cursor: grab; user-select: none; -webkit-user-select: none; clip-path: var(--cut, none); }
 
-/* the packet */
-.packet { position: relative; width: clamp(250px, 30vw, 340px); aspect-ratio: 340 / 520; background: var(--packet); color: var(--ink); padding: 34px 20px 16px; display: flex; flex-direction: column; clip-path: polygon(0 18px, 6% 0, 94% 0, 100% 18px, 100% 100%, 0 100%); }
-.packet::before { content: ""; position: absolute; left: 0; right: 0; top: 18px; border-top: 1px dashed rgba(58, 22, 48, .45); }
-.packet .row { display: flex; justify-content: space-between; }
-.window { position: relative; flex: 1; margin: 12px 0 10px; background: var(--paper); border-radius: 999px 999px 4px 4px; overflow: hidden; }
-.window::after { content: ""; position: absolute; inset: 0; background: var(--ink); -webkit-mask: var(--img) var(--pos, center) / cover no-repeat; mask: var(--img) var(--pos, center) / cover no-repeat; }
-.packet h1 { margin: 0; font: 400 clamp(34px, 4.3vw, 50px)/1 var(--script); text-align: center; white-space: nowrap; }
-.variety { margin: 10px 0 10px; text-align: center; font-size: 17px; }
-.sow { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 1px 10px; border-top: 1px solid var(--ink); padding-top: 7px; }
-.sow dt { font-weight: 500; text-transform: uppercase; letter-spacing: .12em; font-size: 9px; padding-top: 2px; }
-.sow dd { margin: 0; font-size: 11px; }
-
-/* the stake: it's the way in */
-.stake { position: relative; display: flex; align-items: center; justify-content: center; width: clamp(54px, 6vw, 70px); height: clamp(330px, 42vw, 470px); background: var(--stake); text-decoration: none; clip-path: polygon(0 0, 100% 0, 100% 86%, 50% 100%, 0 86%); transition: transform .3s; transform-origin: 50% 100%; }
-.stake:hover { transform: rotate(-3deg); }
-.stake span, .stake { writing-mode: vertical-rl; }
-#goGarden { font: italic 400 22px/1 var(--soft); font-variation-settings: "SOFT" 100, "WONK" 1; padding-bottom: 50px; }
-
-/* the tag, on a bit of string */
-.tagwrap { position: relative; align-self: center; padding-top: 30px; }
-.tagwrap svg { position: absolute; left: -46px; top: 0; width: 70px; height: 60px; overflow: visible; }
-.tag { position: relative; width: 210px; background: var(--paper); padding: 16px 16px 14px 34px; clip-path: polygon(22px 0, 100% 0, 100% 100%, 22px 100%, 0 50%); }
-.tag::before { content: ""; position: absolute; left: 12px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--ground); box-shadow: 0 0 0 2px var(--leaf); }
-.tag p { margin: 0 0 8px; font-size: 15px; line-height: 1.3; }
-.tag input { width: 100%; font: 400 13px/1.2 var(--mono); padding: 7px 8px; border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; margin-bottom: 6px; }
-.tag button { background: none; border: 0; padding: 4px 0; margin-right: 10px; cursor: pointer; color: var(--ink); font: 500 10px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 3px; }
-
-.moving { max-width: 380px; margin: 30px auto 0; background: var(--paper); padding: 16px 18px; text-align: center; }
-.moving h2 { margin: 0 0 6px; font: 400 36px/1 var(--script); }
+/* the bits that do things sit on top, on plain scraps */
+.ui { position: absolute; z-index: 9000; }
+.name { left: clamp(10px, 5vw, 70px); top: clamp(24px, 6vh, 70px); display: flex; flex-wrap: wrap; align-items: flex-end; max-width: 92vw; pointer-events: none; }
+.name span { display: inline-block; padding: .02em .08em .06em; line-height: .9; }
+.say { left: clamp(14px, 6vw, 90px); top: clamp(300px, 38vh, 400px); max-width: 26ch; background: var(--paper); padding: 8px 11px; font: italic 400 19px/1.25 var(--soft); font-variation-settings: "SOFT" 100, "WONK" 1; transform: rotate(-2deg); }
+.go { right: clamp(14px, 8vw, 140px); top: clamp(330px, 46vh, 460px); background: var(--ink); color: var(--paper); text-decoration: none; font: 400 clamp(36px, 5vw, 64px)/1 "Blush", var(--soft); padding: 10px 22px 14px; transform: rotate(4deg); transition: transform .2s; }
+.go:hover { transform: rotate(-3deg) scale(1.05); }
+.tag { left: clamp(14px, 12vw, 200px); top: clamp(470px, 64vh, 640px); width: 250px; background: var(--paper); padding: 12px 14px; transform: rotate(1.5deg); }
+.tag form { display: flex; gap: 6px; margin: 0 0 6px; }
+.tag input { flex: 1; min-width: 0; font: 400 12px/1.2 var(--mono); padding: 7px 8px; border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
+.tag button { background: var(--ink); color: var(--paper); border: 0; padding: 0 9px; cursor: pointer; font: 500 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.tag small { display: block; margin-top: 4px; opacity: .75; }
+#acctIn p { margin: 0 0 6px; font: italic 17px/1.3 var(--soft); }
+#keyLine { display: block; font: 500 15px/1.35 var(--mono); }
+#acctIn:not(.fresh) .fresh-only { display: none; }
+.shuffle { right: 12px; bottom: 12px; position: absolute; z-index: 9000; background: var(--paper); border: 0; padding: 6px 9px; font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.moving { left: 50%; top: 40px; transform: translateX(-50%); background: var(--paper); padding: 14px 16px; text-align: center; max-width: 320px; }
+.moving h2 { margin: 0 0 4px; font: 400 34px/1 "Blush", serif; }
 .moving p { margin: 0 0 8px; }
-.moving button { background: var(--ink); color: var(--paper); border: 0; padding: 9px 14px; font: 500 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.moving button { background: var(--ink); color: var(--paper); border: 0; padding: 8px 12px; font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
 
-.aside { text-align: center; margin: 26px auto 0; max-width: 34ch; font-size: 16px; line-height: 1.35; }
-
-/* other people's gardens, like a seed catalogue */
-.catalogue { max-width: 560px; margin: clamp(56px, 10vh, 100px) auto 0; padding: 0 16px; }
-.catalogue h2 { margin: 0 0 10px; font-weight: 500; text-align: center; }
+.catalogue { background: var(--paper); padding: 46px 16px 30px; }
+.catalogue > * { max-width: 600px; margin-left: auto; margin-right: auto; }
+.catalogue h2 { margin: 0 auto 10px; font: 500 10px/1.5 var(--mono); letter-spacing: .14em; text-transform: uppercase; text-align: center; }
 .clip { display: flex; gap: 8px; align-items: baseline; width: 100%; background: none; border: 0; padding: 7px 0; cursor: pointer; color: inherit; font: inherit; text-align: left; }
-.clip b { font: italic 400 19px/1.2 var(--soft); font-variation-settings: "SOFT" 100, "WONK" 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+.clip b { font: italic 400 20px/1.2 var(--soft); font-variation-settings: "SOFT" 100, "WONK" 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62%; }
 .clip::after { content: ""; order: 2; flex: 1; border-bottom: 1px dotted var(--ink); transform: translateY(-4px); }
 .clip small { order: 3; white-space: nowrap; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
 .clip .pics, .clip ul { display: none; }
-.clip:hover b { color: var(--leaf); }
-.empty { text-align: center; font: italic 16px/1.4 var(--soft); margin: 0; }
-footer { text-align: center; padding: clamp(56px, 10vh, 100px) 16px 26px; }
-.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; font: 500 12px/1.4 var(--mono); max-width: calc(100% - 32px); z-index: 60; }
+.empty { text-align: center; font: italic 17px/1.4 var(--soft); margin: 0; }
+footer { background: var(--paper); text-align: center; padding: 30px 16px 26px; font: 500 10px/1.6 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; font: 500 12px/1.4 var(--mono); max-width: calc(100% - 32px); z-index: 9999; }
 @media (max-width: 640px) {
-  .bed { flex-wrap: wrap; align-items: flex-end; }
-  .packet { width: min(268px, calc(100vw - 110px)); }
-  .stake { height: 300px; }
-  .tagwrap { flex-basis: 100%; display: flex; justify-content: center; padding-top: 24px; }
-  .tagwrap svg { display: none; }
+  .board { height: max(1250px, 170svh); }
+  .say { top: 190px; font-size: 17px; }
+  .go { top: 300px; right: 14px; }
+  .tag { top: 410px; left: 14px; }
+  .tag input { font-size: 16px; }
 }
+@media (prefers-reduced-motion: reduce) { .go { transition: none; } }
 </style>
 </head>
 <body>
 
-<main class="bed">
-  <section class="packet" aria-label="Selvedge Garden">
-    <div class="row tiny"><span id="lot">No. 0017</span><span>perennial</span></div>
-    <div class="window" id="window" aria-hidden="true"></div>
-    <h1>Selvedge</h1>
-    <p class="variety soft">garden variety</p>
-    <dl class="sow">
-      <dt>Sow</dt><dd>the things you love</dd>
-      <dt>Depth</dt><dd>as deep as you like</dd>
-      <dt>Comes up</dt><dd>later, when you wander back</dd>
-      <dt>Wildflowers</dt><dd>by a clunky, hand-built algorithm</dd>
-    </dl>
-  </section>
-  <a class="stake" href="garden/" id="goGarden">go to your garden</a>
-  <div class="tagwrap">
-    <svg viewBox="0 0 70 60" aria-hidden="true"><path d="M2 2 C 30 10, 40 50, 68 44" fill="none" stroke="#6f7d3c" stroke-width="1.2"/></svg>
-    <div class="tag" id="acct" hidden>
-      <div id="acctOut">
-        <p class="soft">Sign in with your face or fingerprint.</p>
-        <form id="signUp"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="your name" aria-label="Your name, as friends will see it"><button type="submit">New account</button><button type="button" id="signIn">Sign in</button></form>
-      </div>
-      <div id="acctIn" hidden>
-        <p class="soft">Hello, <span id="meName"></span>.</p>
-        <button type="button" id="signOut">Sign out</button>
-      </div>
+<main class="board" id="board">
+  <h1 class="ui name" id="name" aria-label="Selvedge Garden"></h1>
+  <p class="ui say">Drop in what you love. Come back later and see what grew.</p>
+  <a class="ui go" href="garden/" id="goGarden">go to your garden</a>
+  <div class="ui tag" id="acct" hidden>
+    <div id="acctOut">
+      <form id="keyForm"><input type="text" id="keyIn" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="your garden key" aria-label="Your garden key, four words"><button type="submit">In</button></form>
+      <form id="signUp"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="new? your name" aria-label="Your name, as friends will see it"><button type="submit">Make</button></form>
+      <small>A garden key is four words. No passwords, no email.</small>
+    </div>
+    <div id="acctIn" hidden>
+      <p>Hello, <span id="meName"></span>. Your key:</p>
+      <span id="keyLine"></span>
+      <small class="fresh-only">Write it down. It’s how you get back in anywhere.</small>
+      <form style="margin-top:6px"><button type="button" id="signOut">Sign out</button></form>
     </div>
   </div>
+  <section class="ui moving" id="moving" hidden>
+    <h2>Moving house</h2>
+    <p>Selvedge now lives at selvedge.garden.</p>
+    <button type="button" id="carry">Carry it over</button>
+    <p id="carryNote" style="margin:8px 0 0">Hands your garden across, in this browser.</p>
+  </section>
+  <button class="shuffle" type="button" id="again">paste it up again</button>
 </main>
 
-<section class="moving" id="moving" hidden>
-  <h2>Moving house</h2>
-  <p>Selvedge now lives at selvedge.garden.</p>
-  <button type="button" id="carry">Carry it over</button>
-  <p id="carryNote" class="tiny" style="margin-top:8px">Hands your garden across, in this browser.</p>
-</section>
-
-<p class="aside soft">Drop in what you love. Come back later and see what grew.</p>
-
 <section class="catalogue" id="public" hidden>
-  <h2 class="tiny">Other people’s gardens</h2>
+  <h2>Other people’s gardens</h2>
   <div id="gardens"></div>
 </section>
-
-<footer class="tiny">love · change · unity &nbsp;·&nbsp; <a href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">pictures: public domain</a></footer>
+<footer>love · change · unity &nbsp;·&nbsp; <a href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">pictures: public domain &amp; CC0</a></footer>
 <script>
-// a different packet each visit
+// The paste-up. Scraps of every picture and word, cut by hand (well, by dice), stuck down anywhere.
+// Click the ground or press "paste it up again" for a fresh one. Drag any scrap.
 (() => {
-  const pick = a => a[Math.floor(Math.random() * a.length)];
-  const pics = [['cat-eyes', 'center'], ['retina', 'center'], ['astronaut', 'center 30%'], ['providence', 'center 20%'], ['eye-macro', 'center'], ['coffee', 'center'], ['horse', 'center 70%'], ['portrait', 'center 30%'], ['lashes', 'center 40%']];
-  const [img, pos] = pick(pics), w = document.getElementById('window');
-  w.style.setProperty('--img', `url(assets/zine/z-${img}.png)`); w.style.setProperty('--pos', pos);
-  const inks = [['#f4a7bf', '#3a1630'], ['#a9c9a4', '#2b2141'], ['#f2c86b', '#5a1d1d'], ['#b9b4e6', '#2a2a2a'], ['#f39a7c', '#24305e']], [bg, ink] = pick(inks);
-  document.documentElement.style.setProperty('--packet', bg); document.documentElement.style.setProperty('--ink', ink);
-  document.getElementById('lot').textContent = 'No. ' + String(1 + Math.floor(Math.random() * 9999)).padStart(4, '0');
+  const R = Math.random, pick = a => a[Math.floor(R() * a.length)], between = (a, b) => a + R() * (b - a);
+  const PICS = [['astronaut',1.00],['cat-eyes',3.16],['coffee',1.12],['crowd',1.79],['dancers',1.76],['deep-field',1.15],['eye-macro',1.43],['haircut',0.76],['heavens',1.17],['hippies',1.24],['hopper',0.74],['horse',1.22],['lac',0.64],['lash-strip',2.65],['lashes',0.63],['marnac',0.44],['model',0.36],['porthole',1.00],['portrait',0.85],['profile',1.06],['providence',0.97],['radiant',1.47],['retina',1.00],['rings',1.41],['wig',1.00],['gen-3',1],['gen-6',1]];
+  const INKS = ['#24121e', '#24121e', '#24121e', '#e0245e', '#2a3fb0', '#d23b1f', '#3d7a3a', '#7a2a9e'];
+  const PAPERS = ['#fbf5e8', '#fbf5e8', '#f4a7bf', '#c6e36b', '#f6d34f', '#9fd3c7', '#ff7a59', '#b8b2f0', '#ffffff', '#24121e'];
+  const GROUNDS = ['#f4a7bf', '#c6e36b', '#f6d34f', '#ff7a59', '#9fd3c7', '#b8b2f0', '#efe7d6'];
+  const NAME_FONTS = [['Federant', 400], ['Grenze Gotisch', 700], ['Handjet', 600], ['Bonbon', 400], ['Faster One', 400], ['Blush', 400], ['Fraunces', 400]];
+  const FONTS = [['Federant', 400], ['Grenze Gotisch', 700], ['Handjet', 600], ['Bonbon', 400], ['Coral Pixels', 400], ['Faster One', 400], ['Ballet', 400], ['Blush', 400], ['Fraunces', 400]];
+  const WORDS = ['selvedge', 'garden', 'sow', 'later', 'wander', 'wildflowers', 'cuttings', 'allotment', 'perennial', 'come back', 'love', 'moth', 'seed', 'free', 'grow', 'what grew', 'library stacks', 'not muck', 'randomness', 'friends', 'drop it in', 'by hand', 'clunky', 'bloom', 'spores', 'compost', 'nothing working on your attention', 'pressed', 'germinate', 'feral', 'velvet', 'leave it', 'unity', 'change', 'O', '&', '*', '✿', '♥', 'no.', '?'];
+  const board = document.getElementById('board');
+  // a hand-cut edge: wobbly points round a rectangle
+  const cut = () => { const p = [], j = () => between(0, 4).toFixed(1), n = 3 + Math.floor(R() * 5);
+    for (let i = 0; i < n; i++) p.push(`${(i / n * 100).toFixed(1)}% ${j()}%`);
+    for (let i = 0; i < n; i++) p.push(`${100 - j()}% ${(i / n * 100).toFixed(1)}%`);
+    for (let i = 0; i < n; i++) p.push(`${(100 - i / n * 100).toFixed(1)}% ${100 - j()}%`);
+    for (let i = 0; i < n; i++) p.push(`${j()}% ${(100 - i / n * 100).toFixed(1)}%`);
+    return R() < .12 ? 'ellipse(49% 49%)' : R() < .1 ? 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' : `polygon(${p.join(',')})`; };
+  const ink = () => pick(INKS), paper = () => pick(PAPERS);
+  function scrap(W, H) {
+    const [img, ar] = pick(PICS), big = R(), w = big < .04 ? between(.45, .9) * W : big < .45 ? between(.12, .32) * W : big < .85 ? between(.05, .13) * W : between(.02, .05) * W;
+    const crop = R() < .5 ? 1 : between(1.2, 4), h = w / (crop > 1 ? between(.5, 2.2) : ar);
+    const el = document.createElement('div'); el.className = 'bit' + (R() < .45 ? ' multiply' : '');
+    if (w > .4 * W) el.classList.add('multiply');
+    const bare = el.classList.contains('multiply') || R() < .2, bg = bare ? 'transparent' : paper(); let c = w > .3 * W ? pick(INKS.slice(3)) : ink(); if (c === bg) c = '#fbf5e8';
+    el.style.cssText = `width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;--img:url(assets/zine/z-${img}.png);--c:${c};--bg:${bg};--pad:${bare ? 0 : between(3, 9).toFixed(0)}px;--cut:${cut()};--ms:${crop > 1 ? (crop * 100).toFixed(0) + '% auto' : 'cover'};--mp:${between(0, 100).toFixed(0)}% ${between(0, 100).toFixed(0)}%`;
+    el.innerHTML = '<i></i>';
+    return [el, w, h];
+  }
+  function repeat(W) {
+    const [img] = pick(PICS), n = 3 + Math.floor(R() * 5), s = between(.05, .12) * W, row = document.createElement('div'), mp = `${between(0, 100).toFixed(0)}% ${between(0, 100).toFixed(0)}%`, ms = (between(1, 3) * 100).toFixed(0) + '% auto', bg = paper();
+    row.className = 'bit'; row.style.cssText = `width:${(s * n).toFixed(0)}px;height:${s.toFixed(0)}px;display:flex`;
+    for (let k = 0; k < n; k++) { const t = document.createElement('i'); t.style.cssText = `position:relative;flex:1;--img:url(assets/zine/z-${img}.png);--c:${k === n - 2 && R() < .6 ? '#e0245e' : ink()};--bg:${bg};--pad:3px;--ms:${ms};--mp:${mp};${k % 2 && R() < .5 ? 'transform:scaleX(-1)' : ''}`; row.appendChild(t); }
+    return [row, s * n, s];
+  }
+  function word(W) {
+    const [f, wt] = pick(FONTS), t = pick(WORDS), size = R() < .1 ? between(.12, .26) * W : R() < .5 ? between(28, 80) : between(12, 26);
+    const el = document.createElement('span'); el.className = 'word'; el.textContent = t;
+    const bg = R() < .55 ? paper() : 'transparent'; let c = ink(); if (c === bg) c = '#fbf5e8';
+    el.style.cssText = `font:${wt} ${size.toFixed(0)}px/${'.95'} "${f}";color:${c};background:${bg};${R() < .5 ? '--cut:' + cut() : ''}`;
+    return [el, size * t.length * .55, size];
+  }
+  let pieces = [];
+  function pasteUp() {
+    pieces.forEach(p => p.remove()); pieces = [];
+    const ground = pick(GROUNDS); board.style.setProperty('--ground', ground); document.documentElement.style.setProperty('--ground', ground);
+    const W = board.clientWidth, H = board.clientHeight, n = Math.round(W < 700 ? 46 : 84);
+    for (let k = 0; k < n; k++) {
+      const r = R(), [el, w, h] = r < .62 ? scrap(W, H) : r < .72 ? repeat(W) : word(W);
+      const x = between(-.15 * w, W - .85 * w), y = between(-.1 * h, H - .9 * h), rot = R() < .15 ? pick([90, -90, 180]) + between(-4, 4) : between(-28, 28), flip = R() < .25 ? -1 : 1;
+      el.dataset.x = x; el.dataset.y = y; el.dataset.r = rot; el.dataset.f = flip;
+      place(el); el.style.zIndex = Math.floor(R() * 900);
+      board.insertBefore(el, board.firstChild); pieces.push(el);
+    }
+    // the name: each letter cut from somewhere else
+    document.getElementById('name').innerHTML = [...'selvedge'].map(ch => { const [f, wt] = pick(NAME_FONTS), bg = R() < .7 ? paper() : 'transparent'; let c = ink(); if (c === bg) c = '#fbf5e8';
+      return `<span aria-hidden="true" style="font:${wt} ${(between(.1, .16) * Math.min(W, 1400)).toFixed(0)}px '${f}';color:${c};background:${bg};transform:rotate(${between(-12, 12).toFixed(1)}deg) translateY(${between(-10, 10).toFixed(0)}px)">${ch}</span>`; }).join('');
+  }
+  const place = el => { el.style.transform = `translate(${(+el.dataset.x).toFixed(0)}px, ${(+el.dataset.y).toFixed(0)}px) rotate(${(+el.dataset.r).toFixed(1)}deg) scaleX(${el.dataset.f})`; };
+  // drag a scrap about
+  let held = null, sx = 0, sy = 0, top = 1000;
+  board.addEventListener('pointerdown', e => { const el = e.target.closest('.bit, .word'); if (!el) return; held = el; sx = e.clientX; sy = e.clientY; el.classList.add('held'); el.style.zIndex = top++; el.setPointerCapture(e.pointerId); e.preventDefault(); });
+  board.addEventListener('pointermove', e => { if (!held) return; held.dataset.x = +held.dataset.x + e.clientX - sx; held.dataset.y = +held.dataset.y + e.clientY - sy; sx = e.clientX; sy = e.clientY; place(held); held.moved = true; });
+  board.addEventListener('pointerup', () => { if (held) held.classList.remove('held'); setTimeout(() => { if (held) held.moved = false; held = null; }, 0); });
+  board.addEventListener('click', e => { if (e.target === board) pasteUp(); });
+  document.getElementById('again').addEventListener('click', pasteUp);
+  document.fonts && document.fonts.ready.then(() => {});
+  pasteUp();
+  // now and then one scrap is swapped for another, like something growing
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => {
+    if (held || document.hidden) return; const old = pick(pieces); if (!old) return;
+    const W = board.clientWidth, H = board.clientHeight, [el, w, h] = R() < .75 ? scrap(W, H) : word(W);
+    el.dataset.x = old.dataset.x; el.dataset.y = old.dataset.y; el.dataset.r = between(-28, 28); el.dataset.f = 1; place(el); el.style.zIndex = old.style.zIndex;
+    old.replaceWith(el); pieces[pieces.indexOf(old)] = el;
+  }, 2600);
 })();
 </script>
 <script>
@@ -161,7 +202,7 @@ footer { text-align: center; padding: clamp(56px, 10vh, 100px) 16px 26px; }
   // your own print run colours, if you have one
   const name = (() => { try { return (localStorage.getItem('drift-garden-name') || '').trim(); } catch (e) { return ''; } })();
   const mine = jget('drift-garden') || [];
-  $('goGarden').textContent = mine.length ? 'go to your garden' : 'start a garden';
+  $('goGarden').textContent = mine.length ? 'your garden' : 'start a garden';
   (() => { const c = document.createElement('canvas'); c.width = c.height = 200; const g = c.getContext('2d'), d = g.createImageData(200, 200);
     for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 16; }
     g.putImageData(d, 0, 0); document.body.style.setProperty('--grain', `url(${c.toDataURL()})`); })();
@@ -197,7 +238,7 @@ footer { text-align: center; padding: clamp(56px, 10vh, 100px) 16px 26px; }
   }
   if (!HOME) return;
 
-  // ---------- account ----------
+  // ---------- account: a garden key, four words ----------
   let account = jget('drift-garden-account');
   async function api(path, opt = {}) {
     const r = await fetch(API + path, { method: opt.method || 'GET', headers: { ...(account ? { Authorization: 'Bearer ' + account.token } : {}), ...(opt.body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, body: opt.body === undefined ? undefined : JSON.stringify(opt.body) });
@@ -206,24 +247,15 @@ footer { text-align: center; padding: clamp(56px, 10vh, 100px) 16px 26px; }
     if (!r.ok) throw new Error(d.error || 'The garden server didn’t answer');
     return d;
   }
-  const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0)).buffer;
-  const common = c => ({ id: c.id, rawId: b64u(c.rawId), type: c.type, authenticatorAttachment: c.authenticatorAttachment || undefined, clientExtensionResults: c.getClientExtensionResults() });
-  async function make(n) {
-    const { id, options: o } = await api('/auth/register/start', { method: 'POST', body: { name: n } });
-    const c = await navigator.credentials.create({ publicKey: { ...o, challenge: unb64u(o.challenge), user: { ...o.user, id: unb64u(o.user.id) }, excludeCredentials: (o.excludeCredentials || []).map(x => ({ ...x, id: unb64u(x.id) })) } });
-    return api('/auth/register/finish', { method: 'POST', body: { id, response: { ...common(c), response: { clientDataJSON: b64u(c.response.clientDataJSON), attestationObject: b64u(c.response.attestationObject), transports: c.response.getTransports ? c.response.getTransports() : [] } } } });
+  const signedIn = (d, key) => { account = { token: d.token, id: d.user.id, name: d.user.name, key }; jset('drift-garden-account', account); showAcct(); };
+  function showAcct() {
+    $('acct').hidden = false; $('acctOut').hidden = !!account; $('acctIn').hidden = !account;
+    if (account) { $('meName').textContent = account.name; $('keyLine').textContent = account.key || ''; }
   }
-  async function use() {
-    const { id, options: o } = await api('/auth/login/start', { method: 'POST', body: {} });
-    const c = await navigator.credentials.get({ publicKey: { ...o, challenge: unb64u(o.challenge), allowCredentials: [] } });
-    return api('/auth/login/finish', { method: 'POST', body: { id, response: { ...common(c), response: { clientDataJSON: b64u(c.response.clientDataJSON), authenticatorData: b64u(c.response.authenticatorData), signature: b64u(c.response.signature), userHandle: c.response.userHandle ? b64u(c.response.userHandle) : undefined } } } });
-  }
-  const oops = e => toast(e && (e.name === 'NotAllowedError' || e.name === 'AbortError') ? 'Passkey cancelled' : (e && e.message) || 'That didn’t work');
-  const signedIn = d => { account = { token: d.token, id: d.user.id, name: d.user.name }; jset('drift-garden-account', account); showAcct(); toast('Welcome, ' + account.name); };
-  function showAcct() { $('acct').hidden = false; $('acctOut').hidden = !!account; $('acctIn').hidden = !account; if (account) $('meName').textContent = account.name; }
-  $('signIn').addEventListener('click', async () => { try { signedIn(await use()); } catch (e) { oops(e); } });
-  $('signUp').addEventListener('submit', async e => { e.preventDefault(); const n = $('signUpName').value.trim(); if (!n) { $('signUpName').focus(); return; } try { signedIn(await make(n)); } catch (err) { oops(err); } });
+  $('keyForm').addEventListener('submit', async e => { e.preventDefault(); const k = $('keyIn').value.toLowerCase().replace(/[^a-z]+/g, ' ').trim(); if (!k) { $('keyIn').focus(); return; }
+    try { signedIn(await api('/auth/key', { method: 'POST', body: { key: k } }), k); toast('Welcome back, ' + account.name); } catch (err) { toast(err.message); } });
+  $('signUp').addEventListener('submit', async e => { e.preventDefault(); const n = $('signUpName').value.trim(); if (!n) { $('signUpName').focus(); return; }
+    try { const d = await api('/auth/key/new', { method: 'POST', body: { name: n } }); signedIn(d, d.key); $('acctIn').classList.add('fresh'); } catch (err) { toast(err.message); } });
   $('signOut').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST', body: {} }); } catch (e) {} account = null; jset('drift-garden-account', null); showAcct(); toast('Signed out'); });
   showAcct();
 
