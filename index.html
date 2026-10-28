@@ -319,7 +319,7 @@ a.btn { text-decoration: none; display: inline-block; }
     <h2 id="lovesTitle">Seed kit</h2>
     <label for="lovesText">Things you love, one per line: people, places, films, books, words, anything</label>
     <textarea id="lovesText" rows="7" placeholder="Kate Bush&#10;moths&#10;Agnès Varda&#10;Piha"></textarea>
-    <p class="hint">Scatter the kit and a few seeds take root as plants: the real thing when it can be found, or just the word. Tap one seed to plant that one. Wildflowers then grow from words in the plants around them.</p>
+    <p class="hint">Scatter the kit and a few seeds grow: each becomes a surprise find for that seed, from photographs, poems, nature, music, books and more. Tap one seed to grow just that one. Wildflowers then grow from words in the plants around them.</p>
     <div class="kitSeeds" id="kitSeeds"></div>
     <div class="row"><button class="link" type="button" id="lovesCancel">Close</button><button class="link" type="submit">Keep the kit</button><button class="btn" type="button" id="scatterBtn">Scatter seeds ✿</button></div>
   </form>
@@ -737,7 +737,7 @@ a.btn { text-decoration: none; display: inline-block; }
     if (p.img) {
       el.className = 'plant pic' + (p.w >= 500 ? ' wide' : '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const capt = p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '';
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : p.seed ? `<span class="wildtag">\u273f From your seed kit</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + ownNote + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : p.seed ? `<span class="wildtag">${esc('\u273f Grown from \u201c' + p.seed + '\u201d' + (p.seedFrom ? ' \u00b7 ' + p.seedFrom : ''))}</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + ownNote + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     } else {
       el.className = 'plant word ' + (p.embed ? 'has-embed ' : '') + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const by = p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '';
@@ -745,7 +745,7 @@ a.btn { text-decoration: none; display: inline-block; }
       const body = p.embed ? playerHTML(p.embed) + duoText('h3', jitter(p.title || p.embed.kind, seedOf(p.id)), sc) + by + (p.note ? `<p>${esc(p.note)}</p>` : '') : p.set === 'quote'
         ? duoText('span', '<span class="mark">\u201c</span>' + jitter(p.note, seedOf(p.id)), 'pull ' + sc) + `<span class="src">${esc(p.title)}</span>` + by
         : duoText('h3', jitter(p.title || p.note, seedOf(p.id), p.set === 'drop'), sc) + by + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : p.seed ? `<span class="wildtag">\u273f From your seed kit</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.embed ? `<span class="host">\u266b ${esc(p.embed.kind)}</span>` : p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : p.seed ? `<span class="wildtag">${esc('\u273f Grown from \u201c' + p.seed + '\u201d' + (p.seedFrom ? ' \u00b7 ' + p.seedFrom : ''))}</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.embed ? `<span class="host">\u266b ${esc(p.embed.kind)}</span>` : p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     }
     if (p.example) el.insertAdjacentHTML('beforeend', '<span class="ex">Example</span>');
     return el;
@@ -795,7 +795,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
   function plant(data, near, animate) {
     const p = { id: Math.random().toString(36).slice(2, 10), no: nextNo(), title: data.title || '', note: data.note || '', img: data.img || null, ar: data.ar || 1, link: data.link || null, example: !!data.example, wild: data.wild || null };
-    if (data.seed) p.seed = data.seed;
+    if (data.seed) { p.seed = data.seed; p.seedFrom = data.seedFrom || ''; }
     if (data.borrow) { p.borrow = data.borrow; p.set = 'borrowed'; }
     if (data.embed) { p.embed = data.embed; p.set = 'plain'; }
     let span;
@@ -1053,7 +1053,8 @@ a.btn { text-decoration: none; display: inline-block; }
   const STOP = new Set(('a about above after again against all almost also always am among an and another any anything are around as at away back be because been before being below between both but by came can cannot could did do does doing done down during each else even ever every everything few find first for found from further get gets getting give go goes going gone good got great had has have having he her here hers herself him himself his how however i if in into is it its itself just keep kept know last least less like little lot lots love loved made make makes making many may me might mine more most much must my myself near need never new next nice no nobody none nor not nothing now of off often oh ok okay old on once one only onto or other others our ours out over own part people perhaps place put quite rather really right said same saw say see seem seems she should since so some something sometimes soon still such sure take than that the their theirs them then there these they thing things think this those though through thing to today too took toward under until up upon us use used very via want was way we week weeks well went were what when where whether which while who whole whom why will with within without would year years yes yet you your yours yourself feel feels felt time times day days today tonight morning evening into onto been which made makes happy whole point wander around garden here this there their also every').split(' '));
   function wordsOf(p) {
     const seen = new Set();
-    return ((p.title || '') + ' ' + (p.note || '')).toLowerCase().replace(/[’']/g, '').split(/[^\p{L}\p{N}-]+/u)
+    // a grown seed's note is mostly source details ("A photograph by… via flickr"), so it gives its title and the seed instead
+    return ((p.title || '') + ' ' + (p.seed ? p.seed : (p.note || ''))).toLowerCase().replace(/[’']/g, '').split(/[^\p{L}\p{N}-]+/u)
       .map(w => w.replace(/^-+|-+$/g, '')).filter(w => w.length >= 4 && !/^\d+$/.test(w) && !STOP.has(w) && !seen.has(w) && seen.add(w));
   }
   const stem = w => w.replace(/ies$/, 'y').replace(/(ing|ed|es|s)$/, '');
@@ -1096,65 +1097,102 @@ a.btn { text-decoration: none; display: inline-block; }
   // the address of the eBay relay (a Cloudflare Worker, see worker/README.md). Empty means no eBay wildflowers.
   const EBAY_RELAY = 'https://broken-unit-4a4d.caitkneller.workers.dev/';
   const LIVE = [
-    { name: 'the Art Institute of Chicago', async find(q) {
+    { name: 'the Art Institute of Chicago', fam: 'museum', async find(q) {
       const d = await getJSON('https://api.artic.edu/api/v1/artworks/search?q=' + encodeURIComponent(q) + '&limit=12&fields=id,title,artist_display,date_display,image_id,is_public_domain,thumbnail');
       return (d.data || []).filter(x => x.image_id && x.is_public_domain).map(x => ({
         title: x.title, note: [strip(x.artist_display).split('\n')[0], x.date_display].filter(Boolean).join(', '),
         img: 'https://www.artic.edu/iiif/2/' + x.image_id + '/full/600,/0/default.jpg', href: 'https://www.artic.edu/artworks/' + x.id,
         ar: x.thumbnail && x.thumbnail.width ? x.thumbnail.height / x.thumbnail.width : 0 })); } },
-    { name: 'The Met', async find(q) {
+    { name: 'The Met', fam: 'museum', async find(q) {
       const d = await getJSON('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=' + encodeURIComponent(q));
       const ids = (d.objectIDs || []).slice(0, 30).sort(() => Math.random() - .5).slice(0, 4);
       const objs = await Promise.all(ids.map(id => getJSON('https://collectionapi.metmuseum.org/public/collection/v1/objects/' + id).catch(() => null)));
       return objs.filter(o => o && o.primaryImageSmall && o.title).map(o => ({
         title: o.title, note: [o.artistDisplayName, o.objectDate, o.department].filter(Boolean).join(', '),
         img: o.primaryImageSmall, href: o.objectURL || ('https://www.metmuseum.org/art/collection/search/' + o.objectID) })); } },
-    { name: 'Wikipedia', async find(q) {
+    { name: 'Wikipedia', fam: 'words', async find(q) {
       const d = await getJSON('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=0&gsrlimit=8&gsrsearch=' + encodeURIComponent(q) + '&prop=pageimages|extracts|info&inprop=url&exintro=1&explaintext=1&exsentences=2&pithumbsize=600');
       return Object.values((d.query && d.query.pages) || {}).sort((x, y) => x.index - y.index).filter(p => p.extract && !/may refer to/.test(p.extract)).map(p => ({
         title: p.title, note: p.extract, img: p.thumbnail ? p.thumbnail.source : null, href: p.fullurl || ('https://en.wikipedia.org/?curid=' + p.pageid),
         ar: p.thumbnail ? p.thumbnail.height / p.thumbnail.width : 0 })); } },
-    { name: 'the Cleveland Museum of Art', async find(q) {
+    { name: 'the Cleveland Museum of Art', fam: 'museum', async find(q) {
       const d = await getJSON('https://openaccess-api.clevelandart.org/api/artworks/?q=' + encodeURIComponent(q) + '&has_image=1&cc0=1&limit=12');
       return (d.data || []).filter(x => x.images && x.images.web && x.images.web.url).map(x => ({
         title: x.title, note: [((x.creators || [])[0] || {}).description, x.creation_date].filter(Boolean).join(', '),
         img: x.images.web.url, href: x.url || ('https://www.clevelandart.org/art/' + x.accession_number),
         ar: x.images.web.width ? x.images.web.height / x.images.web.width : 0 })); } },
-    { name: 'the V&A', async find(q) {
+    { name: 'the V&A', fam: 'museum', async find(q) {
       const d = await getJSON('https://api.vam.ac.uk/v2/objects/search?q=' + encodeURIComponent(q) + '&images_exist=1&page_size=12');
       return (d.records || []).filter(x => x._images && x._images._iiif_image_base_url).map(x => ({
         title: x._primaryTitle || x.objectType || 'Untitled', note: [x._primaryTitle ? x.objectType : '', (x._primaryMaker || {}).name, x._primaryDate].filter(Boolean).join(', '),
         img: x._images._iiif_image_base_url + 'full/600,/0/default.jpg', href: 'https://collections.vam.ac.uk/item/' + x.systemNumber + '/' })); } },
-    { name: 'Open Library', async find(q) {
+    { name: 'Open Library', fam: 'books', async find(q) {
       const d = await getJSON('https://openlibrary.org/search.json?q=' + encodeURIComponent(q) + '&limit=12&fields=key,title,author_name,first_publish_year,cover_i');
       return (d.docs || []).filter(x => x.title).map(x => ({
         title: x.title, note: ['A book' + (x.author_name ? ' by ' + x.author_name.slice(0, 2).join(' and ') : ''), x.first_publish_year].filter(Boolean).join(', '),
         img: x.cover_i ? 'https://covers.openlibrary.org/b/id/' + x.cover_i + '-L.jpg' : null, href: 'https://openlibrary.org' + x.key })); } },
-    { name: 'Wikimedia Commons', async find(q) {
+    { name: 'Wikimedia Commons', fam: 'pictures', async find(q) {
       const d = await getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=' + encodeURIComponent(q + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=600');
       return Object.values((d.query && d.query.pages) || {}).sort((x, y) => x.index - y.index).map(p => ({ p, i: (p.imageinfo || [])[0] })).filter(o => o.i && o.i.thumburl).map(({ p, i }) => {
         const md = i.extmetadata || {}, val = k => strip(md[k] && md[k].value);
         return { title: (val('ObjectName') || p.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ')).slice(0, 120),
           note: [val('ImageDescription').slice(0, 300), val('Artist')].filter(Boolean).join(' \u2014 '), img: i.thumburl, href: i.descriptionurl,
           ar: i.thumbwidth ? i.thumbheight / i.thumbwidth : 0 }; }); } },
-    { name: 'the Internet Archive', async find(q) {
+    { name: 'the Internet Archive', fam: 'books', async find(q) {
       const d = await getJSON('https://archive.org/advancedsearch.php?q=' + encodeURIComponent('(' + q + ') AND mediatype:(texts OR movies OR audio OR image)') + '&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=year&fl[]=mediatype&rows=12&output=json');
       const kind = { texts: 'Text', movies: 'Film', audio: 'Sound', image: 'Image' };
       return ((d.response && d.response.docs) || []).filter(x => x.title).map(x => ({
         title: String(x.title).slice(0, 120), note: [kind[x.mediatype], [].concat(x.creator || [])[0], x.year].filter(Boolean).join(', '),
         img: 'https://archive.org/services/img/' + x.identifier, href: 'https://archive.org/details/' + x.identifier })); } },
+    // beyond the museums: photographs and sounds anyone can share (Openverse), nature sightings (iNaturalist), poems, DJ mixes and Are.na
+    { name: 'Openverse', fam: 'pictures', async find(q) {
+      const d = await getJSON('https://api.openverse.org/v1/images/?page_size=20&mature=false&q=' + encodeURIComponent(q));
+      return (d.results || []).filter(x => x.title && (x.thumbnail || x.url)).map(x => ({
+        title: String(x.title).slice(0, 120), note: ['A photograph' + (x.creator ? ' by ' + x.creator : ''), x.source ? 'via ' + x.source.replace(/_/g, ' ') : ''].filter(Boolean).join(', '),
+        img: x.thumbnail || x.url, href: x.foreign_landing_url || x.url, ar: x.width ? x.height / x.width : 0 })); } },
+    { name: 'iNaturalist', fam: 'nature', async find(q) {
+      const d = await getJSON('https://api.inaturalist.org/v1/observations?photos=true&quality_grade=research&order_by=votes&per_page=20&q=' + encodeURIComponent(q));
+      return (d.results || []).filter(x => x.taxon && x.photos && x.photos[0]).map(x => ({
+        title: x.taxon.preferred_common_name ? x.taxon.preferred_common_name.replace(/^./, c => c.toUpperCase()) : x.taxon.name,
+        note: [x.taxon.preferred_common_name ? x.taxon.name : '', x.place_guess, x.observed_on, x.user && x.user.login ? 'seen by ' + x.user.login : ''].filter(Boolean).join(', '),
+        img: x.photos[0].url.replace('/square.', '/medium.'), href: x.uri || ('https://www.inaturalist.org/observations/' + x.id) })); } },
+    { name: 'poems', fam: 'words', async find(q) {
+      const w = q.split(' ').sort((a, b) => b.length - a.length)[0];
+      const d = await getJSON('https://poetrydb.org/lines/' + encodeURIComponent(w));
+      if (!Array.isArray(d)) return [];
+      return d.filter(x => x.title && x.lines).slice(0, 40).sort(() => Math.random() - .5).slice(0, 12).map(x => {
+        const i = Math.max(0, x.lines.findIndex(l => l.toLowerCase().includes(w.toLowerCase())));
+        return { title: x.title, note: x.lines.slice(i, i + 4).filter(Boolean).join(' / ') + ' — ' + x.author, href: 'https://poetrydb.org/title/' + encodeURIComponent(x.title) + '/lines.text' }; }); } },
+    { name: 'Mixcloud', fam: 'sound', async find(q) {
+      const url = 'https://api.mixcloud.com/search/?type=cloudcast&limit=15&q=' + encodeURIComponent(q);
+      let d; try { d = await getJSON(url); } catch (e) { d = await jsonp(url); }
+      return (d.data || []).filter(x => x.name && x.url).map(x => ({
+        title: x.name, note: ['A mix' + (x.user && x.user.name ? ' by ' + x.user.name : ''), (x.created_time || '').slice(0, 4)].filter(Boolean).join(', '),
+        img: x.pictures && (x.pictures.extra_large || x.pictures.large) || null, href: x.url })); } },
+    { name: 'sounds on Openverse', fam: 'sound', async find(q) {
+      const d = await getJSON('https://api.openverse.org/v1/audio/?page_size=15&mature=false&q=' + encodeURIComponent(q));
+      return (d.results || []).filter(x => x.title && x.foreign_landing_url).map(x => ({
+        title: String(x.title).slice(0, 120), note: ['A sound' + (x.creator ? ' by ' + x.creator : ''), x.source ? 'via ' + x.source.replace(/_/g, ' ') : ''].filter(Boolean).join(', '),
+        img: x.thumbnail || null, href: x.foreign_landing_url })); } },
+    { name: 'Are.na', fam: 'pictures', async find(q) {
+      const d = await getJSON('https://api.are.na/v2/search/blocks?per=20&q=' + encodeURIComponent(q));
+      return (d.blocks || []).filter(x => (x.title || x.generated_title) && (x.image || x.content || x.description)).map(x => ({
+        title: String(x.title || x.generated_title).slice(0, 120), note: strip(x.description || x.content || '').slice(0, 280) || ('From ' + (x.user && x.user.full_name ? x.user.full_name + '’s' : 'an') + ' Are.na channel'),
+        img: x.image && x.image.display ? x.image.display.url : null, href: 'https://www.are.na/block/' + x.id })); } },
     // songs: Apple's open song search (no key); the one that grows is turned into a Spotify player when song.link can match it, otherwise an Apple Music player
-    { name: 'songs', async find(q) {
+    { name: 'songs', fam: 'sound', async find(q) {
       const url = 'https://itunes.apple.com/search?media=music&entity=song&limit=15&term=' + encodeURIComponent(q);
       let d; try { d = await getJSON(url); } catch (e) { d = await jsonp(url); }
       return (d.results || []).filter(x => x.trackViewUrl && x.trackName).map(x => ({
         title: x.trackName, note: [x.artistName, x.collectionName, (x.releaseDate || '').slice(0, 4)].filter(Boolean).join(', '),
         href: x.trackViewUrl.replace(/[?&]uo=\d+/, ''), song: true })); } },
     // eBay listings, through the garden's own relay (see worker/README.md); left out until the relay's address is set
-    ...(EBAY_RELAY ? [{ name: 'eBay', async find(q) {
+    ...(EBAY_RELAY ? [{ name: 'eBay', fam: 'shops', async find(q) {
       const d = await getJSON(EBAY_RELAY + '?q=' + encodeURIComponent(q));
       return (d.items || []).map(x => ({ title: x.title, note: [x.price, x.condition].filter(Boolean).join(' \u00b7 '), img: x.img, href: x.href })); } }] : []),
   ];
+  // museums are many and the rest are few: each family (museums, words, books, pictures, nature, sound, shops) gets an equal turn
+  const famSize = LIVE.reduce((o, x) => (o[x.fam] = (o[x.fam] || 0) + 1, o), {});
   function jsonp(url, ms = 8000) {
     return new Promise((ok, no) => {
       const cb = 'dg' + Math.random().toString(36).slice(2), sc = document.createElement('script');
@@ -1226,7 +1264,7 @@ a.btn { text-decoration: none; display: inline-block; }
       // fair rotation: a source that has already given lots of wildflowers is less likely to go first; kept ones get a gentle boost
       const given = {}; plants.forEach(p => { if (p.wild && p.wild.source) given[p.wild.source] = (given[p.wild.source] || 0) + 1; });
       const bedLikes = {}; if (bed) beds[bed].forEach(m => { if (m.wild.source) bedLikes[m.wild.source] = (bedLikes[m.wild.source] || 0) + 1; });
-      const sources = LIVE.map(x => ({ x, k: Math.random() ** (1 / ((1 + (bedLikes[x.name] || 0)) * tasteS(x.name) / (1 + (given[x.name] || 0) * .8) / (1 + (failed[x.name] || 0) * 4))) })).sort((p, q) => q.k - p.k).map(o => o.x).slice(0, 5);
+      const sources = LIVE.map(x => ({ x, k: Math.random() ** (1 / ((1 + (bedLikes[x.name] || 0)) * tasteS(x.name) / famSize[x.fam] / (1 + (given[x.name] || 0) * .8) / (1 + (failed[x.name] || 0) * 4))) })).sort((p, q) => q.k - p.k).map(o => o.x).slice(0, 5);
       let found = null;
       outer: for (const words of tries) for (const src of sources) {
         let res; try { res = await src.find(words.join(' ')); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
@@ -1393,7 +1431,7 @@ a.btn { text-decoration: none; display: inline-block; }
   const lovesLabel = () => lovesBtn.textContent = '\u00b7 Seed kit' + (loves.length ? ' (' + loves.length + ')' : '');
   lovesLabel();
   const kitText = document.getElementById('lovesText'), kitSeeds = document.getElementById('kitSeeds'), scatterBtn = document.getElementById('scatterBtn');
-  const sownSeeds = () => new Set(plants.filter(p => p.seed).map(p => p.seed.toLowerCase()));
+  const sownSeeds = () => new Set(plants.filter(p => p.seed && (p.link || p.img || p.embed)).map(p => p.seed.toLowerCase()));
   const readKit = () => { const seen = new Set(); return kitText.value.split('\n').map(t => t.trim()).filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase())).slice(0, 200); };
   function keepKit() { loves = readKit(); try { localStorage.setItem(LOVES_KEY, JSON.stringify(loves)); } catch (err) {} lovesLabel(); }
   function showKit() {
@@ -1405,30 +1443,39 @@ a.btn { text-decoration: none; display: inline-block; }
   kitText.addEventListener('blur', keepKit);
   let kitWait; kitText.addEventListener('input', () => { clearTimeout(kitWait); kitWait = setTimeout(() => { keepKit(); showKit(); }, 500); });
   let sowing = false;
-  // a seed takes root as a plant: the thing itself when a source has it, something close, or else just the word
+  // a seed grows a surprise: something a source turned up for that seed, picked at random from what it found, never just the word
   async function sowSeed(t, at) {
-    const m = await findMatch(t, null, usedHrefs());
-    let data;
-    if (m && m.c >= .5) {
-      const r = m.r;
-      if (r.img) { try { const im = await loadImg(r.img); r.ar = im.naturalHeight / im.naturalWidth; } catch (e) { r.img = null; } }
-      data = { title: r.title, note: r.note, link: r.href, seed: t };
-      if (r.song) { const e = await songPlayer(r); if (e) Object.assign(data, { embed: { kind: e.kind, src: e.src, h: e.h, ar: e.ar }, kind: 'narrow', span: 2 }); else data.kind = 'narrow'; }
-      else if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) });
-    } else data = { title: t, seed: t };
+    const used = usedHrefs(), srcs = LIVE.map(x => ({ x, k: Math.random() ** (famSize[x.fam] * (1 + (failed[x.name] || 0) * 4)) })).sort((p, q) => q.k - p.k).map(o => o.x).slice(0, 7);
+    let got = null;
+    for (const src of srcs) {
+      let res; try { res = await src.find(t); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
+      res = res.filter(r => r.title && !used.has(r.href) && !looksLikeWeed(r) && norm(r.title) !== norm(t));
+      if (!res.length) continue;
+      // things that carry the seed's wording first, then any of the first handful, at random
+      const near = res.filter(r => closeness(t, r) >= .5), pool = (near.length ? near : res).slice(0, 8);
+      got = { r: pick(pool), src }; break;
+    }
+    if (!got) return null;
+    const { r, src } = got;
+    if (r.img) { try { const im = await loadImg(r.img); r.ar = im.naturalHeight / im.naturalWidth; } catch (e) { r.img = null; } }
+    const data = { title: r.title, note: r.note, link: r.href, seed: t, seedFrom: src.name };
+    if (r.song) { const e = await songPlayer(r); if (e) Object.assign(data, { embed: { kind: e.kind, src: e.src, h: e.h, ar: e.ar }, kind: 'narrow', span: 2 }); else data.kind = 'narrow'; }
+    else if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) });
+    else data.kind = r.title.length > 70 ? '' : 'narrow';
     const p = plant(data, at, true); save(); return p;
   }
   async function scatter(seeds) {
     if (sowing || !seeds.length) return;
     sowing = true; scatterBtn.disabled = true; closeSheets();
-    const c = viewCentre(); let lastP = null;
+    const c = viewCentre(); let lastP = null, grew = 0; const missed = [];
     try {
       for (let i = 0; i < seeds.length; i++) {
         toast(seeds.length > 1 ? 'Sowing ' + (i + 1) + ' of ' + seeds.length + ': \u201c' + seeds[i] + '\u201d' : 'Sowing \u201c' + seeds[i] + '\u201d');
         const ang = Math.random() * Math.PI * 2, d = seeds.length > 1 ? 200 + Math.random() * 500 : 0;
-        lastP = await sowSeed(seeds[i], { x: c.x + Math.cos(ang) * d, y: c.y + Math.sin(ang) * d * .7 });
+        const p = await sowSeed(seeds[i], { x: c.x + Math.cos(ang) * d, y: c.y + Math.sin(ang) * d * .7 });
+        if (p) { lastP = p; grew++; } else missed.push(seeds[i]);
       }
-      toast(seeds.length > 1 ? seeds.length + ' seeds took root' : 'It took root');
+      toast(missed.length ? (grew ? grew + ' grew. ' : '') + 'Nothing came up for \u201c' + missed.join('\u201d, \u201c') + '\u201d just now. Try again later' : grew > 1 ? grew + ' seeds grew' : 'It grew');
       if (lastP) setTimeout(() => centreOn(lastP), 60);
     } finally { sowing = false; scatterBtn.disabled = false; }
   }
@@ -1464,7 +1511,7 @@ a.btn { text-decoration: none; display: inline-block; }
   // terms: [{ t, echo? }]. Loves take an exact match, else something close. Echoes must be very close, or nothing sprouts.
   // the best match a few sources have for a term: an exact one if possible, else the closest
   async function findMatch(t, from, used) {
-    const srcs = LIVE.slice().sort(() => Math.random() - .5).sort((x, y) => (failed[x.name] || 0) - (failed[y.name] || 0)).slice(0, 5);
+    const srcs = LIVE.map(x => ({ x, k: Math.random() ** (famSize[x.fam] * (1 + (failed[x.name] || 0) * 4)) })).sort((p, q) => q.k - p.k).map(o => o.x).slice(0, 5);
     let close = null;
     for (const src of srcs) {
       let res; try { res = await src.find(t); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }

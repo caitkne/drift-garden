@@ -34,6 +34,8 @@ Every third thing you plant (or whenever you press **✿ Wildflower**), the gard
 - [Open Library](https://openlibrary.org/developers/api)
 - [Internet Archive](https://archive.org/advancedsearch.php)
 
+Beyond the museums, wildflowers and seeds also come from Openverse (openly licensed photographs and sounds), iNaturalist (nature sightings), PoetryDB (poems), Mixcloud (DJ mixes) and Are.na. Sources are grouped into families (museums, words, books, pictures, nature, sound, shops) and each family gets an equal turn, so the four museums don't crowd out everything else.
+
 Sources take turns: one that has already given lots of wildflowers is less likely to go first, and one that fails is tried last.
 
 It plants one result as a card, with its picture, and links to the source. To keep a wildflower you give it a label, and each label becomes a **bed**. Most new wildflowers grow for a bed (bigger beds more often): the bed's label is always one of the search words, paired with something you planted (or a word from the bed's wildflowers), the sources the bed already holds are tried first, and the new one sprouts beside the bed. Kept wildflowers drift over to join their bed. Pull one up and it goes on the **weed pile**: it never sprouts again, results that share its words are passed over, and its source grows less often. You can forgive a weed from the pile. If those can't be reached, it picks from a small hand-gathered seed bank of articles from culture, film, literature, museum and archive sites.
@@ -42,7 +44,7 @@ No AI runs anywhere in the garden. Matching is plain keyword search.
 
 ### Seed kit
 
-A new garden opens with its **seed kit** (top left): things you love, one per line. **Scatter seeds** sows three to five of them at random as plants. Each one takes root as the real thing when a source has it (an exact or close match), or as just the word when nothing does. Tap a single seed to plant that one. Sown seeds are marked in the kit and count as things you planted, so their words feed the wildflowers around them.
+A new garden opens with its **seed kit** (top left): things you love, one per line. **Scatter seeds** grows three to five of them at random. Each seed grows a surprise: something one source turned up for it, picked at random from what it found, never just the word. Tap a single seed to grow that one. Grown seeds are marked in the kit and count as things you planted, so they feed the wildflowers around them.
 
 ## The studio
 
