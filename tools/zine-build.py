@@ -47,3 +47,10 @@ for k, (src, box, mode, w, cell) in JOBS.items():
     pal = Image.new('P', ink.size); pal.putpalette([0, 0, 0, 255, 255, 255]); pal.putdata([0 if v == 0 else 1 for v in ink.get_flattened_data()])
     pal.save(O + 'z-' + k + '.png', optimize=True, transparency=1)
     print(k, out.size)
+
+# a galloping pair for the frieze: the horse and its mirror image
+from PIL import ImageOps
+h = Image.open(O + 'z-horse.png').convert('L'); W, H = h.size; pad = 40
+pair = Image.new('L', (2 * W + 2 * pad, H), 255); pair.paste(h, (pad // 2, 0)); pair.paste(ImageOps.mirror(h), (W + pad + pad // 2, 0))
+pal = Image.new('P', pair.size); pal.putpalette([0, 0, 0, 255, 255, 255]); pal.putdata([0 if v < 128 else 1 for v in pair.getdata()])
+pal.save(O + 'z-horse-pair.png', optimize=True, transparency=1)
