@@ -1,0 +1,13 @@
+# Only for deploying from the command line or testing locally (npx wrangler dev). The dashboard route doesn't use this file.
+name = "drift-garden-api"
+main = "../garden-api.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "drift-garden"
+database_id = "replace-with-your-d1-database-id"
+
+[[kv_namespaces]]
+binding = "GARDENS"
+id = "replace-with-your-kv-namespace-id"

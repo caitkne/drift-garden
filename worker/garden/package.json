@@ -1,0 +1,6 @@
+{
+  "name": "drift-garden-api",
+  "private": true,
+  "scripts": { "build": "esbuild api.js --bundle --format=esm --platform=browser --target=es2022 --minify --outfile=../garden-api.js" },
+  "devDependencies": { "@simplewebauthn/server": "^13.0.0", "esbuild": "^0.24.0" }
+}

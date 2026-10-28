@@ -56,6 +56,10 @@ While **Studio on** (top left), the studio re-sets one piece you can see every 6
 
 The studio has one more layout: **its own style**. A picture lends its own colours, counted the same way. A webpage lends the colours of its main picture and its heading font. If the page uses a Google font, that exact font is used. Licensed fonts can't be copied, so a free font of the same kind stands in (Jost for geometric sans like Futura, Inter Tight for grotesques like Helvetica, EB Garamond or Playfair for serifs, and so on), and the piece says what it's standing in for. New pieces start in their own style. The webpage lookup uses Microlink, which allows about 50 lookups a day.
 
+## Accounts, allotments and cuttings
+
+Once the garden's account server is running (see [worker/README.md](worker/README.md)), a **Sign in** button appears at the top. Sign in with a passkey (no passwords, no email), save your garden to your account (changes follow it there), and open it on another device. Start an **allotment**, plant your garden in it and send friends an invite link. **Visit** shows every garden planted there, one under another with its sign. While visiting, nothing you do touches your own garden. Open any of their plants and **take a cutting**: a copy goes home with you and is planted when you get back, marked with whose garden it came from.
+
 ## eBay wildflowers
 
 eBay listings grow as wildflowers through the garden's eBay relay (a small free Cloudflare Worker that keeps the eBay key private). Setup steps are in [worker/README.md](worker/README.md). Until its address is set in `EBAY_RELAY`, there are no eBay wildflowers.
