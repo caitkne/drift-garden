@@ -121,6 +121,8 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .inkBar i { display: block; height: 100%; position: relative; min-width: 3px; }
 .inkBar i b { position: absolute; top: 100%; left: 0; font: 500 10px/1.6 var(--mono); color: var(--ink); }
 .inkFound { padding-bottom: 14px; }
+.inkBright { display: flex; gap: 10px; align-items: center; text-transform: none; letter-spacing: 0; font: 400 13px/1.4 var(--mono); color: var(--ink); cursor: pointer; }
+.inkBright input { width: 18px; height: 18px; accent-color: var(--blue); }
 .fontTry { display: grid; gap: 10px; font: 400 12px/1.5 var(--mono); }
 .fontTry summary { cursor: pointer; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--blue); }
 .fontTry[open] { padding-bottom: 6px; }
@@ -302,6 +304,7 @@ a.btn { text-decoration: none; display: inline-block; }
     <label for="inkWord">Your word</label>
     <input type="text" id="inkWord" maxlength="40" autocomplete="off" placeholder="pansies">
     <div class="inkPreview" id="inkPreview"><b id="inkSample">pansies</b><span id="inkHex"></span></div>
+    <label class="inkBright" id="inkBrightRow" hidden><input type="checkbox" id="inkBright"> Push the colours brighter (same hues, acid strength)</label>
     <div class="inkFound" id="inkFound" hidden><div class="inkThumbs" id="inkThumbs"></div><div class="inkBar" id="inkBar"></div></div>
     <ul class="inkWhy" id="inkWhy"></ul>
     <details class="fontTry">
@@ -1392,7 +1395,20 @@ a.btn { text-decoration: none; display: inline-block; }
     const tot = ink.bins.reduce((t, b) => t + b.share, 0);
     document.getElementById('inkBar').innerHTML = ink.bins.map((b, i) => `<i style="background:${b.hex};flex:${(b.share / tot).toFixed(4)}${b.grey ? ';background-image:repeating-linear-gradient(45deg,transparent 0 4px,rgba(0,0,0,.08) 4px 8px)' : ''}" title="${b.grey ? 'greys and whites' : b.hex} \u00b7 ${Math.round(b.share * 100)}%">${i < 3 || b.grey ? `<b>${b.grey ? 'greys set aside' : Math.round((b.pct || b.share) * 100) + '%'}</b>` : ''}</i>`).join('');
   }
+  // "brighter": each ink keeps its hue, moves into the acid lightness band (0.6 to 0.8), and takes nearly the strongest colour a screen can show there.
+  // The anchor stays if it still reads on both, otherwise it is pushed darker or lighter until it does.
+  function brighten(ink) {
+    if (!ink || ink.from !== 'pictures') return ink;
+    const up = hx => { let [L, C, h] = labLch(hexLab(hx)); L = Math.max(.6, Math.min(.8, L)); return lchHex(L, Math.max(C, maxC(L, h) * .95), h); };
+    const A = up(ink.A), B = up(ink.B); let F = ink.F;
+    if (contrast(A, F) < 4.5 || contrast(B, F) < 4.5) { const [L, C, h] = labLch(hexLab(F)), dir = -1; for (let l = L; l >= 0 && l <= 1; l += dir * .02) { const T = lchHex(l, C, h); F = T; if (contrast(A, T) >= 4.5 && contrast(B, T) >= 4.5) break; } }
+    return { ...ink, A, B, F, why: [...ink.why, 'Then both inks kept their hues but were lifted into the acid band, as strong as a screen can show them'] };
+  }
+  const inkBright = document.getElementById('inkBright');
+  inkBright.addEventListener('change', () => { const w = inkWant || inkWord.value.trim(); const c = picInks.get((w || '').toLowerCase()); if (c) c.then(ink => ink && paintInk(w, ink)); });
   function paintInk(w, ink, note) {
+    document.getElementById('inkBrightRow').hidden = !ink || ink.from !== 'pictures';
+    if (inkBright.checked) ink = brighten(ink);
     const why = document.getElementById('inkWhy'); why.innerHTML = '';
     document.getElementById('inkSample').textContent = w;
     if (!ink) { document.getElementById('inkHex').textContent = note || 'Try a word with letters in it'; showFound(null); return; }
@@ -1413,14 +1429,15 @@ a.btn { text-decoration: none; display: inline-block; }
   }
   const inkFallback = new Map();
   async function inkFor(w) { return (await inksFromPictures(w)) || inkFallback.get(w.toLowerCase()) || wordInks(w); }
-  document.getElementById('reroll').addEventListener('click', () => { inkWord.value = RUN.word || ''; showInk(); inkSheet.hidden = false; inkWord.focus(); });
+  document.getElementById('reroll').addEventListener('click', () => { inkWord.value = RUN.word || ''; inkBright.checked = !!RUN.bright; showInk(); inkSheet.hidden = false; inkWord.focus(); });
   inkWord.addEventListener('input', showInk);
   document.getElementById('inkCancel').addEventListener('click', closeSheets);
   document.getElementById('inkForm').addEventListener('submit', async e => {
     e.preventDefault(); const w = inkWord.value.trim() || inkWord.placeholder, btn = e.target.querySelector('.btn[type=submit]');
-    btn.textContent = 'Inking\u2026'; const ink = await inkFor(w); btn.textContent = 'Ink it';
+    btn.textContent = 'Inking\u2026'; let ink = await inkFor(w); btn.textContent = 'Ink it';
+    if (inkBright.checked) ink = brighten(ink);
     if (!ink) { toast('Try a word with letters in it'); return; }
-    try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word || w, from: ink.from || 'letters' })); } catch (e) {}
+    try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word || w, from: ink.from || 'letters', bright: inkBright.checked })); } catch (e) {}
     location.reload();
   });
   // ---------- trying a font from the viewer's own device (kept in this browser only) ----------
