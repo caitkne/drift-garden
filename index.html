@@ -25,6 +25,9 @@
   color-scheme: light;
 }
 [hidden] { display: none !important; }
+.title, .strip .word, .free, .moving h2 { filter: url(#rough); }
+.byline .by, .pill, .coupon h3, .clip b, footer span, .price { filter: url(#rough-m); }
+.intro p, .lede, .coupon p { filter: url(#rough-s); }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--pink); color: var(--ink); font: 400 17px/1.55 var(--type); overflow-x: hidden; }
 /* paper: a little grain, slightly uneven ink */
@@ -87,6 +90,26 @@ footer span { display: block; font: 400 34px/1.2 var(--bubble); letter-spacing: 
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <!-- photocopied ink: wobbly edges, a little bleed, toner dropouts -->
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feMorphology in="d" operator="dilate" radius="0.6" result="fat"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="9" result="s"/>
+      <feColorMatrix in="s" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -14 0 0 0 9.6" result="holes"/>
+      <feComposite in="fat" in2="holes" operator="in"/>
+    </filter>
+    <filter id="rough-m" x="-4%" y="-8%" width="108%" height="116%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="3" result="s"/>
+      <feColorMatrix in="s" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -22 0 0 0 15.5" result="holes"/>
+      <feComposite in="d" in2="holes" operator="in"/>
+    </filter>
+    <filter id="rough-s" x="-2%" y="-10%" width="104%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="2" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
     <symbol id="eye" viewBox="0 0 200 80"><path d="M10 44 Q100 -12 190 44 Q100 92 10 44Z" fill="#f3ead6" stroke="#1d1517" stroke-width="4"/><circle cx="100" cy="42" r="23" fill="#1d1517"/><circle cx="100" cy="42" r="10" fill="#f5a9c8"/><circle cx="93" cy="35" r="5" fill="#fff"/>
       <g stroke="#1d1517" stroke-width="3.5" stroke-linecap="round"><path d="M28 30 L18 14"/><path d="M48 20 L42 3"/><path d="M72 13 L69 -2"/><path d="M100 11 V-4"/><path d="M128 13 L131 -2"/><path d="M152 20 L158 3"/><path d="M172 30 L182 14"/><path d="M60 72 L56 82"/><path d="M84 76 L83 86"/><path d="M116 76 L117 86"/><path d="M140 72 L144 82"/></g>
       <path d="M10 44 Q100 -12 190 44" fill="none" stroke="#1d1517" stroke-width="9"/></symbol>
