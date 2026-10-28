@@ -4,12 +4,12 @@ The result is black ink on white, meant to sit on coloured paper with mix-blend-
 import sys, math, random
 from PIL import Image, ImageOps, ImageFilter, ImageDraw, ImageEnhance
 
-def halftone(img, width, cell, angle=45):
+def halftone(img, width, cell, angle=45, lift=.7):
     g = ImageOps.grayscale(img)
     g = g.resize((width, round(g.height * width / g.width)), Image.LANCZOS)
     g = ImageOps.autocontrast(g, cutoff=2)
-    g = ImageEnhance.Contrast(g).enhance(1.25)
-    g = g.point(lambda v: round(255 * (v / 255) ** .8))
+    g = ImageEnhance.Contrast(g).enhance(1.15)
+    g = g.point(lambda v: round(255 * (v / 255) ** lift))
     # work rotated so the dot screen sits at an angle, like a print
     big = g.rotate(angle, expand=True, fillcolor=255)
     W, H = big.size
@@ -20,7 +20,7 @@ def halftone(img, width, cell, angle=45):
             vals = [px[min(W - 1, x + i), min(H - 1, y + j)] for i in range(0, cell, 2) for j in range(0, cell, 2)]
             dark = 1 - sum(vals) / len(vals) / 255
             if dark < .04: continue
-            r = cell * .6 * math.sqrt(dark) * (1 + random.uniform(-.08, .08))
+            r = cell * .55 * math.sqrt(dark) * (1 + random.uniform(-.08, .08))
             cx, cy = x + cell / 2, y + cell / 2
             d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=0)
     out = out.rotate(-angle, expand=True, fillcolor=255)
