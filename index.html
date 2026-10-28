@@ -1085,7 +1085,7 @@ a.btn { text-decoration: none; display: inline-block; }
   }
   const strip = h => (h || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
   // the address of the eBay relay (a Cloudflare Worker, see worker/README.md). Empty means no eBay wildflowers.
-  const EBAY_RELAY = '';
+  const EBAY_RELAY = 'https://broken-unit-4a4d.caitkneller.workers.dev/';
   const LIVE = [
     { name: 'the Art Institute of Chicago', async find(q) {
       const d = await getJSON('https://api.artic.edu/api/v1/artworks/search?q=' + encodeURIComponent(q) + '&limit=12&fields=id,title,artist_display,date_display,image_id,is_public_domain,thumbnail');
