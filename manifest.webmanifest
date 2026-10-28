@@ -1,7 +1,7 @@
 {
   "name": "Selvedge Garden",
   "short_name": "Selvedge",
-  "start_url": "./",
+  "start_url": "./garden/",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f1ec",
@@ -11,7 +11,7 @@
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ],
   "share_target": {
-    "action": "./",
+    "action": "./garden/",
     "method": "GET",
     "params": { "title": "title", "text": "text", "url": "url" }
   }

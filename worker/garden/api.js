@@ -10,12 +10,14 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS creds (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, public_key TEXT NOT NULL, counter INTEGER NOT NULL, transports TEXT, created INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, user_id TEXT NOT NULL, expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS challenges (id TEXT PRIMARY KEY, challenge TEXT NOT NULL, user_id TEXT, name TEXT, expires INTEGER NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS gardens (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, name TEXT NOT NULL, updated INTEGER NOT NULL, size INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS gardens (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, name TEXT NOT NULL, updated INTEGER NOT NULL, size INTEGER NOT NULL, public INTEGER NOT NULL DEFAULT 0, summary TEXT)`,
   `CREATE TABLE IF NOT EXISTS allotments (id TEXT PRIMARY KEY, name TEXT NOT NULL, keeper_id TEXT NOT NULL, created INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS members (allotment_id TEXT NOT NULL, user_id TEXT NOT NULL, joined INTEGER NOT NULL, PRIMARY KEY (allotment_id, user_id))`,
   `CREATE TABLE IF NOT EXISTS plots (allotment_id TEXT NOT NULL, garden_id TEXT NOT NULL, added INTEGER NOT NULL, PRIMARY KEY (allotment_id, garden_id))`,
   `CREATE TABLE IF NOT EXISTS invites (code TEXT PRIMARY KEY, allotment_id TEXT NOT NULL, made_by TEXT NOT NULL, expires INTEGER NOT NULL, uses_left INTEGER NOT NULL)`,
 ];
+// columns added after the first version; adding one that's already there just fails quietly
+const LATER = [`ALTER TABLE gardens ADD COLUMN public INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE gardens ADD COLUMN summary TEXT`];
 let ready = null;
 const DAY = 86400000, SESSION_DAYS = 60, MAX_GARDEN = 20 * 1024 * 1024;
 
@@ -35,7 +37,7 @@ export default {
     if (!ok) return json({ error: 'not allowed' }, 403);
     if (!env.DB || !env.GARDENS) return json({ error: 'The worker needs its DB and GARDENS bindings' }, 500);
     try {
-      ready = ready || env.DB.batch(SCHEMA.map(s => env.DB.prepare(s))).catch(e => { ready = null; throw e; });
+      ready = ready || env.DB.batch(SCHEMA.map(s => env.DB.prepare(s))).then(() => Promise.all(LATER.map(s => env.DB.prepare(s).run().catch(() => null)))).catch(e => { ready = null; throw e; });
       await ready;
       return json(await route(req, env, { rpID: env.RP_ID || 'selvedge.garden', origin, origins }));
     } catch (e) {
@@ -121,12 +123,23 @@ async function route(req, env, ctx) {
   // ---------- you ----------
   if (m === 'GET' && path === '/me') {
     need();
-    const gardens = await all('SELECT id, name, updated, size FROM gardens WHERE owner_id = ? ORDER BY updated DESC', me.id);
+    const gardens = await all('SELECT id, name, updated, size, public FROM gardens WHERE owner_id = ? ORDER BY updated DESC', me.id);
     const allotments = await all(`SELECT a.id, a.name, a.keeper_id = ? AS keeper, (SELECT COUNT(*) FROM members x WHERE x.allotment_id = a.id) AS members,
       (SELECT COUNT(*) FROM plots p WHERE p.allotment_id = a.id) AS plots FROM allotments a JOIN members mm ON mm.allotment_id = a.id AND mm.user_id = ? ORDER BY a.created DESC`, me.id, me.id);
     return { user: me, gardens, allotments };
   }
   if (m === 'PUT' && path === '/me') { need(); const n = clean((await body()).name, 40); if (!n) throw new Oops(400, 'A name, please'); await run('UPDATE users SET name = ? WHERE id = ?', n, me.id); return { user: { id: me.id, name: n } }; }
+
+  // ---------- public gardens: anyone can wander these, signed in or not ----------
+  if (m === 'GET' && path === '/public') {
+    const rows = await all('SELECT g.id, g.name, g.updated, g.summary, u.name AS owner FROM gardens g JOIN users u ON u.id = g.owner_id WHERE g.public = 1 ORDER BY g.updated DESC LIMIT 60');
+    return { gardens: rows.map(r => ({ id: r.id, name: r.name, owner: r.owner, updated: r.updated, ...(r.summary ? JSON.parse(r.summary) : { count: 0, pics: [], titles: [] }) })) };
+  }
+  if (seg[0] === 'gardens' && seg[2] === 'public' && m === 'PUT') {
+    need(); const g = await one('SELECT owner_id FROM gardens WHERE id = ?', seg[1]);
+    if (!g || g.owner_id !== me.id) throw new Oops(404, 'No such garden');
+    const on = !!(await body()).public; await run('UPDATE gardens SET public = ? WHERE id = ?', on ? 1 : 0, seg[1]); return { public: on };
+  }
 
   // ---------- gardens ----------
   if (seg[0] === 'gardens' && seg.length === 2) {
@@ -141,19 +154,28 @@ async function route(req, env, ctx) {
       let data; try { data = JSON.parse(text); } catch (e) { throw new Oops(400, 'Bad garden'); }
       if (!data || typeof data.keys !== 'object') throw new Oops(400, 'Bad garden');
       const name = clean(data.name, 60) || 'A garden';
+      // a little summary for the public list: how many pieces, a few pictures and titles
+      let plants = []; try { plants = JSON.parse(data.keys['drift-garden'] || '[]'); } catch (e) {}
+      if (!Array.isArray(plants)) plants = [];
+      const summary = JSON.stringify({ count: plants.length, pics: plants.filter(p => p && typeof p.img === 'string' && /^https:\/\//.test(p.img)).slice(0, 4).map(p => p.img.slice(0, 500)),
+        titles: plants.filter(p => p && p.title).slice(0, 6).map(p => clean(p.title, 80)) });
       await env.GARDENS.put('garden:' + gid, text);
-      if (g) await run('UPDATE gardens SET name = ?, updated = ?, size = ? WHERE id = ?', name, now, text.length, gid);
-      else await run('INSERT INTO gardens (id, owner_id, name, updated, size) VALUES (?, ?, ?, ?, ?)', gid, me.id, name, now, text.length);
+      if (g) await run('UPDATE gardens SET name = ?, updated = ?, size = ?, summary = ? WHERE id = ?', name, now, text.length, summary, gid);
+      else await run('INSERT INTO gardens (id, owner_id, name, updated, size, summary) VALUES (?, ?, ?, ?, ?, ?)', gid, me.id, name, now, text.length, summary);
       return { id: gid, updated: now };
     }
     if (!g) throw new Oops(404, 'No such garden');
+    if (m === 'GET' && g.public === 1 && !me) {
+      const owner = await one('SELECT name FROM users WHERE id = ?', g.owner_id);
+      return { id: gid, name: g.name, owner: owner?.name || '', mine: false, public: true, updated: g.updated, data: JSON.parse(await env.GARDENS.get('garden:' + gid) || '{"keys":{}}') };
+    }
     need();
     const mine = g.owner_id === me.id;
     if (m === 'GET') {
-      // your own, or one planted in an allotment you belong to
-      if (!mine && !(await one('SELECT 1 AS x FROM plots p JOIN members mm ON mm.allotment_id = p.allotment_id WHERE p.garden_id = ? AND mm.user_id = ?', gid, me.id))) throw new Oops(404, 'No such garden');
+      // your own, a public one, or one planted in an allotment you belong to
+      if (!mine && g.public !== 1 && !(await one('SELECT 1 AS x FROM plots p JOIN members mm ON mm.allotment_id = p.allotment_id WHERE p.garden_id = ? AND mm.user_id = ?', gid, me.id))) throw new Oops(404, 'No such garden');
       const owner = await one('SELECT name FROM users WHERE id = ?', g.owner_id);
-      return { id: gid, name: g.name, owner: owner?.name || '', mine, updated: g.updated, data: JSON.parse(await env.GARDENS.get('garden:' + gid) || '{"keys":{}}') };
+      return { id: gid, name: g.name, owner: owner?.name || '', mine, public: g.public === 1, updated: g.updated, data: JSON.parse(await env.GARDENS.get('garden:' + gid) || '{"keys":{}}') };
     }
     if (m === 'DELETE') {
       if (!mine) throw new Oops(403, 'That garden belongs to someone else');

@@ -11,8 +11,8 @@ ORIGINS = "https://selvedge.garden,https://www.selvedge.garden"
 [[d1_databases]]
 binding = "DB"
 database_name = "drift-garden"
-database_id = "replace-with-your-d1-database-id"
+database_id = "e77a2fe6-6ae3-4c57-845c-0eda5a21ccc9"
 
 [[kv_namespaces]]
 binding = "GARDENS"
-id = "replace-with-your-kv-namespace-id"
+id = "c1f0c1e012e843faadc0f3f1f0400d55"

@@ -1,5 +1,7 @@
 # Selvedge Garden
 
+Lives at **selvedge.garden** (Cloudflare Pages, published from this repo's main branch). The homepage (`index.html`) explains the garden, signs you in, lists public gardens and, on the old caitkne.github.io address, carries your garden over to the new one. Your own garden is at `/garden/` (`garden/index.html`).
+
 A garden to wander. Drop in pictures and words and they land wherever they like on a big field, lining up with their neighbours. Every piece is printed in its own pair of acid candy inks that drift apart as you move.
 
 ## Planting webpages
