@@ -1,11 +1,11 @@
-# Drift Garden
+# Selvedge Garden
 
 A garden to wander. Drop in pictures and words and they land wherever they like on a big field, lining up with their neighbours. Every piece is printed in its own pair of acid candy inks that drift apart as you move.
 
 ## Planting webpages
 
 - Paste a link into the **Link** box, or paste or drop a link anywhere on the garden. The title, summary and picture are filled in for you (looked up with [Microlink](https://microlink.io), free for about 50 links a day).
-- Drag **✿ Plant in Drift** from the plant sheet to your bookmarks bar, then press it on any page. It brings the page's title, picture and any text you've selected.
+- Drag **✿ Plant in Selvedge** from the plant sheet to your bookmarks bar, then press it on any page. It brings the page's title, picture and any text you've selected.
 - On Android, install the garden (browser menu, then "Add to home screen") and it appears in the Share menu.
 
 ## Naming your garden

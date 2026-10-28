@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="A garden to wander: drop in pictures and words, and wildflowers sprout from what you plant.">
-<title>Drift Garden</title>
+<title>Selvedge Garden</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
@@ -280,11 +280,11 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
 
 </head>
 <body>
-<div id="view" aria-label="Drift Garden. Drag to wander.">
+<div id="view" aria-label="Selvedge Garden. Drag to wander.">
   <div id="world"><div class="marks"></div></div>
 </div>
 
-<div class="top"><span><button class="reroll" id="nameBtn" type="button" title="Rename your garden">Drift Garden</button> <button class="reroll" id="lovesBtn" type="button">· Seed kit</button> <button class="reroll" id="weedBtn" type="button" hidden></button> <button class="reroll" id="studioBtn" type="button" title="The studio keeps re-setting pieces in new layouts"></button> <button class="reroll" id="acctBtn" type="button" hidden>· Sign in</button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
+<div class="top"><span><button class="reroll" id="nameBtn" type="button" title="Rename your garden">Selvedge Garden</button> <button class="reroll" id="lovesBtn" type="button">· Seed kit</button> <button class="reroll" id="weedBtn" type="button" hidden></button> <button class="reroll" id="studioBtn" type="button" title="The studio keeps re-setting pieces in new layouts"></button> <button class="reroll" id="acctBtn" type="button" hidden>· Sign in</button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
 
 <div class="bottom">
   <button class="btn" id="plantBtn" type="button">Plant something</button>
@@ -306,7 +306,7 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
     <input type="text" id="tTitle" maxlength="80" placeholder="Moth on the porch light">
     <label for="tNote">Words</label>
     <textarea id="tNote" maxlength="1200" placeholder="Whatever you'd like someone to find when they wander past."></textarea>
-    <p class="hint">It lands in a free spot and lines up with whatever's near. Kept in this browser only for now.<br>Plant from any page: drag <a class="bm" id="bm" href="#">✿ Plant in Drift</a> to your bookmarks bar.</p>
+    <p class="hint">It lands in a free spot and lines up with whatever's near. Kept in this browser only for now.<br>Plant from any page: drag <a class="bm" id="bm" href="#">✿ Plant in Selvedge</a> to your bookmarks bar.</p>
     <div class="row">
       <button class="link" type="button" id="cancelPlant">Cancel</button>
       <button class="btn" type="submit" id="doPlant">Plant it</button>
@@ -352,7 +352,7 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
     <span class="kick">Your garden</span>
     <h2 id="nameTitle">Name it</h2>
     <label for="nameInput">Its name</label>
-    <input type="text" id="nameInput" maxlength="40" autocomplete="off" placeholder="Drift Garden">
+    <input type="text" id="nameInput" maxlength="40" autocomplete="off" placeholder="Selvedge Garden">
     <p class="hint">It goes on the masthead and the browser tab. Kept in this browser only, like everything else here.</p>
     <div class="row"><button class="link" type="button" id="nameCancel">Cancel</button><button class="btn" type="submit">Name it</button></div>
   </form>
@@ -672,7 +672,7 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
     g.putImageData(d, 0, 0); document.documentElement.style.setProperty('--grain', `url(${c.toDataURL()})`); })();
 
   const NAME_KEY = 'drift-garden-name';
-  const gardenName = (() => { try { return (store.getItem(NAME_KEY) || '').trim() || 'Drift Garden'; } catch (e) { return 'Drift Garden'; } })();
+  const gardenName = (() => { try { return (store.getItem(NAME_KEY) || '').trim() || 'Selvedge Garden'; } catch (e) { return 'Selvedge Garden'; } })();
   // break the name over two lines at the space nearest the middle, as the masthead always was
   const mastLines = n => { const sp = [...n.matchAll(/ /g)].map(m => m.index); if (!sp.length) return n; const mid = n.length / 2, at = sp.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid))[0]; return n.slice(0, at) + '\n' + n.slice(at + 1); };
   document.title = gardenName; document.getElementById('nameBtn').textContent = gardenName; document.getElementById('view').setAttribute('aria-label', gardenName + '. Drag to wander.');
@@ -1490,7 +1490,7 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
   });
 
   // ---------- naming the garden ----------
-  document.getElementById('nameBtn').addEventListener('click', () => { const i = document.getElementById('nameInput'); i.value = gardenName === 'Drift Garden' ? '' : gardenName; document.getElementById('nameSheet').hidden = false; i.focus(); });
+  document.getElementById('nameBtn').addEventListener('click', () => { const i = document.getElementById('nameInput'); i.value = gardenName === 'Selvedge Garden' ? '' : gardenName; document.getElementById('nameSheet').hidden = false; i.focus(); });
   document.getElementById('nameCancel').addEventListener('click', closeSheets);
   document.getElementById('nameForm').addEventListener('submit', e => { e.preventDefault(); const v = document.getElementById('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 40); try { v ? store.setItem(NAME_KEY, v) : store.removeItem(NAME_KEY); } catch (err) {} location.reload(); });
 
@@ -1818,7 +1818,7 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
   if (displayNow) applyDisplay(displayNow);
   document.getElementById('displayPick').addEventListener('toggle', e => {
     if (!e.target.open || document.getElementById('fontGrid').childElementCount) return;
-    const label = (typeof gardenName === 'string' ? gardenName : 'Drift Garden').slice(0, 24), all = DISPLAY.flatMap(([, l]) => l);
+    const label = (typeof gardenName === 'string' ? gardenName : 'Selvedge Garden').slice(0, 24), all = DISPLAY.flatMap(([, l]) => l);
     // previews load only the letters they show, so all of them together stay small
     for (let i = 0; i < all.length; i += 20) useFont(famHref(all.slice(i, i + 20), [...new Set(label + 'Blush (house)')].join('')));
     const btn = (spec, name) => `<button type="button" data-spec="${esc(spec)}" aria-pressed="${spec === displayNow}"><b style="font-family:'${esc(famName(spec) || 'Blush')}'">${esc(label)}</b><span>${esc(name || famName(spec))}</span></button>`;

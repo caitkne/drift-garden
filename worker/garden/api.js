@@ -1,4 +1,4 @@
-// Drift Garden accounts: passkey sign-in, saved gardens, invite-only allotments.
+// Selvedge Garden accounts: passkey sign-in, saved gardens, invite-only allotments.
 // Runs as a Cloudflare Worker. Bindings: DB (a D1 database) and GARDENS (a KV namespace).
 // Optional plain-text variables: ORIGINS (default https://caitkne.github.io), RP_ID (default caitkne.github.io).
 // Build: npm run build (bundles this file into ../garden-api.js, the one file you paste into Cloudflare).
@@ -83,7 +83,7 @@ async function route(req, env, ctx) {
     // a signed-in person adding a passkey on another device keeps their account
     const userId = me ? me.id : rand(16);
     const exclude = me ? await all('SELECT id, transports FROM creds WHERE user_id = ?', me.id) : [];
-    const options = await generateRegistrationOptions({ rpName: 'Drift Garden', rpID: ctx.rpID, userName: n, userDisplayName: n, userID: isoBase64URL.toBuffer(userId),
+    const options = await generateRegistrationOptions({ rpName: 'Selvedge Garden', rpID: ctx.rpID, userName: n, userDisplayName: n, userID: isoBase64URL.toBuffer(userId),
       attestationType: 'none', authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
       excludeCredentials: exclude.map(c => ({ id: c.id, transports: c.transports ? JSON.parse(c.transports) : undefined })) });
     const id = rand();
