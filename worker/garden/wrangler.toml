@@ -1,7 +1,12 @@
-# Only for deploying from the command line or testing locally (npx wrangler dev). The dashboard route doesn't use this file.
+# For deploying from the command line (npx wrangler deploy). The site lives at selvedge.garden and this worker at api.selvedge.garden.
 name = "drift-garden-api"
 main = "../garden-api.js"
 compatibility_date = "2026-10-01"
+routes = [{ pattern = "api.selvedge.garden", custom_domain = true }]
+
+[vars]
+RP_ID = "selvedge.garden"
+ORIGINS = "https://selvedge.garden,https://www.selvedge.garden"
 
 [[d1_databases]]
 binding = "DB"

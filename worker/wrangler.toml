@@ -1,8 +1,8 @@
-# Only needed if you deploy from the command line (npx wrangler deploy). The dashboard route doesn't use this file.
-name = "drift-ebay"
+# For deploying from the command line (npx wrangler deploy). Updates the eBay relay already running as broken-unit-4a4d; its secrets stay.
+name = "broken-unit-4a4d"
 main = "ebay-relay.js"
 compatibility_date = "2026-10-01"
 
 [vars]
 MARKETPLACE = "EBAY_AU"
-ALLOWED_ORIGINS = "https://caitkne.github.io"
+ALLOWED_ORIGINS = "https://selvedge.garden,https://www.selvedge.garden,https://caitkne.github.io"

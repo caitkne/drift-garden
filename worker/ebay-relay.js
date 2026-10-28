@@ -23,7 +23,7 @@ async function appToken(env) {
 
 export default {
   async fetch(req, env, ctx) {
-    const origins = (env.ALLOWED_ORIGINS || 'https://caitkne.github.io').split(',').map(s => s.trim());
+    const origins = (env.ALLOWED_ORIGINS || 'https://selvedge.garden,https://www.selvedge.garden,https://caitkne.github.io').split(',').map(s => s.trim());
     const origin = req.headers.get('Origin') || '';
     const cors = origins.includes(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {};
     const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...cors, 'Content-Type': 'application/json' } });

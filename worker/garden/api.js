@@ -1,6 +1,6 @@
 // Selvedge Garden accounts: passkey sign-in, saved gardens, invite-only allotments.
 // Runs as a Cloudflare Worker. Bindings: DB (a D1 database) and GARDENS (a KV namespace).
-// Optional plain-text variables: ORIGINS (default https://caitkne.github.io), RP_ID (default caitkne.github.io).
+// Optional plain-text variables: ORIGINS (default https://selvedge.garden and www), RP_ID (default selvedge.garden).
 // Build: npm run build (bundles this file into ../garden-api.js, the one file you paste into Cloudflare).
 import { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
@@ -26,7 +26,7 @@ class Oops extends Error { constructor(status, msg) { super(msg); this.status = 
 
 export default {
   async fetch(req, env) {
-    const origins = (env.ORIGINS || 'https://caitkne.github.io').split(',').map(s => s.trim());
+    const origins = (env.ORIGINS || 'https://selvedge.garden,https://www.selvedge.garden').split(',').map(s => s.trim());
     const origin = req.headers.get('Origin') || '';
     const ok = origins.includes(origin);
     const cors = ok ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {};
@@ -37,7 +37,7 @@ export default {
     try {
       ready = ready || env.DB.batch(SCHEMA.map(s => env.DB.prepare(s))).catch(e => { ready = null; throw e; });
       await ready;
-      return json(await route(req, env, { rpID: env.RP_ID || 'caitkne.github.io', origin, origins }));
+      return json(await route(req, env, { rpID: env.RP_ID || 'selvedge.garden', origin, origins }));
     } catch (e) {
       return json({ error: e instanceof Oops ? e.message : 'Something went wrong' }, e.status || 500);
     }
