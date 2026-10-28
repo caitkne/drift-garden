@@ -252,6 +252,11 @@ a.btn { text-decoration: none; display: inline-block; }
 .wild .card { outline: 2px dashed var(--F); outline-offset: -9px; }
 .wild.kept .card { outline: 0; }
 .plant.wild::before { background: radial-gradient(var(--B) 2.5px, transparent 3px) 0 0 / 11px 11px; }
+.kitSeeds { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px; }
+.kitSeeds:empty { display: none; }
+.kitSeeds button { font: 500 12px/1 var(--mono); padding: 7px 10px; border: 1px solid currentColor; border-radius: 99px; background: none; color: inherit; cursor: pointer; }
+.kitSeeds button.sown { opacity: .45; text-decoration: line-through; }
+.kitSeeds button:hover:not(.sown) { background: rgba(127,127,127,.16); }
 .wildtag { display: block; margin-bottom: 10px; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .word.wild h3 { font-size: calc(36px * var(--sz, 1)); }
 .wild .by { display: block; margin-top: 8px; font: 500 12px/1.4 var(--mono); }
@@ -267,7 +272,7 @@ a.btn { text-decoration: none; display: inline-block; }
   <div id="world"><div class="marks"></div></div>
 </div>
 
-<div class="top"><span><button class="reroll" id="nameBtn" type="button" title="Rename your garden">Drift Garden</button> <button class="reroll" id="lovesBtn" type="button">· Loves</button> <button class="reroll" id="weedBtn" type="button" hidden></button> <button class="reroll" id="studioBtn" type="button" title="The studio keeps re-setting pieces in new layouts"></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
+<div class="top"><span><button class="reroll" id="nameBtn" type="button" title="Rename your garden">Drift Garden</button> <button class="reroll" id="lovesBtn" type="button">· Seed kit</button> <button class="reroll" id="weedBtn" type="button" hidden></button> <button class="reroll" id="studioBtn" type="button" title="The studio keeps re-setting pieces in new layouts"></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
 
 <div class="bottom">
   <button class="btn" id="plantBtn" type="button">Plant something</button>
@@ -310,12 +315,15 @@ a.btn { text-decoration: none; display: inline-block; }
 
 <div class="scrim" id="lovesSheet" hidden>
   <form class="sheet" id="lovesForm" aria-labelledby="lovesTitle">
-    <span class="kick">Things you love</span>
-    <h2 id="lovesTitle">Loves</h2>
-    <label for="lovesText">One per line: people, places, films, books, words, anything</label>
-    <textarea id="lovesText" rows="8" placeholder="Kate Bush&#10;moths&#10;Agnès Varda&#10;Piha"></textarea>
-    <p class="hint">Every so often a wildflower brings one of these back: an exact match when it can find one, or something close.</p>
-    <div class="row"><button class="link" type="button" id="lovesCancel">Cancel</button><button class="btn" type="submit">Keep these</button></div>
+    <span class="kick">To start your garden</span>
+    <h2 id="lovesTitle">Seed kit</h2>
+    <label for="lovesText">Things you love, one per line: people, places, films, books, words, anything</label>
+    <textarea id="lovesText" rows="7" placeholder="Kate Bush&#10;moths&#10;Agnès Varda&#10;Piha"></textarea>
+    <p class="hint">Scatter the kit and a few seeds take root as plants: the real thing when it can be found, or just the word. Tap one seed to plant that one. Wildflowers then grow from words in the plants around them.</p>
+    <div class="kitSeeds" id="kitSeeds"></div>
+    <div class="row"><button class="link" type="button" id="lovesCancel">Close</button><button class="link" type="submit">Keep the kit</button><button class="btn" type="button" id="scatterBtn">Scatter seeds ✿</button></div>
+  </form>
+</div>
   </form>
 </div>
 
@@ -729,7 +737,7 @@ a.btn { text-decoration: none; display: inline-block; }
     if (p.img) {
       el.className = 'plant pic' + (p.w >= 500 ? ' wide' : '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const capt = p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '';
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + ownNote + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : p.seed ? `<span class="wildtag">\u273f From your seed kit</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + ownNote + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     } else {
       el.className = 'plant word ' + (p.embed ? 'has-embed ' : '') + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const by = p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '';
@@ -737,7 +745,7 @@ a.btn { text-decoration: none; display: inline-block; }
       const body = p.embed ? playerHTML(p.embed) + duoText('h3', jitter(p.title || p.embed.kind, seedOf(p.id)), sc) + by + (p.note ? `<p>${esc(p.note)}</p>` : '') : p.set === 'quote'
         ? duoText('span', '<span class="mark">\u201c</span>' + jitter(p.note, seedOf(p.id)), 'pull ' + sc) + `<span class="src">${esc(p.title)}</span>` + by
         : duoText('h3', jitter(p.title || p.note, seedOf(p.id), p.set === 'drop'), sc) + by + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.embed ? `<span class="host">\u266b ${esc(p.embed.kind)}</span>` : p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : p.seed ? `<span class="wildtag">\u273f From your seed kit</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.embed ? `<span class="host">\u266b ${esc(p.embed.kind)}</span>` : p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     }
     if (p.example) el.insertAdjacentHTML('beforeend', '<span class="ex">Example</span>');
     return el;
@@ -787,6 +795,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
   function plant(data, near, animate) {
     const p = { id: Math.random().toString(36).slice(2, 10), no: nextNo(), title: data.title || '', note: data.note || '', img: data.img || null, ar: data.ar || 1, link: data.link || null, example: !!data.example, wild: data.wild || null };
+    if (data.seed) p.seed = data.seed;
     if (data.borrow) { p.borrow = data.borrow; p.set = 'borrowed'; }
     if (data.embed) { p.embed = data.embed; p.set = 'plain'; }
     let span;
@@ -1187,16 +1196,7 @@ a.btn { text-decoration: none; display: inline-block; }
   async function sprout(nearPlant) {
     if (sprouting) return;
     const pool = plants.filter(p => !p.wild || p.wild.kept).map(p => ({ p, words: wordsOf(p) })).filter(o => o.words.length);
-    // every so often (about 1 in 4), one of your loves comes back
-    if (loves.length && (!pool.length || Math.random() < .25)) return sproutMatch(loveTerms(), nearPlant);
-    if (!pool.length) { toast('Plant a few things with words first, or add some loves'); return; }
-    // now and then, a very close match to one of the first things you planted (never the thing itself)
-    const firsts = plants.filter(p => !p.wild && (p.title || '').trim().length > 2).sort((x, y) => (x.no || 0) - (y.no || 0));
-    if (firsts.length > 5 && Math.random() < .15) {
-      const echoed = {}; plants.forEach(p => { if (p.wild && p.wild.echo) echoed[p.wild.echo] = (echoed[p.wild.echo] || 0) + 1; });
-      const old = firsts.slice(0, Math.ceil(firsts.length / 3)).map(p => ({ p, k: Math.random() ** (1 + (echoed[p.title.trim()] || 0)) })).sort((x, y) => y.k - x.k).slice(0, 3).map(o => o.p);
-      if (await sproutMatch(old.map(p => ({ t: p.title.trim().split(/\s+/).slice(0, 6).join(' '), echo: p })), nearPlant, true)) return;
-    }
+    if (!pool.length) { toast('Scatter your seed kit or plant a few things with words first'); return; }
     sprouting = true; wildBtn.textContent = '✿ Sprouting…';
     try {
       const counts = {}; pool.forEach(o => o.words.forEach(w => counts[w] = (counts[w] || 0) + 1));
@@ -1206,19 +1206,23 @@ a.btn { text-decoration: none; display: inline-block; }
       const beds = bedsNow(), labels = Object.keys(beds);
       let bed = null;
       if (labels.length && Math.random() < .7) { let r = Math.random() * labels.reduce((t, l) => t + beds[l].length, 0); bed = labels.find(l => (r -= beds[l].length) <= 0) || labels[0]; }
-      let A, B;
-      if (bed) {
-        const members = beds[bed], vocab = [...new Set([...bed.split(' ').filter(w => w.length > 2), ...members.flatMap(m => wordsOf(m))])];
-        vocab.forEach(w => counts[w] = counts[w] || 1);
-        const planted = pool.filter(o => !o.p.wild);
-        A = { p: pick(members), words: vocab.length ? vocab : [bed], bedWords: vocab.filter(w => !bed.split(' ').includes(w)) };
-        B = planted.length ? pick(planted) : pick(pool);
-      } else [A, B] = pool.slice().sort(() => Math.random() - .5);
-      const a = pickWord(A.words), b = B ? pickWord(B.words.filter(w => w !== a).length ? B.words.filter(w => w !== a) : B.words) : null;
+      // Every wildflower is a mix of 3 to 5 words from plants growing near each other: one word from each neighbour, nearest first.
+      // A bed's label always counts as one of the words, and it grows among the bed.
+      const anchor = bed ? pick(beds[bed]) : (nearPlant || pick(pool).p);
+      const cx = q => q.x + q.w / 2, cy = q => q.y + q.h / 2, far = q => Math.hypot(cx(q) - cx(anchor), cy(q) - cy(anchor));
+      const hood = pool.slice().sort((x, y) => far(x.p) - far(y.p)).slice(0, 8);
+      const want = 3 + (Math.random() * 3 | 0), kw = [], kwFrom = [], taken = new Set();
+      if (bed) { kw.push(bed); kwFrom.push(beds[bed][0]); bed.split(' ').forEach(w => taken.add(stem(w))); }
+      for (let round = 0; round < 3 && kw.length < want; round++) for (const o of hood) {
+        if (kw.length >= want) break;
+        const free = o.words.filter(w => !taken.has(stem(w)));
+        if (!free.length) continue;
+        const w = pickWord(free); kw.push(w); kwFrom.push(o.p); taken.add(stem(w));
+        if (round === 0 && kw.length >= want) break;
+      }
+      // all of them first; if no source has anything, let go of the last word, down to three
+      const tries = []; for (let n = kw.length; n >= Math.min(3, kw.length); n--) tries.push(kw.slice(0, n));
       const used = usedHrefs();
-      // a bed's label is always one of the search words: label + something you planted, then label + a word from the bed, then the label alone
-      const v = bed && A.bedWords.length ? pickWord(A.bedWords) : null;
-      const tries = bed ? [b && [bed, b], v && [bed, v], [bed]].filter(Boolean) : (b && b !== a ? [[a, b], [a], [b]] : [[a]]);
       // fair rotation: a source that has already given lots of wildflowers is less likely to go first; kept ones get a gentle boost
       const given = {}; plants.forEach(p => { if (p.wild && p.wild.source) given[p.wild.source] = (given[p.wild.source] || 0) + 1; });
       const bedLikes = {}; if (bed) beds[bed].forEach(m => { if (m.wild.source) bedLikes[m.wild.source] = (bedLikes[m.wild.source] || 0) + 1; });
@@ -1226,20 +1230,21 @@ a.btn { text-decoration: none; display: inline-block; }
       let found = null;
       outer: for (const words of tries) for (const src of sources) {
         let res; try { res = await src.find(words.join(' ')); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
-        res = res.filter(r => !used.has(r.href) && !looksLikeWeed(r)).slice(0, 5);
+        // results that carry more of the words go first
+        res = res.filter(r => !used.has(r.href) && !looksLikeWeed(r)).map(r => ({ r, c: closeness(words.join(' '), r) })).sort((x, y) => y.c - x.c).map(o => o.r).slice(0, 5);
         while (res.length) {
           const r = res.splice(Math.random() * Math.min(3, res.length) | 0, 1)[0];
           if (r.img) { try { const im = await loadImg(r.img); r.ar = im.naturalHeight / im.naturalWidth; } catch (e) { r.img = null; } }
-          found = { r, src, words, from: words.map(w => (bed ? (w === b ? B : A) : (w === a ? A : B)).p) }; break outer;
+          found = { r, src, words, from: kwFrom.slice(0, words.length) }; break outer;
         }
       }
       if (!found) { sproutFromBank(nearPlant); return; }
       const { r, src, words, from } = found, name = t => t.title || t.note.slice(0, 40);
-      const verb = i => from[i] && from[i].wild ? 'kept' : 'planted';
-      const by = bed ? 'Grown for your \u201c' + bed + '\u201d bed' + (words[1] ? ', with \u201c' + words[1] + '\u201d, which you ' + (from[1] && from[1].wild ? 'kept' : 'planted') : '')
-        : 'Because you ' + words.map((w, i) => (i && verb(i) === verb(0) ? '' : verb(i) + ' ') + '\u201c' + w + '\u201d').join(' and ');
-      const near = bed ? pick(beds[bed]) : (nearPlant || from[0]);
-      const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words, bed, from: from.map(name) } };
+      const list = ws => ws.map(w => '\u201c' + w + '\u201d').join(', ').replace(/, ([^,]*)$/, ' and $1');
+      const by = bed ? 'Grown for your \u201c' + bed + '\u201d bed, with ' + list(words.slice(1)) + ' from nearby'
+        : 'A mix of ' + list(words) + ', growing near each other';
+      const near = anchor;
+      const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words, bed, from: [...new Set(from.map(name))] } };
       if (r.song) { const e = await songPlayer(r); if (e) Object.assign(data, { embed: { kind: e.kind, src: e.src, h: e.h, ar: e.ar }, kind: 'narrow', span: 2 }); else data.kind = 'narrow'; }
       else if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
       const p = plant(data, { x: near.x + near.w / 2, y: near.y + near.h / 2 }, true);
@@ -1385,16 +1390,63 @@ a.btn { text-decoration: none; display: inline-block; }
   const LOVES_KEY = 'drift-garden-loves';
   let loves = (() => { try { return JSON.parse(localStorage.getItem(LOVES_KEY)) || []; } catch (e) { return []; } })();
   const lovesSheet = document.getElementById('lovesSheet'), lovesBtn = document.getElementById('lovesBtn');
-  const lovesLabel = () => lovesBtn.textContent = '\u00b7 Loves' + (loves.length ? ' (' + loves.length + ')' : '');
+  const lovesLabel = () => lovesBtn.textContent = '\u00b7 Seed kit' + (loves.length ? ' (' + loves.length + ')' : '');
   lovesLabel();
-  lovesBtn.addEventListener('click', () => { document.getElementById('lovesText').value = loves.join('\n'); lovesSheet.hidden = false; document.getElementById('lovesText').focus(); });
+  const kitText = document.getElementById('lovesText'), kitSeeds = document.getElementById('kitSeeds'), scatterBtn = document.getElementById('scatterBtn');
+  const sownSeeds = () => new Set(plants.filter(p => p.seed).map(p => p.seed.toLowerCase()));
+  const readKit = () => { const seen = new Set(); return kitText.value.split('\n').map(t => t.trim()).filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase())).slice(0, 200); };
+  function keepKit() { loves = readKit(); try { localStorage.setItem(LOVES_KEY, JSON.stringify(loves)); } catch (err) {} lovesLabel(); }
+  function showKit() {
+    const sown = sownSeeds();
+    kitSeeds.innerHTML = loves.map((t, i) => `<button type="button" data-i="${i}" class="${sown.has(t.toLowerCase()) ? 'sown' : ''}" title="${sown.has(t.toLowerCase()) ? 'Already growing' : 'Plant this one'}">${esc(t)}</button>`).join('');
+  }
+  function openKit() { kitText.value = loves.join('\n'); showKit(); lovesSheet.hidden = false; kitText.focus(); }
+  lovesBtn.addEventListener('click', openKit);
+  kitText.addEventListener('blur', keepKit);
+  let kitWait; kitText.addEventListener('input', () => { clearTimeout(kitWait); kitWait = setTimeout(() => { keepKit(); showKit(); }, 500); });
+  let sowing = false;
+  // a seed takes root as a plant: the thing itself when a source has it, something close, or else just the word
+  async function sowSeed(t, at) {
+    const m = await findMatch(t, null, usedHrefs());
+    let data;
+    if (m && m.c >= .5) {
+      const r = m.r;
+      if (r.img) { try { const im = await loadImg(r.img); r.ar = im.naturalHeight / im.naturalWidth; } catch (e) { r.img = null; } }
+      data = { title: r.title, note: r.note, link: r.href, seed: t };
+      if (r.song) { const e = await songPlayer(r); if (e) Object.assign(data, { embed: { kind: e.kind, src: e.src, h: e.h, ar: e.ar }, kind: 'narrow', span: 2 }); else data.kind = 'narrow'; }
+      else if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) });
+    } else data = { title: t, seed: t };
+    const p = plant(data, at, true); save(); return p;
+  }
+  async function scatter(seeds) {
+    if (sowing || !seeds.length) return;
+    sowing = true; scatterBtn.disabled = true; closeSheets();
+    const c = viewCentre(); let lastP = null;
+    try {
+      for (let i = 0; i < seeds.length; i++) {
+        toast(seeds.length > 1 ? 'Sowing ' + (i + 1) + ' of ' + seeds.length + ': \u201c' + seeds[i] + '\u201d' : 'Sowing \u201c' + seeds[i] + '\u201d');
+        const ang = Math.random() * Math.PI * 2, d = seeds.length > 1 ? 200 + Math.random() * 500 : 0;
+        lastP = await sowSeed(seeds[i], { x: c.x + Math.cos(ang) * d, y: c.y + Math.sin(ang) * d * .7 });
+      }
+      toast(seeds.length > 1 ? seeds.length + ' seeds took root' : 'It took root');
+      if (lastP) setTimeout(() => centreOn(lastP), 60);
+    } finally { sowing = false; scatterBtn.disabled = false; }
+  }
+  scatterBtn.addEventListener('click', () => {
+    keepKit();
+    const sown = sownSeeds(), left = loves.filter(t => !sown.has(t.toLowerCase()));
+    if (!loves.length) { toast('Write a few seeds in the kit first'); kitText.focus(); return; }
+    if (!left.length) { toast('Every seed in the kit is already growing'); return; }
+    scatter(left.sort(() => Math.random() - .5).slice(0, Math.min(left.length, 3 + (Math.random() * 3 | 0))));
+  });
+  kitSeeds.addEventListener('click', e => { const b = e.target.closest?.('button'); if (!b || b.classList.contains('sown')) return; keepKit(); scatter([loves[+b.dataset.i]]); });
+  // a new, empty garden opens with its seed kit
+  setTimeout(() => { let seen = false; try { seen = localStorage.getItem('drift-garden-kit-seen') === '1'; localStorage.setItem('drift-garden-kit-seen', '1'); } catch (e) {} if (!seen && !plants.length && lovesSheet.hidden && plantSheet.hidden) openKit(); }, 2800);
   document.getElementById('lovesCancel').addEventListener('click', closeSheets);
   document.getElementById('lovesForm').addEventListener('submit', e => {
     e.preventDefault();
     const seen = new Set();
-    loves = document.getElementById('lovesText').value.split('\n').map(t => t.trim()).filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase())).slice(0, 200);
-    try { localStorage.setItem(LOVES_KEY, JSON.stringify(loves)); } catch (err) {}
-    lovesLabel(); closeSheets(); toast(loves.length ? loves.length + (loves.length === 1 ? ' love' : ' loves') + ' kept' : 'Loves cleared');
+    keepKit(); closeSheets(); toast(loves.length ? loves.length + (loves.length === 1 ? ' seed' : ' seeds') + ' in your kit' : 'Seed kit emptied');
   });
   const usedHrefs = () => new Set(plants.map(p => (p.wild && p.wild.href) || p.link).filter(Boolean).concat(weeds.map(w => w.href)));
   // loves that have come back less often go first
@@ -1410,24 +1462,28 @@ a.btn { text-decoration: none; display: inline-block; }
     return ws.length ? ws.filter(w => hay.includes(' ' + w)).length / ws.length : 0;
   };
   // terms: [{ t, echo? }]. Loves take an exact match, else something close. Echoes must be very close, or nothing sprouts.
+  // the best match a few sources have for a term: an exact one if possible, else the closest
+  async function findMatch(t, from, used) {
+    const srcs = LIVE.slice().sort(() => Math.random() - .5).sort((x, y) => (failed[x.name] || 0) - (failed[y.name] || 0)).slice(0, 5);
+    let close = null;
+    for (const src of srcs) {
+      let res; try { res = await src.find(t); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
+      res = res.filter(r => r.title && !used.has(r.href) && !looksLikeWeed(r) && !(from && norm(r.title) === norm(from.title)));
+      const best = res.map(r => ({ r, c: closeness(t, r) })).sort((x, y) => y.c - x.c)[0];
+      if (!best) continue;
+      if (best.c === 1 && norm(best.r.title).includes(norm(t))) return { r: best.r, c: 1, src, t, from, exact: true };
+      if (!close || best.c > close.c) close = { r: best.r, c: best.c, src, t, from, exact: false };
+    }
+    return close;
+  }
   async function sproutMatch(terms, nearPlant, echo) {
     sprouting = true; wildBtn.textContent = '\u273f Sprouting\u2026';
     try {
       const used = usedHrefs();
       let found = null;
       for (const { t, echo: from } of terms) {
-        const srcs = LIVE.slice().sort(() => Math.random() - .5).sort((x, y) => (failed[x.name] || 0) - (failed[y.name] || 0)).slice(0, 5);
-        let close = null;
-        for (const src of srcs) {
-          let res; try { res = await src.find(t); } catch (e) { failed[src.name] = (failed[src.name] || 0) + 1; continue; }
-          res = res.filter(r => r.title && !used.has(r.href) && !looksLikeWeed(r) && !(from && norm(r.title) === norm(from.title)));
-          const best = res.map(r => ({ r, c: closeness(t, r) })).sort((x, y) => y.c - x.c)[0];
-          if (!best) continue;
-          if (best.c === 1 && norm(best.r.title).includes(norm(t))) { found = { r: best.r, src, t, from, exact: true }; break; }
-          if (!close || best.c > close.c) close = { r: best.r, c: best.c, src, t, from, exact: false };
-        }
-        if (!found && close && (!echo || close.c >= .75)) found = close;
-        if (found) break;
+        const m = await findMatch(t, from, used);
+        if (m && (m.exact || !echo || m.c >= .75)) { found = m; break; }
       }
       if (!found) { if (!echo) toast('None of your loves could be found just now'); return false; }
       const { r, src, t, from, exact } = found;

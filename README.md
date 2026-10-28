@@ -24,7 +24,7 @@ The whole garden is printed in one trio of inks, taken from a word you choose (t
 
 ## Wildflowers
 
-Every third thing you plant (or whenever you press **✿ Wildflower**), the garden takes words from two things you've planted and searches open collections for them:
+Every third thing you plant (or whenever you press **✿ Wildflower**), the garden picks a spot, takes one word from each of the plants growing nearest it until it has 3 to 5 words, and searches open collections for that mix. If no source has anything for all of them, it lets go of the last word, down to three:
 
 - [Art Institute of Chicago API](https://api.artic.edu/docs/) (public-domain artworks)
 - [The Met Collection API](https://metmuseum.github.io/)
@@ -40,11 +40,9 @@ It plants one result as a card, with its picture, and links to the source. To ke
 
 No AI runs anywhere in the garden. Matching is plain keyword search.
 
-### Loves and echoes
+### Seed kit
 
-**Loves** (top left) is a list you can dump favourites into, one per line. About one wildflower in four brings a love back: an exact match when a source has one (its title carries the whole phrase), otherwise the closest thing found. Loves that have come back less often are tried first.
-
-Now and then (about 1 in 7, once you've planted six or more things), a wildflower is an **echo**: a very close match to one of the first third of things you planted. The planting itself never comes back, and if nothing close enough turns up, an ordinary wildflower grows instead.
+A new garden opens with its **seed kit** (top left): things you love, one per line. **Scatter seeds** sows three to five of them at random as plants. Each one takes root as the real thing when a source has it (an exact or close match), or as just the word when nothing does. Tap a single seed to plant that one. Sown seeds are marked in the kit and count as things you planted, so their words feed the wildflowers around them.
 
 ## The studio
 
@@ -58,7 +56,7 @@ The studio has one more layout: **its own style**. A picture lends its own colou
 
 ## eBay wildflowers
 
-eBay listings can grow as wildflowers once the garden's eBay relay is running (a small free Cloudflare Worker that keeps the eBay key private). Setup steps are in [worker/README.md](worker/README.md). Until its address is set in `EBAY_RELAY`, there are no eBay wildflowers.
+eBay listings grow as wildflowers through the garden's eBay relay (a small free Cloudflare Worker that keeps the eBay key private). Setup steps are in [worker/README.md](worker/README.md). Until its address is set in `EBAY_RELAY`, there are no eBay wildflowers.
 
 ## Fonts
 
