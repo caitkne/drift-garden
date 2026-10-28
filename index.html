@@ -13,222 +13,201 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<meta name="theme-color" content="#f3f1ec">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Modak&family=Shrikhand&family=Bungee+Shade&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap">
+<meta name="theme-color" content="#f6b3c8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..700&family=Archivo:wdth,wght@62..125,400..800&display=swap">
 <style>
 :root {
-  --pink: #f5a9c8; --ink: #1d1517; --paper: #fbf6ea; --lime: #8fd400; --hot: #ff2f7e; --blue: #2b2f9e;
-  --bubble: "Modak", "Arial Rounded MT Bold", sans-serif;
-  --swash: "Shrikhand", Georgia, serif;
-  --shade: "Bungee Shade", Impact, sans-serif;
-  --type: "Courier Prime", "Courier New", monospace;
+  --pink: #f6b3c8; --paper: #f7f1e6; --ink: #1c1718; --red: #d42a2f; --mint: #8fd3b9; --lemon: #f4d54a; --blue: #253a9c;
+  --serif: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --label: "Archivo", "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
 }
 [hidden] { display: none !important; }
 * { box-sizing: border-box; }
-html { background: var(--ink); }
-body { margin: 0; background: var(--pink); color: var(--ink); font: 400 15px/1.5 var(--type); overflow-x: hidden; }
-body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: var(--grain, none); opacity: .9; z-index: 50; mix-blend-mode: multiply; }
-section, header, footer { position: relative; overflow: clip; }
-.title-slice, .word, .free, .moving h2 { filter: url(#rough); }
-.pill, .coupon h3, .clip b, .slogan { filter: url(#rough-m); }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--label); overflow-x: hidden; }
+a { color: inherit; }
+.caps { font: 700 11px/1.3 var(--label); font-stretch: 125%; letter-spacing: .16em; text-transform: uppercase; }
+/* ink laid down as one flat spot colour */
+.print { position: relative; }
+.print::after { content: ""; position: absolute; inset: 0; background: var(--c, var(--ink)); -webkit-mask: var(--img) var(--pos, center) / var(--size, cover) no-repeat; mask: var(--img) var(--pos, center) / var(--size, cover) no-repeat; }
+/* a wrapper's scalloped edge */
+.scallop { height: 18px; background: radial-gradient(circle at 12px 0, transparent 11.5px, var(--c, var(--red)) 12px) 0 0 / 24px 18px repeat-x; }
+.scallop.up { background: radial-gradient(circle at 12px 18px, transparent 11.5px, var(--c, var(--red)) 12px) 0 0 / 24px 18px repeat-x; }
 
-/* a picture printed in two inks that didn't quite line up */
-.riso { position: relative; display: block; }
-.riso::before, .riso::after { content: ""; position: absolute; inset: 0; -webkit-mask: var(--img) var(--pos, center) / var(--size, cover) no-repeat; mask: var(--img) var(--pos, center) / var(--size, cover) no-repeat; }
-.riso::before { background: var(--c2, var(--hot)); transform: translate(var(--dx, 1%), var(--dy, 1.6%)); }
-.riso::after { background: var(--c1, var(--ink)); mix-blend-mode: multiply; }
-
-/* the little notes: typed on a scrap and stuck down */
-.note { position: absolute; z-index: 5; max-width: 23ch; font: 400 14px/1.35 var(--type); background: var(--paper); color: var(--ink); padding: 6px 9px 7px 30px; transform: rotate(var(--r, -1.5deg)); }
-.note b { position: absolute; left: 8px; top: 5px; font: 700 13px/1 var(--type); width: 16px; height: 16px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-size: 10px; }
-.note.ink { background: var(--ink); color: var(--paper); } .note.ink b { background: var(--hot); color: var(--ink); }
-
-/* ---------- 1. the eye ---------- */
-.cover { min-height: min(100svh, 980px); padding-bottom: 40px; }
-.cover .eye { position: absolute; inset: 0 0 18% 0; --img: url(assets/zine/z-eye-macro.png); --pos: 50% 46%; --dx: 1.2%; --dy: 2.2%; }
-/* the name, cut into strips and pasted back a little crooked */
-.title { position: relative; z-index: 2; margin: 0; padding-top: clamp(40px, 9vw, 120px); font: 400 clamp(84px, 24vw, 330px)/.8 var(--bubble); letter-spacing: -.04em; text-align: center; }
-.title-slice { display: block; color: var(--c, var(--ink)); background: var(--paper); clip-path: inset(calc(var(--k) * 100% / 6) -10% calc(100% - (var(--k) + 1) * 100% / 6) -10%); transform: translateX(var(--x, 0)); }
-.title-slice + .title-slice { position: absolute; left: 0; right: 0; bottom: 0; }
-.word { position: absolute; z-index: 3; right: clamp(-6px, 1vw, 20px); top: clamp(140px, 30vw, 400px); margin: 0; font: 400 clamp(46px, 8vw, 110px)/1 var(--swash); background: var(--lime); padding: .05em .2em .12em; writing-mode: vertical-rl; transform: rotate(180deg); }
-.go { position: relative; z-index: 4; display: flex; justify-content: center; margin-top: clamp(140px, 22vw, 300px); }
-.pill { display: inline-block; background: var(--ink); color: var(--pink); text-decoration: none; font: 400 clamp(38px, 6vw, 64px)/1 var(--bubble); padding: 14px 36px 6px; border-radius: 999px; border: 0; cursor: pointer; transform: rotate(-3deg); transition: transform .15s; }
-.pill:hover { transform: rotate(2deg) scale(1.04); }
-.price { position: absolute; z-index: 4; left: 50%; margin-left: clamp(150px, 22vw, 290px); bottom: clamp(30px, 5vw, 60px); width: 96px; height: 96px; background: var(--hot); border-radius: 50%; display: grid; place-items: center; text-align: center; font: 700 13px/1.05 var(--type); transform: rotate(12deg); }
-.price b { display: block; font: 400 28px/1 var(--swash); }
-.moving { position: relative; z-index: 6; margin: 24px auto 0; max-width: 520px; border: 3px solid var(--ink); background: var(--paper); padding: 18px; display: grid; gap: 10px; }
-.moving h2 { margin: 0; font: 400 36px/1 var(--swash); }
+/* ---------- the wrapper front ---------- */
+.front { background: var(--pink); padding: 18px clamp(16px, 4vw, 48px) 0; text-align: center; }
+.rule-line { display: flex; justify-content: space-between; gap: 12px; border-block: 1.5px solid var(--ink); padding: 7px 0; }
+.mast { margin: clamp(10px, 2vw, 24px) 0 0; font: 900 clamp(76px, 19.5vw, 280px)/.86 var(--serif); letter-spacing: -.035em; }
+.panels { display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; gap: clamp(16px, 3vw, 44px); align-items: center; max-width: 1180px; margin: clamp(18px, 3vw, 36px) auto 0; }
+.label { border: 1.5px solid var(--ink); padding: 14px 14px 12px; text-align: left; background: var(--paper); }
+.label h2 { margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1.5px solid var(--ink); }
+.label dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 14px; }
+.label dt { font-weight: 700; }
+.label dd { margin: 0; text-align: right; font-family: var(--serif); font-style: italic; }
+/* the emblem: a picture in an oval frame */
+.emblem { width: clamp(220px, 32vw, 420px); aspect-ratio: 4 / 5; border-radius: 50%; border: 7px double var(--red); padding: 9px; background: var(--paper); margin: 0 auto; }
+.emblem .print { height: 100%; border-radius: 50%; overflow: hidden; background: var(--pink); --img: url(assets/zine/z-portrait.png); --c: var(--red); --pos: center 30%; }
+.sub { max-width: 30ch; margin: clamp(18px, 2.4vw, 28px) auto 0; font: italic 400 clamp(20px, 2.4vw, 28px)/1.3 var(--serif); }
+.go { margin: 22px 0 clamp(26px, 4vw, 44px); }
+.btn { display: inline-block; background: var(--red); color: var(--paper); text-decoration: none; border: 0; cursor: pointer; padding: 15px 28px 14px; font: 800 13px/1 var(--label); font-stretch: 125%; letter-spacing: .16em; text-transform: uppercase; }
+.btn:hover { background: var(--ink); }
+.ghost { background: none; border: 0; padding: 10px 0; cursor: pointer; color: var(--ink); font: 700 11px/1 var(--label); font-stretch: 125%; letter-spacing: .16em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; }
+.btn:focus-visible, .ghost:focus-visible, input:focus-visible, .clip:focus-visible, a:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.moving { max-width: 460px; margin: 24px auto 0; background: var(--paper); border: 1.5px solid var(--ink); padding: 18px; display: grid; gap: 10px; justify-items: center; }
+.moving h2 { margin: 0; font: italic 700 32px/1 var(--serif); }
 .moving p { margin: 0; }
 
-/* ---------- 2. copies of copies ---------- */
-.copies { background: var(--ink); padding: clamp(60px, 9vw, 120px) 0; }
-.gens { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0; }
-.gens i { aspect-ratio: 1 / 1.25; position: relative; }
-.gens i::after { content: ""; position: absolute; inset: 0; background: var(--c, var(--pink)); -webkit-mask: var(--img) var(--pos, center) / cover no-repeat; mask: var(--img) var(--pos, center) / cover no-repeat; }
-.gens i.odd { background: var(--lime); --c: var(--ink); }
-.gens i:nth-child(even) { transform: translateY(8%); }
+/* ---------- a feature spread ---------- */
+.feature { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 5vw, 72px); max-width: 1180px; margin: 0 auto; padding: clamp(56px, 8vw, 110px) clamp(16px, 4vw, 48px); align-items: end; }
+.feature figure { margin: 0; }
+.feature .print { aspect-ratio: 460 / 721; --img: url(assets/zine/z-lac.png); --c: var(--blue); }
+figcaption { margin-top: 10px; font-size: 13px; color: #5b5253; }
+figcaption i { font-family: var(--serif); }
+.kicker { color: var(--red); margin: 0 0 18px; }
+.quote { margin: 0; font: italic 400 clamp(40px, 6.4vw, 92px)/1 var(--serif); letter-spacing: -.02em; }
+.quote em { font-style: normal; font-weight: 800; }
+.feature p.small { max-width: 34ch; margin: 22px 0 0; font-size: 15px; }
+/* copies of copies */
+.copies { max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px) clamp(56px, 8vw, 100px); }
+.gens { display: grid; grid-template-columns: repeat(8, 1fr); gap: clamp(6px, 1.2vw, 14px); }
+.gens i { aspect-ratio: 4 / 5; background: var(--pink); --c: var(--ink); }
+.gens i.odd { background: var(--lemon); --c: var(--red); }
 
-/* ---------- 3. the horses, and the coupon ---------- */
-.ride { background: var(--lime); border-block: 3px solid var(--ink); padding: 0 16px clamp(50px, 7vw, 90px); }
-.herd { position: relative; height: clamp(150px, 26vw, 360px); margin: 0 -16px; }
-.herd::after { content: ""; position: absolute; inset: 6% 0 0; background: var(--ink); -webkit-mask: url(assets/zine/z-horse-pair.png) 0 100% / auto 100% repeat-x; mask: url(assets/zine/z-horse-pair.png) 0 100% / auto 100% repeat-x; animation: gallop 40s linear infinite; }
-.herd.back::after { background: var(--blue); inset: 30% 0 4%; opacity: .9; animation-duration: 64s; animation-direction: reverse; }
-@keyframes gallop { to { -webkit-mask-position: -2400px 100%; mask-position: -2400px 100%; } }
-@media (prefers-reduced-motion: reduce) { .herd::after { animation: none; } }
-.coupon { position: relative; z-index: 2; max-width: 480px; margin: clamp(-80px, -6vw, -30px) auto 0; border: 2.5px dashed var(--ink); padding: 18px 20px 14px; background: var(--paper); transform: rotate(-1.5deg); }
-.coupon::before { content: "\2702"; position: absolute; top: -16px; left: 18px; background: var(--lime); padding: 0 6px; font-size: 22px; line-height: 1; }
-.coupon h3 { margin: 0 0 4px; font: 400 34px/1.05 var(--swash); }
-.coupon p { margin: 0 0 8px; }
-.coupon form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.coupon input { flex: 1; min-width: 0; font: 400 16px/1.2 var(--type); padding: 10px 12px; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
-.link { font: 700 13px/1 var(--type); text-transform: uppercase; letter-spacing: .08em; background: none; border: 0; padding: 10px 0; color: var(--ink); cursor: pointer; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
-.pill:focus-visible, .link:focus-visible, input:focus-visible, .clip:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+/* ---------- the back of the wrapper ---------- */
+.back { background: var(--mint); padding: clamp(50px, 7vw, 90px) 16px; }
+.facts { max-width: 440px; margin: 0 auto; background: var(--paper); border: 2px solid var(--ink); padding: 14px 16px 16px; }
+.facts h2 { margin: 0; font: 900 34px/1 var(--serif); letter-spacing: -.01em; }
+.facts .per { border-bottom: 8px solid var(--ink); padding: 4px 0 6px; }
+.facts table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 14px; }
+.facts td { border-bottom: 1px solid var(--ink); padding: 5px 0; }
+.facts td:last-child { text-align: right; font-weight: 700; }
+.facts tr:last-child td { border-bottom: 4px solid var(--ink); }
+.facts form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.facts input { flex: 1; min-width: 0; font: 400 16px/1.2 var(--label); padding: 11px 12px; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
+.facts p { margin: 0 0 10px; font: italic 400 17px/1.35 var(--serif); }
 
-/* ---------- 4. two pictures cut into strips and woven ---------- */
-.wander { background: var(--paper); padding-bottom: 70px; }
-.weave-box { position: relative; }
-.weave { position: relative; display: grid; grid-template-columns: repeat(14, 1fr); height: clamp(320px, 52vw, 700px); }
-.weave i { position: relative; transform: translateY(var(--y, 0)); }
-.weave i::after { content: ""; position: absolute; inset: 0; background: var(--c); -webkit-mask: var(--img) calc(var(--n) * 100% / 13) 30% / 1400% auto no-repeat; mask: var(--img) calc(var(--n) * 100% / 13) 30% / 1400% auto no-repeat; }
-.free { position: absolute; z-index: 3; left: 50%; top: 50%; margin: 0; white-space: nowrap; font: 400 clamp(56px, 12vw, 170px)/1 var(--swash); color: var(--ink); background: var(--hot); padding: 0 .18em .08em; transform: translate(-50%, -50%) rotate(-7deg); }
-.wander .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; position: relative; }
-.gardens { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 26px; margin-top: 56px; }
-.clip { position: relative; display: block; width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; background: #fff; border: 2px dashed var(--ink); padding: 14px 16px 12px; transform: rotate(var(--r, -1deg)); transition: transform .2s; }
-.clip:hover { transform: rotate(0deg) translateY(-3px); }
-.clip .pics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px; }
-.clip .pics span { aspect-ratio: 1; overflow: hidden; background: var(--paper); }
-.clip .pics img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1) contrast(1.6) brightness(1.05); mix-blend-mode: multiply; }
-.clip b { display: block; font: 400 30px/1.05 var(--swash); }
-.clip small { display: block; margin: 6px 0 8px; font: 700 11px/1.4 var(--type); letter-spacing: .1em; text-transform: uppercase; }
-.clip ul { margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.45; }
-.clip ul li::before { content: "\2605  "; }
-.empty { border: 2px dashed var(--ink); padding: 18px; max-width: 40ch; background: #fff; }
+/* ---------- contents: public gardens ---------- */
+.wander { max-width: 1180px; margin: 0 auto; padding: clamp(56px, 8vw, 110px) clamp(16px, 4vw, 48px); display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 5vw, 72px); align-items: start; }
+.wander h2 { margin: 0; font: italic 400 clamp(56px, 9vw, 130px)/.9 var(--serif); letter-spacing: -.03em; }
+.wander .print { aspect-ratio: 900 / 512; margin-top: 28px; --c: var(--red); }
+.gardens { border-top: 2px solid var(--ink); }
+.clip { display: grid; grid-template-columns: 2.4em 1fr auto; gap: 4px 12px; align-items: baseline; width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 16px 0 14px; }
+.clip::before { content: counter(item, decimal-leading-zero); counter-increment: item; font: 700 12px/1 var(--label); letter-spacing: .1em; }
+.gardens { counter-reset: item; }
+.clip:hover b { color: var(--red); }
+.clip .pics { display: none; }
+.clip b { grid-column: 2; font: 700 clamp(24px, 2.6vw, 32px)/1.1 var(--serif); }
+.clip small { grid-column: 2; font: 700 10px/1.4 var(--label); font-stretch: 125%; letter-spacing: .14em; text-transform: uppercase; color: #5b5253; }
+.clip ul { grid-column: 2; margin: 4px 0 0; padding: 0; list-style: none; font: italic 15px/1.4 var(--serif); }
+.clip ul li { display: inline; } .clip ul li + li::before { content: " · "; }
+.empty { font: italic 18px/1.4 var(--serif); padding: 16px 0; margin: 0; border-bottom: 1px solid var(--ink); }
 
-/* ---------- the crowd ---------- */
-footer { background: var(--hot); color: var(--ink); text-align: center; padding: clamp(120px, 18vw, 220px) 16px 26px; font: 700 12px/1.6 var(--type); letter-spacing: .14em; text-transform: uppercase; }
-footer .crowd { position: absolute; inset: 0; --img: url(assets/zine/z-crowd.png); --pos: center 35%; --c2: transparent; opacity: .6; }
-footer > *:not(.crowd) { position: relative; }
-.slogan { display: inline-block; background: var(--ink); color: var(--pink); font: 400 clamp(30px, 5vw, 48px)/1.1 var(--bubble); letter-spacing: 0; text-transform: none; padding: 4px 18px 0; margin-bottom: 12px; }
-footer p { margin: 0 auto; display: inline; background: var(--paper); padding: 3px 8px; line-height: 2.1; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-footer a { color: inherit; }
-.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--pink); padding: 12px 18px; font: 700 14px/1.4 var(--type); max-width: calc(100% - 32px); z-index: 60; border-radius: 999px; }
-@media (max-width: 760px) {
-  .note { position: relative; left: auto !important; right: auto !important; top: auto !important; bottom: auto !important; display: table; max-width: 26ch; font-size: 13px; margin: 14px 16px; }
-  .cover { min-height: 0; }
-  .cover .eye { inset: 0; }
-  .title { padding-top: 56px; }
-  .word { position: relative; right: auto; top: auto; writing-mode: horizontal-tb; transform: rotate(-4deg); display: table; margin: -8px 16px 0 auto; }
-  .go { margin-top: 30px; }
-  .price { position: relative; left: auto; bottom: auto; margin: 18px 24px 0 auto; }
-  .copies .note { margin-top: 26px; }
-  .free { font-size: 12vw; }
-  .copies { padding-bottom: 30px; }
-  .ride .note { margin: 18px auto 0; }
+footer { background: var(--red); color: var(--paper); text-align: center; padding: 26px 16px 30px; }
+footer .mark { display: block; font: italic 400 26px/1.2 var(--serif); margin-bottom: 8px; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 12px 18px; font: 600 14px/1.4 var(--label); max-width: calc(100% - 32px); z-index: 60; }
+@media (max-width: 820px) {
+  .panels { grid-template-columns: 1fr; } .panels .label { max-width: 360px; width: 100%; margin: 0 auto; }
+  .panels .label.l { order: 2; } .panels .label.r { order: 3; }
+  .feature, .wander { grid-template-columns: 1fr; }
+  .feature figure { max-width: 300px; }
   .gens { grid-template-columns: repeat(4, 1fr); }
-  .price { margin-left: 70px; bottom: 6px; width: 84px; height: 84px; }
-  .weave { grid-template-columns: repeat(10, 1fr); }
-  .weave i:nth-child(n+11) { display: none; }
-  .weave i::after { -webkit-mask-position: calc(var(--n) * 100% / 9) 30%; mask-position: calc(var(--n) * 100% / 9) 30%; -webkit-mask-size: 1000% auto; mask-size: 1000% auto; }
+  .rule-line span:nth-child(2) { display: none; }
+  .facts form { flex-direction: column; align-items: stretch; }
 }
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <!-- photocopied ink: wobbly edges, a little bleed, toner dropouts -->
-    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="4" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feMorphology in="d" operator="dilate" radius="0.6" result="fat"/>
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="9" result="s"/>
-      <feColorMatrix in="s" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -14 0 0 0 9.6" result="holes"/>
-      <feComposite in="fat" in2="holes" operator="in"/>
-    </filter>
-    <filter id="rough-m" x="-4%" y="-8%" width="108%" height="116%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="7" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="3" result="s"/>
-      <feColorMatrix in="s" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -22 0 0 0 15.5" result="holes"/>
-      <feComposite in="d" in2="holes" operator="in"/>
-    </filter>
-    <filter id="rough-s" x="-2%" y="-10%" width="104%" height="120%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="2" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-  </defs>
-</svg>
 
-<header class="cover">
-  <div class="riso eye" aria-hidden="true"></div>
-  <h1 class="title" id="title" aria-label="Selvedge Garden"></h1>
-  <p class="word" aria-hidden="true">garden</p>
-  <p class="note" style="left:clamp(12px,6vw,90px);top:clamp(250px,40vw,520px);--r:-3deg"><b>1</b>Drop the things you love. Come back to them later.</p>
-  <p class="note ink" style="right:clamp(70px,14vw,200px);top:clamp(22px,4vw,48px);--r:2deg"><b>2</b>Run by a clunky, hand-built algorithm. No ads.</p>
+<header class="front">
+  <div class="rule-line caps"><span>No. ∞</span><span>Pasted up by hand</span><span>Free</span></div>
+  <h1 class="mast">Selvedge</h1>
+  <div class="panels">
+    <div class="label l">
+      <h2 class="caps">Contents</h2>
+      <dl><dt>Things you love</dt><dd>to taste</dd><dt>Wildflowers</dt><dd>a few</dd><dt>Friends</dt><dd>by invite</dd></dl>
+    </div>
+    <div class="emblem" aria-hidden="true"><div class="print"></div></div>
+    <div class="label r">
+      <h2 class="caps">Directions</h2>
+      <dl><dt>Plant</dt><dd>what you love</dd><dt>Leave</dt><dd>for a while</dd><dt>Return</dt><dd>to wander</dd></dl>
+    </div>
+  </div>
+  <p class="sub">A garden for the things you love. Drop them in, come back later.</p>
   <section class="moving" id="moving" hidden>
-    <h2>Moving house!</h2>
+    <h2>Moving house</h2>
     <p>Selvedge now lives at selvedge.garden.</p>
-    <div><button class="pill" type="button" id="carry">carry it over</button></div>
+    <button class="btn" type="button" id="carry">Carry it over</button>
     <p id="carryNote" style="font-size:13px">Opens a new tab and hands your garden across.</p>
   </section>
-  <div class="go"><a class="pill" href="garden/" id="goGarden">go to your garden</a></div>
-  <div class="price"><span><b>free</b>forever</span></div>
+  <div class="go"><a class="btn" href="garden/" id="goGarden">go to your garden</a></div>
+  <div class="scallop" style="--c:var(--paper);margin:0 calc(-1 * clamp(16px, 4vw, 48px))"></div>
 </header>
+
+<section class="feature">
+  <figure aria-hidden="true"><div class="print" id="plate"></div><figcaption id="plateCap"></figcaption></figure>
+  <div>
+    <p class="kicker caps">Wildflowers</p>
+    <p class="quote">More library stacks than <em>feed.</em></p>
+    <p class="small">Wildflowers sprout from what you plant, picked by a clunky, hand-built algorithm. No ads.</p>
+  </div>
+</section>
 
 <section class="copies" aria-hidden="true">
   <div class="gens" id="gens"></div>
-  <p class="note" style="left:clamp(12px,8vw,120px);bottom:clamp(14px,3vw,34px);--r:-2deg"><b>3</b>Wildflowers sprout from what you plant. More library stacks than feed.</p>
+  <figcaption>A copy of a copy of a copy, <i>and a stranger.</i></figcaption>
 </section>
 
-<section class="ride">
-  <div class="herd back" aria-hidden="true"></div>
-  <div class="herd" aria-hidden="true" style="margin-top:clamp(-260px,-19vw,-110px)"></div>
-  <div class="coupon" id="acct" hidden>
+<section class="back">
+  <div class="facts" id="acct" hidden>
     <div id="acctOut">
-      <h3>Clip &amp; keep</h3>
-      <p>Sign in with your face or fingerprint. No passwords, no email.</p>
-      <div><button class="link" type="button" id="signIn">Sign in</button></div>
-      <form id="signUp"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="your name" aria-label="Your name, as friends will see it"><button class="link" type="submit">Make an account</button></form>
+      <h2>Account facts</h2>
+      <div class="per caps">Per gardener</div>
+      <table><tbody>
+        <tr><td>Sign in</td><td>face or fingerprint</td></tr>
+        <tr><td>Passwords</td><td>0</td></tr>
+        <tr><td>Email</td><td>0</td></tr>
+        <tr><td>Ads</td><td>0</td></tr>
+        <tr><td>Allotments</td><td>invite only</td></tr>
+      </tbody></table>
+      <button class="ghost" type="button" id="signIn">Sign in</button>
+      <form id="signUp"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="Your name" aria-label="Your name, as friends will see it"><button class="btn" type="submit">Make an account</button></form>
     </div>
     <div id="acctIn" hidden>
-      <h3>Hello, <span id="meName"></span></h3>
-      <p>Save, share and make gardens public from inside your garden.</p>
-      <div><button class="link" type="button" id="signOut">Sign out</button></div>
+      <h2>Hello, <span id="meName"></span></h2>
+      <div class="per caps">Signed in</div>
+      <p style="margin-top:12px">Save, share and make gardens public from inside your garden.</p>
+      <button class="ghost" type="button" id="signOut">Sign out</button>
     </div>
   </div>
-  <p class="note" style="right:clamp(12px,7vw,110px);bottom:clamp(14px,2.4vw,30px);--r:3deg"><b>4</b>Share an allotment with friends. Invite only.</p>
 </section>
 
 <section class="wander">
-  <div class="weave-box"><div class="weave" id="weave" aria-hidden="true"></div>
-  <h2 class="free">Free to wander!</h2></div>
-  <p class="note ink" style="left:clamp(12px,5vw,70px);top:clamp(16px,3vw,40px);--r:-2deg"><b>5</b>Pasted up fresh each visit.</p>
-  <main class="wrap" id="public" hidden>
-    <p class="note" style="position:relative;display:inline-block;margin:44px 0 0;--r:1deg"><b>6</b>Public gardens. Look around, take cuttings.</p>
+  <div>
+    <h2>Free to wander</h2>
+    <div class="print" id="wanderPic" aria-hidden="true"></div>
+  </div>
+  <main id="public" hidden>
+    <p class="kicker caps">Public gardens</p>
     <div class="gardens" id="gardens"></div>
   </main>
 </section>
 
+<div class="scallop up" style="--c:var(--red)"></div>
 <footer>
-  <div class="riso crowd" aria-hidden="true"></div>
-  <span class="slogan">love &bull; change &bull; unity</span><br>
-  <p>Selvedge Garden &middot; <a href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">pictures: public domain &amp; CC0</a></p>
+  <span class="mark">love · change · unity</span>
+  <span class="caps"><a href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">Pictures: public domain &amp; CC0</a></span>
 </footer>
 <script>
-// paste-up: each visit cuts and arranges the pictures a little differently
+// each visit picks its pictures a little differently
 (() => {
-  const pick = a => a[Math.floor(Math.random() * a.length)], shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
-  const Z = n => `url(assets/zine/z-${n}.png)`;
-  // the name, in six crooked strips
-  const t = document.getElementById('title'), inks = ['var(--ink)', 'var(--ink)', 'var(--hot)', 'var(--ink)', 'var(--blue)', 'var(--ink)'];
-  t.innerHTML = [0, 1, 2, 3, 4, 5].map(k => `<span class="title-slice" aria-hidden="true" style="--k:${k};--x:${((Math.random() - .5) * 5).toFixed(2)}%;--c:${k === 0 ? 'var(--ink)' : pick(inks)}">selvedge</span>`).join('');
-  // copies of copies, and one stranger among them
-  const odd = 1 + Math.floor(Math.random() * 7), stranger = pick(['astronaut', 'hopper', 'cat-eyes', 'coffee', 'horse']);
-  document.getElementById('gens').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(n => n === odd ? `<i class="odd" style="--img:${Z(stranger)}"></i>` : `<i style="--img:${Z('gen-' + n)}"></i>`).join('');
-  // two pictures cut into strips and woven together
-  const pairs = shuffle([['dancers', 'lac'], ['model', 'marnac'], ['hippies', 'retina'], ['dancers', 'astronaut'], ['profile', 'heavens'], ['lashes', 'providence']]), [a, b] = pick(pairs);
-  const [ia, ib] = shuffle([['var(--ink)', 'var(--blue)'], ['var(--ink)', 'var(--hot)'], ['var(--blue)', 'var(--hot)']])[0];
-  document.getElementById('weave').innerHTML = Array.from({ length: 14 }, (_, n) => `<i style="--n:${n};--img:${Z(n % 2 ? b : a)};--c:${n % 2 ? ib : ia};--y:${((Math.random() - .5) * 6).toFixed(1)}%"></i>`).join('');
+  const pick = a => a[Math.floor(Math.random() * a.length)], Z = n => `url(assets/zine/z-${n}.png)`;
+  const plates = [['lac', 'Lac de Côme, George Barbier, 1924', '460 / 721'], ['marnac', 'Jeanne Marnac, George Barbier', '380 / 871']];
+  const [pl, cap, ar] = pick(plates), plate = document.getElementById('plate');
+  plate.style.cssText = `--img:${Z(pl)};aspect-ratio:${ar}`;
+  const [w, h] = ar.split(' / ').map(Number); plate.parentNode.style.maxWidth = Math.round(640 * w / h) + 'px'; document.getElementById('plateCap').innerHTML = `<i>${cap}</i>`;
+  const odd = 2 + Math.floor(Math.random() * 6), stranger = pick(['astronaut', 'hopper', 'cat-eyes', 'coffee']);
+  document.getElementById('gens').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(n => `<i class="print${n === odd ? ' odd' : ''}" style="--img:${Z(n === odd ? stranger : 'gen-' + n)}"></i>`).join('');
+  document.getElementById('wanderPic').style.setProperty('--img', Z(pick(['dancers', 'crowd', 'hippies'])));
 })();
 </script>
 <script>
@@ -316,7 +295,7 @@ footer a { color: inherit; }
   (async () => {
     let list; try { list = (await api('/public')).gardens; } catch (e) { return; }
     $('public').hidden = false;
-    const tilt = i => [-1.6, 1.2, -.6, 1.8, -1.2, .7][i % 6];
+    const tilt = () => 0;
     $('gardens').innerHTML = list.length ? list.map((g, i) => `<button class="clip" type="button" style="--r:${tilt(i)}deg" data-id="${esc(g.id)}">
       ${g.pics && g.pics.length ? `<span class="pics">${g.pics.slice(0, 4).map(p => `<span><img alt="" loading="lazy" src="${esc(p)}"></span>`).join('')}</span>` : ''}
       <b>${esc(g.name)}</b><small>by ${esc(g.owner)} \u00b7 ${g.count} ${g.count === 1 ? 'piece' : 'pieces'} \u00b7 ${ago(g.updated)}</small>

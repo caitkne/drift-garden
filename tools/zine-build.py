@@ -74,3 +74,8 @@ for n in range(1, 9):
     save_ink(g, f'z-gen-{n}.png')
     g = g.convert('L').filter(ImageFilter.GaussianBlur(.6 + n * .25))
     g = g.resize((300 - n * 12, 300 - n * 12)).resize((300, 300))
+
+# the cover portrait: a finer screen, printed like a wrapper's centre picture
+random.seed('portrait')
+por = Image.open(S + 'haircut-1966.jpg').convert('RGB').crop((330, 300, 1130, 1237))
+save_ink(zinify.halftone(por, 900, 10, lift=.75), 'z-portrait.png')

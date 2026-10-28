@@ -41,8 +41,6 @@ def toner(im):
     for _ in range(W * H // 9000):
         x, y = random.randrange(W), random.randrange(H); r = random.choice([.6, .8, 1.2, 1.6])
         d.ellipse((x - r, y - r, x + r, y + r), fill=0)
-    for _ in range(2):
-        x = random.randrange(W); d.line((x, 0, x + random.randint(-6, 6), H), fill=0, width=1)
     return im
 
 if __name__ == '__main__':
