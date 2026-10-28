@@ -24,7 +24,7 @@ The whole garden is printed in one trio of inks, taken from a word you choose (t
 
 ## Wildflowers
 
-Every third thing you plant (or whenever you press **✿ Wildflower**), the garden picks a spot, takes one word from each of the plants growing nearest it until it has 3 to 5 words, and searches open collections for that mix. If no source has anything for all of them, it lets go of the last word, down to three:
+Every third thing you plant (or whenever you press **✿ Wildflower**), the garden picks a spot and takes something from each of the plants growing nearest it. Most of the time (7 in 10) that's a phrase, such as "moth lamps at dusk" or "black sand", two or three of them; otherwise it's 3 to 5 single words. It searches open collections for that mix, and if no source has anything, it lets go of the last one (phrases down to one, words down to three):
 
 - [Art Institute of Chicago API](https://api.artic.edu/docs/) (public-domain artworks)
 - [The Met Collection API](https://metmuseum.github.io/)

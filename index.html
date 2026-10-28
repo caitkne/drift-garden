@@ -1113,6 +1113,16 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
     return ((p.title || '') + ' ' + (p.seed ? p.seed : (p.note || ''))).toLowerCase().replace(/[’']/g, '').split(/[^\p{L}\p{N}-]+/u)
       .map(w => w.replace(/^-+|-+$/g, '')).filter(w => w.length >= 4 && !/^\d+$/.test(w) && !STOP.has(w) && !seen.has(w) && seen.add(w));
   }
+  // phrases: runs of two to four words from a piece's title (and the start of its note), that don't begin or end on a little word
+  function phrasesOf(p) {
+    const text = (p.title || '') + (p.seed ? ' . ' + p.seed : p.note ? ' . ' + p.note.split(/(?<=[.!?])\s/)[0] : '');
+    const out = new Set();
+    text.replace(/[’']/g, '').split(/[,.;:!?()\[\]"“”«»\u2014\u2013|/\\]+|\s-\s/).forEach(seg => {
+      const ws = seg.trim().split(/\s+/).filter(Boolean), ok = w => { const l = w.toLowerCase(); return l.length >= 3 && !STOP.has(l) && !/^\d+$/.test(l); };
+      for (let n = 2; n <= 4; n++) for (let i = 0; i + n <= ws.length; i++) { const run = ws.slice(i, i + n); if (ok(run[0]) && ok(run[n - 1])) out.add(run.join(' ').toLowerCase()); }
+    });
+    return [...out];
+  }
   const stem = w => w.replace(/ies$/, 'y').replace(/(ing|ed|es|s)$/, '');
   const stemsOf = text => wordsOf({ title: text }).map(stem).filter(x => x.length >= 3);
   const libStems = LIB.map(x => new Set(stemsOf(x[0] + ' ' + x[1])));
@@ -1305,17 +1315,20 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
       const anchor = bed ? pick(beds[bed]) : (nearPlant || pick(pool).p);
       const cx = q => q.x + q.w / 2, cy = q => q.y + q.h / 2, far = q => Math.hypot(cx(q) - cx(anchor), cy(q) - cy(anchor));
       const hood = pool.slice().sort((x, y) => far(x.p) - far(y.p)).slice(0, 8);
-      const want = 3 + (Math.random() * 3 | 0), kw = [], kwFrom = [], taken = new Set();
-      if (bed) { kw.push(bed); kwFrom.push(beds[bed][0]); bed.split(' ').forEach(w => taken.add(stem(w))); }
+      // Most of the time (7 in 10) the mix is 2 or 3 phrases, one from each nearby piece; otherwise it's 3 to 5 single words.
+      const phrased = Math.random() < .7;
+      const want = phrased ? 2 + (Math.random() * 2 | 0) : 3 + (Math.random() * 3 | 0), kw = [], kwFrom = [], taken = new Set();
+      const take = (t, p) => { kw.push(t); kwFrom.push(p); t.split(' ').forEach(w => taken.add(stem(w))); };
+      if (bed) take(bed, beds[bed][0]);
       for (let round = 0; round < 3 && kw.length < want; round++) for (const o of hood) {
         if (kw.length >= want) break;
+        const ph = phrased ? phrasesOf(o.p).filter(t => t.split(' ').every(w => !taken.has(stem(w)))) : [];
+        if (ph.length) { take(pick(ph), o.p); continue; }
         const free = o.words.filter(w => !taken.has(stem(w)));
-        if (!free.length) continue;
-        const w = pickWord(free); kw.push(w); kwFrom.push(o.p); taken.add(stem(w));
-        if (round === 0 && kw.length >= want) break;
+        if (free.length) take(pickWord(free), o.p);
       }
-      // all of them first; if no source has anything, let go of the last word, down to three
-      const tries = []; for (let n = kw.length; n >= Math.min(3, kw.length); n--) tries.push(kw.slice(0, n));
+      // all of them first; if no source has anything, let go of the last one (single words go down to three, phrases down to one)
+      const floor = phrased ? 1 : Math.min(3, kw.length), tries = []; for (let n = kw.length; n >= floor; n--) tries.push(kw.slice(0, n));
       const used = usedHrefs();
       // fair rotation: a source that has already given lots of wildflowers is less likely to go first; kept ones get a gentle boost
       const given = {}; plants.forEach(p => { if (p.wild && p.wild.source) given[p.wild.source] = (given[p.wild.source] || 0) + 1; });
