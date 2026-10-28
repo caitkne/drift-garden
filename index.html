@@ -136,6 +136,13 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .fontTry summary { cursor: pointer; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--blue); }
 .fontTry[open] { padding-bottom: 6px; }
 .fontTry label { display: block; margin-top: 8px; }
+.fontGrid { display: grid; gap: 4px; }
+.fontGrid h3 { margin: 12px 0 2px; font: 500 10px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--pink); }
+.fontGrid .fopts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.fontGrid button { display: grid; gap: 2px; text-align: left; padding: 8px 10px 6px; background: none; border: 1px solid rgba(27,29,58,.18); color: var(--ink); cursor: pointer; }
+.fontGrid button b { font-size: 21px; line-height: 1.15; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.fontGrid button span { font: 400 10px/1.3 var(--mono); opacity: .7; }
+.fontGrid button[aria-pressed="true"] { border: 2px solid var(--blue); background: rgba(27,29,58,.04); }
 .weeds { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .weeds li { display: grid; gap: 4px; padding-bottom: 12px; border-bottom: 1px dashed var(--blue); font: 400 13px/1.45 var(--mono); }
 .weeds li b { font: 400 22px/1.15 var(--script); }
@@ -334,6 +341,11 @@ a.btn { text-decoration: none; display: inline-block; }
     <label class="inkBright" id="inkBrightRow" hidden><span>True</span><input type="range" id="inkBright" min="0" max="100" step="5" value="0" aria-label="Acidity: from the picture's true colours to acid strength"><span>Acid</span><output id="inkAcidVal">0%</output></label>
     <div class="inkFound" id="inkFound" hidden><div class="inkThumbs" id="inkThumbs"></div><div class="inkBar" id="inkBar"></div></div>
     <ul class="inkWhy" id="inkWhy"></ul>
+    <details class="fontTry" id="displayPick">
+      <summary>Display font</summary>
+      <p class="hint">Free fonts (Google Fonts, open licences) for titles and the masthead. Each is sized to sit like the house font.</p>
+      <div class="fontGrid" id="fontGrid"></div>
+    </details>
     <details class="fontTry">
       <summary>Try a font from your device</summary>
       <p class="hint">The font file stays in this browser only. It's never uploaded or published.</p>
@@ -1599,6 +1611,46 @@ a.btn { text-decoration: none; display: inline-block; }
   });
   // ---------- trying a font from the viewer's own device (kept in this browser only) ----------
   const FONT_KEYS = { title: 'drift-garden-font-title', small: 'drift-garden-font-small' };
+  // ---------- display fonts: free, offbeat, a little uncanny ----------
+  const DISPLAY = [
+    ['Dripping and dread', ['Creepster', 'Nosifer', 'Butcherman', 'Eater', 'Rubik Wet Paint', 'Frijole', 'Metal Mania']],
+    ['Old ink and blackletter', ['UnifrakturMaguntia', 'UnifrakturCook:wght@700', 'Pirata One', 'Grenze Gotisch', 'Jacquard 24', 'Jacquarda Bastarda 9', 'Fruktur', 'Germania One', 'New Rocker']],
+    ['Sideshow and poster', ['Ewert', 'Sancreek', 'Rye', 'Smokum', 'Fascinate Inline', 'Vast Shadow', 'Miltonian', 'Miltonian Tattoo', 'Jacques Francois Shadow', 'Piedra', 'Ribeye Marrow', 'Federant', 'Almendra Display', 'Shojumaru', 'Trade Winds']],
+    ['Storybook witchery', ['Griffy', 'Henny Penny', 'Mystery Quest', 'Spirax', 'Princess Sofia', 'Mountains of Christmas', 'Butterfly Kids', 'Kranky', 'Jolly Lodger', 'Flavors', 'Freckle Face', 'Ruge Boogie', 'Bonbon', 'Love Ya Like A Sister', 'Caesar Dressing', 'Bigelow Rules', 'Shizuru', 'Snowburst One', 'Underdog']],
+    ['Glitch and uncanny', ['Rubik Glitch', 'Rubik Puddles', 'Rubik Microbe', 'Rubik Beastly', 'Rubik Burned', 'Rubik Distressed', 'Moirai One', 'Londrina Sketch', 'Londrina Shadow', 'Codystar', 'Monoton', 'Sixtyfour', 'Workbench', 'Foldit', 'Kablammo', 'Hanalei', 'Bungee Shade', 'Tilt Prism', 'Barrio', 'Danfo']],
+    ['Typed, scrawled, left behind', ['Special Elite', 'Lacquer', 'Sedgwick Ave Display']]];
+  const DISPLAY_KEY = 'drift-garden-display';
+  const famName = spec => spec.split(':')[0];
+  const famHref = (specs, text) => 'https://fonts.googleapis.com/css2?' + specs.map(sp => 'family=' + sp.replace(/ /g, '+')).join('&') + (text ? '&text=' + encodeURIComponent(text) : '') + '&display=swap';
+  async function applyDisplay(spec) {
+    let el = document.getElementById('displayFont');
+    if (!spec) { if (el) el.textContent = ''; return; }
+    const fam = famName(spec), sample = 'Moth Garden';
+    useFont(famHref([spec]));
+    try { await document.fonts.load('100px "' + fam + '"', sample); await document.fonts.load('100px "Blush"', sample); } catch (e) {}
+    // size it so its width matches the house font's: the house font sits at 0.74
+    const g = document.createElement('canvas').getContext('2d'), w = f => { g.font = '100px ' + f; return g.measureText(sample).width; };
+    const sz = Math.max(.42, Math.min(1.15, .74 * w('"Blush"') / (w('"' + fam + '"') || 1)));
+    if (!el) { el = document.createElement('style'); el.id = 'displayFont'; document.head.appendChild(el); }
+    el.textContent = `:root{--script:"${fam}","Blush",Georgia,serif}.scr,.sheet h2,#tTitle{--sz:${sz.toFixed(3)}!important;font-weight:400!important}.mast h1{font-size:${Math.round(128 * sz / .74)}px}.sheet h2{font-size:${Math.round(52 * sz / .74)}px}`;
+    requestAnimationFrame(() => { reserved = [{ x: mast.offsetLeft, y: mast.offsetTop, w: mast.offsetWidth, h: mast.offsetHeight }]; settle(true); });
+  }
+  let displayNow = (() => { try { return localStorage.getItem(DISPLAY_KEY) || ''; } catch (e) { return ''; } })();
+  if (displayNow) applyDisplay(displayNow);
+  document.getElementById('displayPick').addEventListener('toggle', e => {
+    if (!e.target.open || document.getElementById('fontGrid').childElementCount) return;
+    const label = (typeof gardenName === 'string' ? gardenName : 'Drift Garden').slice(0, 24), all = DISPLAY.flatMap(([, l]) => l);
+    // previews load only the letters they show, so all of them together stay small
+    for (let i = 0; i < all.length; i += 20) useFont(famHref(all.slice(i, i + 20), [...new Set(label + 'Blush (house)')].join('')));
+    const btn = (spec, name) => `<button type="button" data-spec="${esc(spec)}" aria-pressed="${spec === displayNow}"><b style="font-family:'${esc(famName(spec) || 'Blush')}'">${esc(label)}</b><span>${esc(name || famName(spec))}</span></button>`;
+    document.getElementById('fontGrid').innerHTML = `<div class="fopts">${btn('', 'Blush (house)')}</div>` + DISPLAY.map(([mood, l]) => `<h3>${esc(mood)}</h3><div class="fopts">${l.map(sp => btn(sp)).join('')}</div>`).join('');
+  });
+  document.getElementById('fontGrid').addEventListener('click', e => {
+    const b = e.target.closest('button[data-spec]'); if (!b) return;
+    displayNow = b.dataset.spec; try { displayNow ? localStorage.setItem(DISPLAY_KEY, displayNow) : localStorage.removeItem(DISPLAY_KEY); } catch (err) {}
+    document.querySelectorAll('#fontGrid button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    applyDisplay(displayNow); toast(displayNow ? 'Set in ' + famName(displayNow) : 'Back to Blush');
+  });
   function applyLocalFonts() {
     let css = '';
     const t = localStorage.getItem(FONT_KEYS.title), m = localStorage.getItem(FONT_KEYS.small);

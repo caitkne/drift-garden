@@ -58,6 +58,9 @@ The studio has one more layout: **its own style**. A picture lends its own colou
 
 ## Fonts
 
+**Display font** (in the Print run sheet) offers 74 free Google Fonts that feel offbeat, a little unnerving, whimsical and macabre, grouped by mood: dripping and dread, old ink and blackletter, sideshow and poster, storybook witchery, glitch and uncanny, typed and scrawled. The previews only load the letters they show. The chosen font is sized automatically to match the house font's width, and is kept in this browser.
+
+
 Titles are set in Blush TM (`fonts/blush.woff2`). The print run sheet can also try a font file from your own device, kept in that browser only.
 
 ## Running it
