@@ -1618,13 +1618,13 @@ a.btn { text-decoration: none; display: inline-block; }
   // ---------- trying a font from the viewer's own device (kept in this browser only) ----------
   const FONT_KEYS = { title: 'drift-garden-font-title', small: 'drift-garden-font-small' };
   // ---------- display fonts: free, offbeat, a little uncanny ----------
+  // the test: would it sit on an A24 title card? (C's seven picks first in each group, then more in their spirit)
   const DISPLAY = [
-    ['Dripping and dread', ['Creepster', 'Nosifer', 'Butcherman', 'Eater', 'Rubik Wet Paint', 'Frijole', 'Metal Mania']],
-    ['Old ink and blackletter', ['UnifrakturMaguntia', 'UnifrakturCook:wght@700', 'Pirata One', 'Grenze Gotisch', 'Jacquard 24', 'Jacquarda Bastarda 9', 'Fruktur', 'Germania One', 'New Rocker']],
-    ['Sideshow and poster', ['Ewert', 'Sancreek', 'Rye', 'Smokum', 'Fascinate Inline', 'Vast Shadow', 'Miltonian', 'Miltonian Tattoo', 'Jacques Francois Shadow', 'Piedra', 'Ribeye Marrow', 'Federant', 'Almendra Display', 'Shojumaru', 'Trade Winds']],
-    ['Storybook witchery', ['Griffy', 'Henny Penny', 'Mystery Quest', 'Spirax', 'Princess Sofia', 'Mountains of Christmas', 'Butterfly Kids', 'Kranky', 'Jolly Lodger', 'Flavors', 'Freckle Face', 'Ruge Boogie', 'Bonbon', 'Love Ya Like A Sister', 'Caesar Dressing', 'Bigelow Rules', 'Shizuru', 'Snowburst One', 'Underdog']],
-    ['Glitch and uncanny', ['Rubik Glitch', 'Rubik Puddles', 'Rubik Microbe', 'Rubik Beastly', 'Rubik Burned', 'Rubik Distressed', 'Moirai One', 'Londrina Sketch', 'Londrina Shadow', 'Codystar', 'Monoton', 'Sixtyfour', 'Workbench', 'Foldit', 'Kablammo', 'Hanalei', 'Bungee Shade', 'Tilt Prism', 'Barrio', 'Danfo']],
-    ['Typed, scrawled, left behind', ['Special Elite', 'Lacquer', 'Sedgwick Ave Display']]];
+    ['Hairline and haunted', ['Ballet', 'Bonbon', 'Explora', 'Fuggles', 'Mea Culpa', 'Mrs Saint Delafield', 'Monsieur La Doulaise', 'Babylonica', 'Petemoss', 'Corinthia', 'Fleur De Leah', 'Send Flowers', 'Italiana', 'Poiret One', 'Megrim', 'Wire One']],
+    ['Strange serifs', ['Federant', 'Kalnia', 'Elsie', 'Della Respira', 'Lancelot', 'Metamorphous', 'Trochut', 'Smythe', 'Imbue', 'Instrument Serif', 'Gloock', 'Cormorant Unicase', 'Castoro Titling', 'IM Fell English SC', 'IM Fell DW Pica SC', 'Linden Hill', 'Young Serif', 'Fraunces', 'Bodoni Moda', 'Stint Ultra Expanded', 'Cinzel Decorative']],
+    ['Gothic edge', ['Grenze Gotisch', 'Grenze', 'Texturina', 'Jaini', 'Medula One', 'Stint Ultra Condensed', 'Six Caps', 'Tulpen One', 'Big Shoulders Display']],
+    ['Signal and static', ['Handjet', 'Coral Pixels', 'Doto', 'Bitcount Prop Single', 'Bitcount Grid Double', 'Major Mono Display']],
+    ['Speed and drift', ['Faster One', 'Syncopate', 'Lexend Zetta', 'Bungee Hairline', 'Syne']]];
   const DISPLAY_KEY = 'drift-garden-display';
   const famName = spec => spec.split(':')[0];
   const famHref = (specs, text) => 'https://fonts.googleapis.com/css2?' + specs.map(sp => 'family=' + sp.replace(/ /g, '+')).join('&') + (text ? '&text=' + encodeURIComponent(text) : '') + '&display=swap';
