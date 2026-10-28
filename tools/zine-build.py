@@ -54,3 +54,23 @@ h = Image.open(O + 'z-horse.png').convert('L'); W, H = h.size; pad = 40
 pair = Image.new('L', (2 * W + 2 * pad, H), 255); pair.paste(h, (pad // 2, 0)); pair.paste(ImageOps.mirror(h), (W + pad + pad // 2, 0))
 pal = Image.new('P', pair.size); pal.putpalette([0, 0, 0, 255, 255, 255]); pal.putdata([0 if v < 128 else 1 for v in pair.getdata()])
 pal.save(O + 'z-horse-pair.png', optimize=True, transparency=1)
+
+# one eye, blown up until the dots are the size of coins
+random.seed('macro')
+eye = Image.open(S + 'eye-lashes.jpg').convert('RGB').crop((360, 400, 760, 680))
+macro = zinify.halftone(eye, 1200, 22, lift=.8)
+def save_ink(im, name):
+    ink = im.convert('L').point(lambda v: 0 if v < 128 else 255)
+    pal = Image.new('P', ink.size); pal.putpalette([0, 0, 0, 255, 255, 255]); pal.putdata([0 if v == 0 else 1 for v in ink.getdata()])
+    pal.save(O + name, optimize=True, transparency=1)
+save_ink(macro, 'z-eye-macro.png')
+
+# copies of copies: each generation photocopied from the one before, losing a little more
+from PIL import ImageFilter
+random.seed('gen')
+g = Image.open(S + 'mod-wig.jpg').convert('L').crop((330, 300, 1180, 1150)).resize((300, 300))
+for n in range(1, 9):
+    g = zinify.photocopy(g.convert('RGB'), 300) if n > 1 else zinify.halftone(g.convert('RGB'), 300, 4, lift=.6)
+    save_ink(g, f'z-gen-{n}.png')
+    g = g.convert('L').filter(ImageFilter.GaussianBlur(.6 + n * .25))
+    g = g.resize((300 - n * 12, 300 - n * 12)).resize((300, 300))

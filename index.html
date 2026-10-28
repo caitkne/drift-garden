@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Selvedge Garden: a place to drop the things that inspire you, wander them, and share an allotment with friends. No ads, no algorithms, no AI.">
+<meta name="description" content="Selvedge Garden: a place to drop the things that inspire you, wander them, and share an allotment with friends. Wildflowers sprout by clunky, hand-written rules: more art school library stacks than feed.">
 <title>Selvedge Garden</title>
 <script>
   // links shared to the old address (bookmarklet, share sheet) still land in your garden
@@ -26,99 +26,110 @@
 }
 [hidden] { display: none !important; }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--pink); color: var(--ink); font: 400 17px/1.55 var(--type); overflow-x: hidden; }
+html { background: var(--ink); }
+body { margin: 0; background: var(--pink); color: var(--ink); font: 400 15px/1.5 var(--type); overflow-x: hidden; }
 body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: var(--grain, none); opacity: .9; z-index: 50; mix-blend-mode: multiply; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; position: relative; }
-section, header, footer, .frieze { position: relative; overflow: clip; }
-
-/* photocopied ink */
-.mast h1, .word, .free, .moving h2 { filter: url(#rough); }
-.by, .pill, .coupon h3, .clip b, footer .slogan, .price { filter: url(#rough-m); }
-.typed span, .coupon p, .lede { filter: url(#rough-s); }
+section, header, footer { position: relative; overflow: clip; }
+.title-slice, .word, .free, .moving h2 { filter: url(#rough); }
+.pill, .coupon h3, .clip b, .slogan { filter: url(#rough-m); }
 
 /* a picture printed in two inks that didn't quite line up */
 .riso { position: relative; display: block; }
 .riso::before, .riso::after { content: ""; position: absolute; inset: 0; -webkit-mask: var(--img) var(--pos, center) / var(--size, cover) no-repeat; mask: var(--img) var(--pos, center) / var(--size, cover) no-repeat; }
-.riso::before { background: var(--c2, var(--hot)); transform: translate(var(--dx, .9%), var(--dy, 1.6%)); }
+.riso::before { background: var(--c2, var(--hot)); transform: translate(var(--dx, 1%), var(--dy, 1.6%)); }
 .riso::after { background: var(--c1, var(--ink)); mix-blend-mode: multiply; }
 
-/* ---------- cover ---------- */
-.mast { padding-top: clamp(18px, 4vw, 40px); }
-.mast h1 { position: relative; margin: 0; font: 400 clamp(60px, 21.5vw, 290px)/.78 var(--bubble); letter-spacing: -.035em; text-align: center; color: transparent; }
-/* the name is printed out of the photo: halftone inside the letters, a pink misprint behind */
-.mast h1 span { position: relative; display: block; background: url(assets/zine/z-dancers.png) center 55% / 115% auto, var(--paper); -webkit-background-clip: text; background-clip: text; -webkit-text-stroke: clamp(2px, .4vw, 5px) var(--ink); }
-.mast h1::before { content: attr(data-text); position: absolute; inset: 0; color: var(--hot); transform: translate(1.4%, 3%); z-index: -1; }
-.eyes { height: clamp(150px, 27vw, 380px); margin-top: clamp(-40px, -3vw, -14px); --img: url(assets/zine/z-lash-strip.png); --pos: center 40%; }
-.word { position: absolute; right: clamp(8px, 6vw, 90px); bottom: clamp(-14px, -1vw, -6px); margin: 0; font: 400 clamp(52px, 10vw, 128px)/1 var(--swash); background: var(--paper); padding: 0 .16em .06em; transform: rotate(-3deg); }
-.typed { position: relative; z-index: 1; margin-top: clamp(-34px, -2.4vw, -18px); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; }
-.typed p { margin: 0; max-width: 64ch; }
-.typed span { display: inline; background: var(--paper); padding: 3px 8px; line-height: 2.05; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-.typed p + p { margin-top: 10px; }
-.typed p:nth-child(2) { margin-left: clamp(0px, 6vw, 70px); }
-.price { width: 112px; height: 112px; flex: none; background: var(--ink); color: var(--pink); border-radius: 50%; display: grid; place-items: center; text-align: center; font: 700 15px/1.05 var(--type); transform: rotate(8deg); }
-.typed .price span { display: block; background: none; padding: 0; line-height: 1.05; filter: none; }
-.price b { display: block; font: 400 32px/1 var(--swash); }
-.byline { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 24px; border-top: 3px solid var(--ink); padding-top: 14px; margin-top: 34px; }
-.by { font: 400 clamp(30px, 5.4vw, 56px)/1 var(--shade); }
-.byline small { font: 700 12px/1.4 var(--type); letter-spacing: .12em; text-transform: uppercase; }
-.actions { display: flex; flex-wrap: wrap; gap: 26px; align-items: start; margin: 22px 0 46px; }
-.pill { display: inline-block; background: var(--ink); color: var(--pink); text-decoration: none; font: 400 clamp(30px, 4.6vw, 44px)/1 var(--bubble); padding: 12px 30px 6px; border-radius: 999px; border: 0; cursor: pointer; transform: rotate(-2deg); transition: transform .15s; }
-.pill:hover { transform: rotate(1deg) scale(1.03); }
-.coupon { position: relative; flex: 1; min-width: min(100%, 340px); max-width: 560px; border: 2.5px dashed var(--ink); padding: 20px 20px 16px; background: var(--paper); }
-.coupon::before { content: "\2702"; position: absolute; top: -16px; left: 18px; background: var(--pink); padding: 0 6px; font-size: 22px; line-height: 1; }
-.coupon h3 { margin: 0 0 6px; font: 400 30px/1.05 var(--swash); }
-.coupon p { margin: 0 0 10px; font-size: 15px; }
-.coupon form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.coupon input { flex: 1; min-width: 0; font: 400 16px/1.2 var(--type); padding: 10px 12px; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
-.link { font: 700 14px/1 var(--type); text-transform: uppercase; letter-spacing: .08em; background: none; border: 0; padding: 10px 0; color: var(--ink); cursor: pointer; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
-.pill:focus-visible, .link:focus-visible, input:focus-visible, .clip:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
-.moving { border: 3px solid var(--ink); background: var(--paper); padding: 22px; display: grid; gap: 12px; max-width: 64ch; margin: 24px 0; }
-.moving h2 { margin: 0; font: 400 40px/1 var(--swash); }
+/* the little notes: typed on a scrap and stuck down */
+.note { position: absolute; z-index: 5; max-width: 23ch; font: 400 14px/1.35 var(--type); background: var(--paper); color: var(--ink); padding: 6px 9px 7px 30px; transform: rotate(var(--r, -1.5deg)); }
+.note b { position: absolute; left: 8px; top: 5px; font: 700 13px/1 var(--type); width: 16px; height: 16px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-size: 10px; }
+.note.ink { background: var(--ink); color: var(--paper); } .note.ink b { background: var(--hot); color: var(--ink); }
+
+/* ---------- 1. the eye ---------- */
+.cover { min-height: min(100svh, 980px); padding-bottom: 40px; }
+.cover .eye { position: absolute; inset: 0 0 18% 0; --img: url(assets/zine/z-eye-macro.png); --pos: 50% 46%; --dx: 1.2%; --dy: 2.2%; }
+/* the name, cut into strips and pasted back a little crooked */
+.title { position: relative; z-index: 2; margin: 0; padding-top: clamp(40px, 9vw, 120px); font: 400 clamp(84px, 24vw, 330px)/.8 var(--bubble); letter-spacing: -.04em; text-align: center; }
+.title-slice { display: block; color: var(--c, var(--ink)); background: var(--paper); clip-path: inset(calc(var(--k) * 100% / 6) -10% calc(100% - (var(--k) + 1) * 100% / 6) -10%); transform: translateX(var(--x, 0)); }
+.title-slice + .title-slice { position: absolute; left: 0; right: 0; bottom: 0; }
+.word { position: absolute; z-index: 3; right: clamp(-6px, 1vw, 20px); top: clamp(140px, 30vw, 400px); margin: 0; font: 400 clamp(46px, 8vw, 110px)/1 var(--swash); background: var(--lime); padding: .05em .2em .12em; writing-mode: vertical-rl; transform: rotate(180deg); }
+.go { position: relative; z-index: 4; display: flex; justify-content: center; margin-top: clamp(140px, 22vw, 300px); }
+.pill { display: inline-block; background: var(--ink); color: var(--pink); text-decoration: none; font: 400 clamp(38px, 6vw, 64px)/1 var(--bubble); padding: 14px 36px 6px; border-radius: 999px; border: 0; cursor: pointer; transform: rotate(-3deg); transition: transform .15s; }
+.pill:hover { transform: rotate(2deg) scale(1.04); }
+.price { position: absolute; z-index: 4; left: 50%; margin-left: clamp(150px, 22vw, 290px); bottom: clamp(30px, 5vw, 60px); width: 96px; height: 96px; background: var(--hot); border-radius: 50%; display: grid; place-items: center; text-align: center; font: 700 13px/1.05 var(--type); transform: rotate(12deg); }
+.price b { display: block; font: 400 28px/1 var(--swash); }
+.moving { position: relative; z-index: 6; margin: 24px auto 0; max-width: 520px; border: 3px solid var(--ink); background: var(--paper); padding: 18px; display: grid; gap: 10px; }
+.moving h2 { margin: 0; font: 400 36px/1 var(--swash); }
 .moving p { margin: 0; }
 
-/* ---------- the horses go round ---------- */
-.frieze { height: clamp(86px, 11vw, 132px); background: var(--lime); border-block: 3px solid var(--ink); }
-.frieze::after { content: ""; position: absolute; inset: 12% 0 6%; background: var(--ink); -webkit-mask: url(assets/zine/z-horse-pair.png) 0 50% / auto 100% repeat-x; mask: url(assets/zine/z-horse-pair.png) 0 50% / auto 100% repeat-x; animation: gallop 26s linear infinite; }
-@keyframes gallop { to { -webkit-mask-position: -1360px 50%; mask-position: -1360px 50%; } }
-@media (prefers-reduced-motion: reduce) { .frieze::after { animation: none; } }
+/* ---------- 2. copies of copies ---------- */
+.copies { background: var(--ink); padding: clamp(60px, 9vw, 120px) 0; }
+.gens { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0; }
+.gens i { aspect-ratio: 1 / 1.25; position: relative; }
+.gens i::after { content: ""; position: absolute; inset: 0; background: var(--c, var(--pink)); -webkit-mask: var(--img) var(--pos, center) / cover no-repeat; mask: var(--img) var(--pos, center) / cover no-repeat; }
+.gens i.odd { background: var(--lime); --c: var(--ink); }
+.gens i:nth-child(even) { transform: translateY(8%); }
 
-/* ---------- free to wander ---------- */
-.spread { background: var(--paper); padding: 56px 0 70px; }
-.spread .top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(20px, 4vw, 56px); align-items: start; }
-.free { font: 400 clamp(64px, 8.6vw, 116px)/.9 var(--swash); margin: 0; }
-.lede { max-width: 44ch; margin: 22px 0 0; }
-/* one picture over and over, until it isn't */
-.same { display: grid; grid-template-columns: repeat(4, 1fr); border: 3px solid var(--ink); background: var(--ink); gap: 3px; }
-.same i { aspect-ratio: 1; background: var(--paper); position: relative; }
-.same i::after { content: ""; position: absolute; inset: 0; background: var(--c, var(--ink)); -webkit-mask: var(--img, url(assets/zine/z-wig.png)) var(--pos, center) / cover no-repeat; mask: var(--img, url(assets/zine/z-wig.png)) var(--pos, center) / cover no-repeat; }
-.same i.odd { background: var(--hot); --c: var(--ink); }
-.same + figcaption { margin-top: 10px; font: 700 13px/1.4 var(--type); letter-spacing: .12em; text-transform: uppercase; text-align: right; }
-.gardens { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 30px; margin-top: 54px; }
-.clip { position: relative; display: block; width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; background: #fff; border: 2px dashed var(--ink); padding: 16px 16px 14px; transform: rotate(var(--r, -1deg)); transition: transform .2s; }
+/* ---------- 3. the horses, and the coupon ---------- */
+.ride { background: var(--lime); border-block: 3px solid var(--ink); padding: 0 16px clamp(50px, 7vw, 90px); }
+.herd { position: relative; height: clamp(150px, 26vw, 360px); margin: 0 -16px; }
+.herd::after { content: ""; position: absolute; inset: 6% 0 0; background: var(--ink); -webkit-mask: url(assets/zine/z-horse-pair.png) 0 100% / auto 100% repeat-x; mask: url(assets/zine/z-horse-pair.png) 0 100% / auto 100% repeat-x; animation: gallop 40s linear infinite; }
+.herd.back::after { background: var(--blue); inset: 30% 0 4%; opacity: .9; animation-duration: 64s; animation-direction: reverse; }
+@keyframes gallop { to { -webkit-mask-position: -2400px 100%; mask-position: -2400px 100%; } }
+@media (prefers-reduced-motion: reduce) { .herd::after { animation: none; } }
+.coupon { position: relative; z-index: 2; max-width: 480px; margin: clamp(-80px, -6vw, -30px) auto 0; border: 2.5px dashed var(--ink); padding: 18px 20px 14px; background: var(--paper); transform: rotate(-1.5deg); }
+.coupon::before { content: "\2702"; position: absolute; top: -16px; left: 18px; background: var(--lime); padding: 0 6px; font-size: 22px; line-height: 1; }
+.coupon h3 { margin: 0 0 4px; font: 400 34px/1.05 var(--swash); }
+.coupon p { margin: 0 0 8px; }
+.coupon form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.coupon input { flex: 1; min-width: 0; font: 400 16px/1.2 var(--type); padding: 10px 12px; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
+.link { font: 700 13px/1 var(--type); text-transform: uppercase; letter-spacing: .08em; background: none; border: 0; padding: 10px 0; color: var(--ink); cursor: pointer; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.pill:focus-visible, .link:focus-visible, input:focus-visible, .clip:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+
+/* ---------- 4. two pictures cut into strips and woven ---------- */
+.wander { background: var(--paper); padding-bottom: 70px; }
+.weave-box { position: relative; }
+.weave { position: relative; display: grid; grid-template-columns: repeat(14, 1fr); height: clamp(320px, 52vw, 700px); }
+.weave i { position: relative; transform: translateY(var(--y, 0)); }
+.weave i::after { content: ""; position: absolute; inset: 0; background: var(--c); -webkit-mask: var(--img) calc(var(--n) * 100% / 13) 30% / 1400% auto no-repeat; mask: var(--img) calc(var(--n) * 100% / 13) 30% / 1400% auto no-repeat; }
+.free { position: absolute; z-index: 3; left: 50%; top: 50%; margin: 0; white-space: nowrap; font: 400 clamp(56px, 12vw, 170px)/1 var(--swash); color: var(--ink); background: var(--hot); padding: 0 .18em .08em; transform: translate(-50%, -50%) rotate(-7deg); }
+.wander .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; position: relative; }
+.gardens { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 26px; margin-top: 56px; }
+.clip { position: relative; display: block; width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; background: #fff; border: 2px dashed var(--ink); padding: 14px 16px 12px; transform: rotate(var(--r, -1deg)); transition: transform .2s; }
 .clip:hover { transform: rotate(0deg) translateY(-3px); }
 .clip .pics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px; }
 .clip .pics span { aspect-ratio: 1; overflow: hidden; background: var(--paper); }
 .clip .pics img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(1) contrast(1.6) brightness(1.05); mix-blend-mode: multiply; }
-.clip b { display: block; font: 400 32px/1.05 var(--swash); }
-.clip small { display: block; margin: 6px 0 8px; font: 700 12px/1.4 var(--type); letter-spacing: .1em; text-transform: uppercase; }
-.clip ul { margin: 0; padding: 0; list-style: none; font-size: 14px; line-height: 1.45; }
+.clip b { display: block; font: 400 30px/1.05 var(--swash); }
+.clip small { display: block; margin: 6px 0 8px; font: 700 11px/1.4 var(--type); letter-spacing: .1em; text-transform: uppercase; }
+.clip ul { margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.45; }
 .clip ul li::before { content: "\2605  "; }
-.empty { border: 2px dashed var(--ink); padding: 22px; max-width: 52ch; background: #fff; }
+.empty { border: 2px dashed var(--ink); padding: 18px; max-width: 40ch; background: #fff; }
 
-/* ---------- footer: the crowd ---------- */
-footer { background: var(--hot); color: var(--ink); text-align: center; padding: clamp(90px, 14vw, 170px) 16px 30px; font: 700 13px/1.6 var(--type); letter-spacing: .14em; text-transform: uppercase; }
-footer .crowd { position: absolute; inset: 0; --img: url(assets/zine/z-crowd.png); --pos: center 35%; --c2: transparent; opacity: .55; }
+/* ---------- the crowd ---------- */
+footer { background: var(--hot); color: var(--ink); text-align: center; padding: clamp(120px, 18vw, 220px) 16px 26px; font: 700 12px/1.6 var(--type); letter-spacing: .14em; text-transform: uppercase; }
+footer .crowd { position: absolute; inset: 0; --img: url(assets/zine/z-crowd.png); --pos: center 35%; --c2: transparent; opacity: .6; }
 footer > *:not(.crowd) { position: relative; }
-footer .slogan { display: inline-block; background: var(--ink); color: var(--pink); font: 400 clamp(30px, 5vw, 48px)/1.1 var(--bubble); letter-spacing: 0; text-transform: none; padding: 4px 18px 0; margin-bottom: 12px; }
+.slogan { display: inline-block; background: var(--ink); color: var(--pink); font: 400 clamp(30px, 5vw, 48px)/1.1 var(--bubble); letter-spacing: 0; text-transform: none; padding: 4px 18px 0; margin-bottom: 12px; }
 footer p { margin: 0 auto; display: inline; background: var(--paper); padding: 3px 8px; line-height: 2.1; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 footer a { color: inherit; }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--pink); padding: 12px 18px; font: 700 14px/1.4 var(--type); max-width: calc(100% - 32px); z-index: 60; border-radius: 999px; }
 @media (max-width: 760px) {
-  .typed { grid-template-columns: 1fr; margin-top: 18px; }
-  .typed p:nth-child(2) { margin-left: 0; }
-  .price { justify-self: end; margin-top: -6px; }
-  .spread .top { grid-template-columns: 1fr; }
-  .same { margin-top: 10px; }
+  .note { position: relative; left: auto !important; right: auto !important; top: auto !important; bottom: auto !important; display: table; max-width: 26ch; font-size: 13px; margin: 14px 16px; }
+  .cover { min-height: 0; }
+  .cover .eye { inset: 0; }
+  .title { padding-top: 56px; }
+  .word { position: relative; right: auto; top: auto; writing-mode: horizontal-tb; transform: rotate(-4deg); display: table; margin: -8px 16px 0 auto; }
+  .go { margin-top: 30px; }
+  .price { position: relative; left: auto; bottom: auto; margin: 18px 24px 0 auto; }
+  .copies .note { margin-top: 26px; }
+  .free { font-size: 12vw; }
+  .copies { padding-bottom: 30px; }
+  .ride .note { margin: 18px auto 0; }
+  .gens { grid-template-columns: repeat(4, 1fr); }
+  .price { margin-left: 70px; bottom: 6px; width: 84px; height: 84px; }
+  .weave { grid-template-columns: repeat(10, 1fr); }
+  .weave i:nth-child(n+11) { display: none; }
+  .weave i::after { -webkit-mask-position: calc(var(--n) * 100% / 9) 30%; mask-position: calc(var(--n) * 100% / 9) 30%; -webkit-mask-size: 1000% auto; mask-size: 1000% auto; }
 }
 </style>
 </head>
@@ -148,67 +159,78 @@ footer a { color: inherit; }
   </defs>
 </svg>
 
-<header>
-  <div class="wrap mast"><h1 data-text="selvedge" aria-label="Selvedge"><span aria-hidden="true">selvedge</span></h1></div>
-  <div class="riso eyes" aria-hidden="true"></div>
-  <div class="wrap">
-    <p class="word" aria-hidden="true">garden</p>
-  </div>
-  <div class="wrap">
-    <section class="moving" id="moving" hidden>
-      <h2>Moving house!</h2>
-      <p>Selvedge Garden now lives at <b>selvedge.garden</b>. Your garden is still here in this browser. Carry it over and it'll be waiting at the new address.</p>
-      <div><button class="pill" type="button" id="carry">carry it over</button></div>
-      <p id="carryNote" style="font-size:14px">It opens selvedge.garden in a new tab and hands everything across, in this browser only.</p>
-    </section>
-    <div class="typed">
-      <div>
-        <p><span>A place to drop the things that inspire you and come back to them later. Plant pictures, words, songs and links, and they land wherever they like.</span></p>
-        <p><span>Wildflowers sprout from what you've planted: finds from museums, libraries, poems, nature and music, picked by plain rules. Never by AI. No ads, no feeds, nothing working on your attention.</span></p>
-        <p><span>Share an allotment with friends, by invite only. Take cuttings from their gardens, or wander the public ones.</span></p>
-      </div>
-      <div class="price"><span><b>free</b>forever<br>&amp; ever</span></div>
-    </div>
-    <div class="byline"><span class="by">BY YOU &amp; FRIENDS</span><small>No ads &bull; No algorithms &bull; No AI</small></div>
-    <div class="actions" id="actions">
-      <a class="pill" href="garden/" id="goGarden">go to your garden</a>
-      <div class="coupon" id="acct" hidden>
-        <div id="acctOut">
-          <h3>Clip &amp; keep</h3>
-          <p>An account saves your garden, lets you join allotments and take cuttings. You sign in with a passkey: your face, fingerprint or phone lock. No passwords, no email.</p>
-          <div><button class="link" type="button" id="signIn">Sign in with a passkey</button></div>
-          <form id="signUp"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="the name friends will see" aria-label="The name friends will see"><button class="link" type="submit">Make an account</button></form>
-        </div>
-        <div id="acctIn" hidden>
-          <h3>Hello, <span id="meName"></span></h3>
-          <p>Save your garden, start allotments and make it public from the account button inside your garden.</p>
-          <div><button class="link" type="button" id="signOut">Sign out</button></div>
-        </div>
-      </div>
-    </div>
-  </div>
+<header class="cover">
+  <div class="riso eye" aria-hidden="true"></div>
+  <h1 class="title" id="title" aria-label="Selvedge Garden"></h1>
+  <p class="word" aria-hidden="true">garden</p>
+  <p class="note" style="left:clamp(12px,6vw,90px);top:clamp(250px,40vw,520px);--r:-3deg"><b>1</b>Drop the things you love. Come back to them later.</p>
+  <p class="note ink" style="right:clamp(70px,14vw,200px);top:clamp(22px,4vw,48px);--r:2deg"><b>2</b>Run by a clunky, hand-built algorithm. No ads.</p>
+  <section class="moving" id="moving" hidden>
+    <h2>Moving house!</h2>
+    <p>Selvedge now lives at selvedge.garden.</p>
+    <div><button class="pill" type="button" id="carry">carry it over</button></div>
+    <p id="carryNote" style="font-size:13px">Opens a new tab and hands your garden across.</p>
+  </section>
+  <div class="go"><a class="pill" href="garden/" id="goGarden">go to your garden</a></div>
+  <div class="price"><span><b>free</b>forever</span></div>
 </header>
 
-<div class="frieze" aria-hidden="true"></div>
+<section class="copies" aria-hidden="true">
+  <div class="gens" id="gens"></div>
+  <p class="note" style="left:clamp(12px,8vw,120px);bottom:clamp(14px,3vw,34px);--r:-2deg"><b>3</b>Wildflowers sprout from what you plant. More library stacks than feed.</p>
+</section>
 
-<main class="spread" id="public" hidden>
-  <div class="wrap">
-    <div class="top">
-      <div>
-        <h2 class="free">Free to wander!</h2>
-        <p class="lede">Public gardens, shared by their gardeners. Wander in and look around. Nothing you do there changes them.</p>
-      </div>
-      <figure style="margin:0" aria-hidden="true"><div class="same"><i></i><i></i><i></i><i></i><i></i><i class="odd" style="--img:url(assets/zine/z-astronaut.png);--pos:center 25%"></i><i></i><i></i><i></i><i></i><i class="odd" style="--img:url(assets/zine/z-hopper.png);--pos:center 25%"></i><i></i><i></i><i></i><i></i><i></i></div><figcaption>randomness, but not muck</figcaption></figure>
+<section class="ride">
+  <div class="herd back" aria-hidden="true"></div>
+  <div class="herd" aria-hidden="true" style="margin-top:clamp(-260px,-19vw,-110px)"></div>
+  <div class="coupon" id="acct" hidden>
+    <div id="acctOut">
+      <h3>Clip &amp; keep</h3>
+      <p>Sign in with your face or fingerprint. No passwords, no email.</p>
+      <div><button class="link" type="button" id="signIn">Sign in</button></div>
+      <form id="signUp"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="your name" aria-label="Your name, as friends will see it"><button class="link" type="submit">Make an account</button></form>
     </div>
-    <div class="gardens" id="gardens"></div>
+    <div id="acctIn" hidden>
+      <h3>Hello, <span id="meName"></span></h3>
+      <p>Save, share and make gardens public from inside your garden.</p>
+      <div><button class="link" type="button" id="signOut">Sign out</button></div>
+    </div>
   </div>
-</main>
+  <p class="note" style="right:clamp(12px,7vw,110px);bottom:clamp(14px,2.4vw,30px);--r:3deg"><b>4</b>Share an allotment with friends. Invite only.</p>
+</section>
+
+<section class="wander">
+  <div class="weave-box"><div class="weave" id="weave" aria-hidden="true"></div>
+  <h2 class="free">Free to wander!</h2></div>
+  <p class="note ink" style="left:clamp(12px,5vw,70px);top:clamp(16px,3vw,40px);--r:-2deg"><b>5</b>Pasted up fresh each visit.</p>
+  <main class="wrap" id="public" hidden>
+    <p class="note" style="position:relative;display:inline-block;margin:44px 0 0;--r:1deg"><b>6</b>Public gardens. Look around, take cuttings.</p>
+    <div class="gardens" id="gardens"></div>
+  </main>
+</section>
 
 <footer>
   <div class="riso crowd" aria-hidden="true"></div>
   <span class="slogan">love &bull; change &bull; unity</span><br>
-  <p>Selvedge Garden &middot; no ads &middot; no algorithms &middot; no AI &middot; <a href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">pictures: public domain &amp; CC0</a></p>
+  <p>Selvedge Garden &middot; <a href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">pictures: public domain &amp; CC0</a></p>
 </footer>
+<script>
+// paste-up: each visit cuts and arranges the pictures a little differently
+(() => {
+  const pick = a => a[Math.floor(Math.random() * a.length)], shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+  const Z = n => `url(assets/zine/z-${n}.png)`;
+  // the name, in six crooked strips
+  const t = document.getElementById('title'), inks = ['var(--ink)', 'var(--ink)', 'var(--hot)', 'var(--ink)', 'var(--blue)', 'var(--ink)'];
+  t.innerHTML = [0, 1, 2, 3, 4, 5].map(k => `<span class="title-slice" aria-hidden="true" style="--k:${k};--x:${((Math.random() - .5) * 5).toFixed(2)}%;--c:${k === 0 ? 'var(--ink)' : pick(inks)}">selvedge</span>`).join('');
+  // copies of copies, and one stranger among them
+  const odd = 1 + Math.floor(Math.random() * 7), stranger = pick(['astronaut', 'hopper', 'cat-eyes', 'coffee', 'horse']);
+  document.getElementById('gens').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(n => n === odd ? `<i class="odd" style="--img:${Z(stranger)}"></i>` : `<i style="--img:${Z('gen-' + n)}"></i>`).join('');
+  // two pictures cut into strips and woven together
+  const pairs = shuffle([['dancers', 'lac'], ['model', 'marnac'], ['hippies', 'retina'], ['dancers', 'astronaut'], ['profile', 'heavens'], ['lashes', 'providence']]), [a, b] = pick(pairs);
+  const [ia, ib] = shuffle([['var(--ink)', 'var(--blue)'], ['var(--ink)', 'var(--hot)'], ['var(--blue)', 'var(--hot)']])[0];
+  document.getElementById('weave').innerHTML = Array.from({ length: 14 }, (_, n) => `<i style="--n:${n};--img:${Z(n % 2 ? b : a)};--c:${n % 2 ? ib : ia};--y:${((Math.random() - .5) * 6).toFixed(1)}%"></i>`).join('');
+})();
+</script>
 <script>
 (() => {
   const API = 'https://api.selvedge.garden';
@@ -299,7 +321,7 @@ footer a { color: inherit; }
       ${g.pics && g.pics.length ? `<span class="pics">${g.pics.slice(0, 4).map(p => `<span><img alt="" loading="lazy" src="${esc(p)}"></span>`).join('')}</span>` : ''}
       <b>${esc(g.name)}</b><small>by ${esc(g.owner)} \u00b7 ${g.count} ${g.count === 1 ? 'piece' : 'pieces'} \u00b7 ${ago(g.updated)}</small>
       ${g.titles && g.titles.length ? `<ul>${g.titles.slice(0, 4).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</button>`).join('')
-      : '<p class="empty">Nobody\u2019s shared one yet. Make yours public from the account button inside your garden, and it shows up here.</p>';
+      : '<p class="empty">None yet. Make yours public from inside your garden.</p>';
   })();
   $('gardens').addEventListener('click', async e => {
     const b = e.target.closest('.clip'); if (!b) return;
