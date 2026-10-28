@@ -1,0 +1,8 @@
+# Only needed if you deploy from the command line (npx wrangler deploy). The dashboard route doesn't use this file.
+name = "drift-ebay"
+main = "ebay-relay.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+MARKETPLACE = "EBAY_AU"
+ALLOWED_ORIGINS = "https://caitkne.github.io"

@@ -56,6 +56,10 @@ While **Studio on** (top left), the studio re-sets one piece you can see every 6
 
 The studio has one more layout: **its own style**. A picture lends its own colours, counted the same way. A webpage lends the colours of its main picture and its heading font. If the page uses a Google font, that exact font is used. Licensed fonts can't be copied, so a free font of the same kind stands in (Jost for geometric sans like Futura, Inter Tight for grotesques like Helvetica, EB Garamond or Playfair for serifs, and so on), and the piece says what it's standing in for. New pieces start in their own style. The webpage lookup uses Microlink, which allows about 50 lookups a day.
 
+## eBay wildflowers
+
+eBay listings can grow as wildflowers once the garden's eBay relay is running (a small free Cloudflare Worker that keeps the eBay key private). Setup steps are in [worker/README.md](worker/README.md). Until its address is set in `EBAY_RELAY`, there are no eBay wildflowers.
+
 ## Fonts
 
 **Display font** (in the Print run sheet) offers 74 free Google Fonts that feel offbeat, a little unnerving, whimsical and macabre, grouped by mood: dripping and dread, old ink and blackletter, sideshow and poster, storybook witchery, glitch and uncanny, typed and scrawled. The previews only load the letters they show. The chosen font is sized automatically to match the house font's width, and is kept in this browser.

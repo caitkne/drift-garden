@@ -1084,6 +1084,8 @@ a.btn { text-decoration: none; display: inline-block; }
     try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); } finally { clearTimeout(t); }
   }
   const strip = h => (h || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  // the address of the eBay relay (a Cloudflare Worker, see worker/README.md). Empty means no eBay wildflowers.
+  const EBAY_RELAY = '';
   const LIVE = [
     { name: 'the Art Institute of Chicago', async find(q) {
       const d = await getJSON('https://api.artic.edu/api/v1/artworks/search?q=' + encodeURIComponent(q) + '&limit=12&fields=id,title,artist_display,date_display,image_id,is_public_domain,thumbnail');
@@ -1139,6 +1141,10 @@ a.btn { text-decoration: none; display: inline-block; }
       return (d.results || []).filter(x => x.trackViewUrl && x.trackName).map(x => ({
         title: x.trackName, note: [x.artistName, x.collectionName, (x.releaseDate || '').slice(0, 4)].filter(Boolean).join(', '),
         href: x.trackViewUrl.replace(/[?&]uo=\d+/, ''), song: true })); } },
+    // eBay listings, through the garden's own relay (see worker/README.md); left out until the relay's address is set
+    ...(EBAY_RELAY ? [{ name: 'eBay', async find(q) {
+      const d = await getJSON(EBAY_RELAY + '?q=' + encodeURIComponent(q));
+      return (d.items || []).map(x => ({ title: x.title, note: [x.price, x.condition].filter(Boolean).join(' \u00b7 '), img: x.img, href: x.href })); } }] : []),
   ];
   function jsonp(url, ms = 8000) {
     return new Promise((ok, no) => {
