@@ -8,6 +8,10 @@ A garden to wander. Drop in pictures and words and they land wherever they like 
 - Drag **✿ Plant in Drift** from the plant sheet to your bookmarks bar, then press it on any page. It brings the page's title, picture and any text you've selected.
 - On Android, install the garden (browser menu, then "Add to home screen") and it appears in the Share menu.
 
+## Players
+
+Paste a Spotify, YouTube, Vimeo, SoundCloud, Bandcamp or Apple Music link, or its embed code, into the Link field (or anywhere on the garden). It becomes a piece with the player inside, so it plays right there. Only the player's address is kept, and only from those sites, so pasted code can't run anything else. The studio leaves players alone, because re-setting one would stop the music.
+
 ## Print runs
 
 The whole garden is printed in one trio of inks, taken from a word you choose (top-right corner). The word is searched on Wikimedia Commons and the Art Institute of Chicago, and only pictures with the word in their title are kept (up to 16). Every pixel is sorted into a colour bin (8 lightness steps, 24 hues, 4 strengths, greys by lightness), and each picture counts equally. Pixels near the centre count more, and a plain white, grey or black backdrop is set aside. Greys and whites are left out of the running, and the coloured bins are gathered into 12 hue families, so a red spread across many shades still counts as one red. Ink A is the most common family. Ink B is the next most common one that's clearly different, nudged up to 0.1 toward A's lightness. The anchor is the most common colour that reads on both at 4.5:1, or the darkest or lightest one pushed until it does (lifting A and B slightly if nothing else works). The sheet shows the pictures, the colour counts, and each step. Tick **Push the colours brighter** to keep the hues but lift both inks into the acid band (lightness 0.6 to 0.8, as strong as a screen can show); the print run remembers the choice. If no pictures can be found, the older letter rules decide instead: hue from the letters' balance point on the wheel, gap from the vowels, and so on.

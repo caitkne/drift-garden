@@ -200,6 +200,11 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .plant.set-borrowed .duo.pic .b { display: none; }
 .plant.set-borrowed .duo.pic .p { background: none; transform: none; }
 .plant.set-borrowed .duo.pic .p img, .plant.set-borrowed .duo.pic .p canvas { filter: none; mix-blend-mode: normal; }
+/* players */
+.embed { display: block; margin: 0 0 14px; }
+.embed iframe { display: block; width: 100%; border: 0; border-radius: 12px; background: var(--B); }
+.has-embed h3 { font-size: calc(36px * var(--sz, 1)) !important; }
+#vFig .embed iframe { border-radius: 12px; }
 .plant.resetting { transition: opacity .45s, filter .45s; opacity: 0; filter: blur(5px); }
 .keepRow { display: grid; gap: 10px; width: 100%; }
 .keepRow .row { flex-wrap: nowrap; }
@@ -263,7 +268,7 @@ a.btn { text-decoration: none; display: inline-block; }
       <input type="file" id="file" accept="image/*" aria-label="Choose an image">
     </div>
     <label for="tUrl">Link</label>
-    <input type="url" id="tUrl" inputmode="url" autocomplete="off" placeholder="Paste a webpage address">
+    <input type="text" id="tUrl" inputmode="url" autocomplete="off" placeholder="A webpage, or a Spotify / YouTube link or embed code">
     <label for="tTitle">Title</label>
     <input type="text" id="tTitle" maxlength="80" placeholder="Moth on the porch light">
     <label for="tNote">Words</label>
@@ -669,7 +674,8 @@ a.btn { text-decoration: none; display: inline-block; }
 
   // ---------- render ----------
   function build(p) {
-    const el = document.createElement('button'); el.type = 'button'; el.dataset.id = p.id;
+    // a player can't live inside a button (some browsers wouldn't let you press play), so those pieces are a focusable div
+    const el = document.createElement(p.embed ? 'div' : 'button'); if (p.embed) { el.tabIndex = 0; el.setAttribute('role', 'button'); } else el.type = 'button'; el.dataset.id = p.id;
     el.setAttribute('aria-label', (p.title || 'Untitled') + (p.example ? ', example' : ''));
     el.style.width = p.w + 'px';
     inkUp(p); const own = p.set === 'borrowed' && p.borrow;
@@ -683,13 +689,13 @@ a.btn { text-decoration: none; display: inline-block; }
       const capt = p.title ? duoText('span', jitter(p.title, seedOf(p.id)), 'capt ' + sc) : '';
       el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + (p.set === 'plate' ? `<span class="kicker">Plate ${roman(p.no)}</span>` : '') + ownNote + '<span class="frame">' + duoPic(p.img, p.w - 36, Math.round((p.w - 36) * (p.ar || 1))) + (p.set === 'over' && capt ? '<span class="overcap">' + capt + '</span>' : '') + '</span>' + (p.set === 'over' ? '' : capt) + (p.wild ? `<span class="by">${esc(p.wild.by)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     } else {
-      el.className = 'plant word ' + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
+      el.className = 'plant word ' + (p.embed ? 'has-embed ' : '') + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const by = p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '';
       const head = p.set === 'rule' ? `<span class="kicker">Drift Garden \u00b7 No. ${fmtNo(p.no)}</span>` : p.set === 'numeral' ? `<span class="numeral" aria-hidden="true">${p.no}</span>` : '';
-      const body = p.set === 'quote'
+      const body = p.embed ? playerHTML(p.embed) + duoText('h3', jitter(p.title || p.embed.kind, seedOf(p.id)), sc) + (p.note ? `<p>${esc(p.note)}</p>` : '') : p.set === 'quote'
         ? duoText('span', '<span class="mark">\u201c</span>' + jitter(p.note, seedOf(p.id)), 'pull ' + sc) + `<span class="src">${esc(p.title)}</span>` + by
         : duoText('h3', jitter(p.title || p.note, seedOf(p.id), p.set === 'drop'), sc) + by + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '');
-      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
+      el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.embed ? `<span class="host">\u266b ${esc(p.embed.kind)}</span>` : p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
     }
     if (p.example) el.insertAdjacentHTML('beforeend', '<span class="ex">Example</span>');
     return el;
@@ -740,6 +746,7 @@ a.btn { text-decoration: none; display: inline-block; }
   function plant(data, near, animate) {
     const p = { id: Math.random().toString(36).slice(2, 10), no: nextNo(), title: data.title || '', note: data.note || '', img: data.img || null, ar: data.ar || 1, link: data.link || null, example: !!data.example, wild: data.wild || null };
     if (data.borrow) { p.borrow = data.borrow; p.set = 'borrowed'; }
+    if (data.embed) { p.embed = data.embed; p.set = 'plain'; }
     let span;
     if (p.img) span = data.span || pick([1, 2, 2, 3]);
     else {
@@ -807,7 +814,7 @@ a.btn { text-decoration: none; display: inline-block; }
   let pending = null, style = null;
   function openPlant() { document.getElementById('nextNo').textContent = 'Piece ' + fmtNo(nextNo()); plantSheet.hidden = false; document.getElementById('tTitle').focus(); }
   function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; document.getElementById('weedSheet').hidden = true; document.getElementById('lovesSheet').hidden = true; }
-  function resetForm() { form.reset(); pending = null; style = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
+  function resetForm() { form.reset(); pending = null; style = null; embedPending = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
   function readImage(f) {
     if (!f || !f.type.startsWith('image/')) return;
     const fr = new FileReader();
@@ -830,7 +837,30 @@ a.btn { text-decoration: none; display: inline-block; }
   // ---------- planting webpages: paste a link, drop a link, the bookmark, or share to the installed app ----------
   const tUrl = document.getElementById('tUrl');
   const isUrl = v => /^https?:\/\/\S+$/i.test((v || '').trim());
-  let metaFor = '';
+  let metaFor = '', embedPending = null;
+  // ---------- players: Spotify, YouTube, Vimeo, SoundCloud, Bandcamp, Apple Music ----------
+  // A link or a pasted embed code becomes a player. Only the address is kept (never the pasted code itself), and only from these sites.
+  function embedFrom(text) {
+    text = (text || '').trim(); if (!text) return null;
+    let src = text, h = 0;
+    if (/<iframe/i.test(text)) { const fr = new DOMParser().parseFromString(text, 'text/html').querySelector('iframe'); if (!fr) return null; src = fr.getAttribute('src') || ''; h = parseInt(fr.getAttribute('height')) || 0; }
+    let u; try { u = new URL(src.startsWith('//') ? 'https:' + src : src); } catch (e) { return null; }
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+    const host = u.hostname.replace(/^www\./, ''), path = u.pathname;
+    let m;
+    if (host === 'open.spotify.com' && (m = path.match(/^\/(?:intl-[\w-]+\/)?(?:embed\/)?(track|album|playlist|episode|show|artist)\/([A-Za-z0-9]+)/)))
+      return { kind: 'Spotify', src: `https://open.spotify.com/embed/${m[1]}/${m[2]}`, h: /track|episode/.test(m[1]) ? 152 : 352, url: `https://open.spotify.com/${m[1]}/${m[2]}` };
+    if ((host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') && (m = (u.searchParams.get('v') && [0, u.searchParams.get('v')]) || path.match(/^\/(?:embed|shorts|live)\/([\w-]{6,})/)))
+      return { kind: 'YouTube', src: `https://www.youtube-nocookie.com/embed/${m[1]}`, ar: 9 / 16, url: `https://www.youtube.com/watch?v=${m[1]}` };
+    if (host === 'youtu.be' && (m = path.match(/^\/([\w-]{6,})/))) return { kind: 'YouTube', src: `https://www.youtube-nocookie.com/embed/${m[1]}`, ar: 9 / 16, url: `https://www.youtube.com/watch?v=${m[1]}` };
+    if ((host === 'vimeo.com' || host === 'player.vimeo.com') && (m = path.match(/(?:^|\/video)\/(\d+)/))) return { kind: 'Vimeo', src: `https://player.vimeo.com/video/${m[1]}`, ar: 9 / 16, url: `https://vimeo.com/${m[1]}` };
+    if (host === 'w.soundcloud.com' && path.startsWith('/player')) return { kind: 'SoundCloud', src: u.href, h: h || 166, url: u.searchParams.get('url') || null };
+    if (host === 'soundcloud.com' && path.split('/').filter(Boolean).length >= 2) return { kind: 'SoundCloud', src: 'https://w.soundcloud.com/player/?visual=false&url=' + encodeURIComponent(u.origin + path), h: 166, url: u.origin + path };
+    if (host === 'bandcamp.com' && path.startsWith('/EmbeddedPlayer')) return { kind: 'Bandcamp', src: u.href, h: Math.min(472, h || 120), url: null };
+    if (host === 'embed.music.apple.com' || host === 'music.apple.com') { const e = new URL(u.href); e.hostname = 'embed.music.apple.com'; return { kind: 'Apple Music', src: e.href, h: e.searchParams.get('i') ? 175 : 450, url: 'https://music.apple.com' + path + e.search }; }
+    return null;
+  }
+  const playerHTML = e => `<span class="embed"><iframe src="${esc(e.src)}" title="${esc(e.kind)} player" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation" referrerpolicy="strict-origin-when-cross-origin" style="${e.ar ? 'aspect-ratio:' + (1 / e.ar).toFixed(4) : 'height:' + (e.h | 0) + 'px'}"></iframe></span>`;
   // ---------- borrowing a page's own style ----------
   // Microlink hands back the page's main picture colours, its font links and inline styles. The heading font is read from those.
   // A Google font is used exactly. Anything else (licensed fonts) gets a free stand-in of the same kind, and the piece says which.
@@ -911,7 +941,10 @@ a.btn { text-decoration: none; display: inline-block; }
   }
 
   async function lookUp(u, hint) {
-    u = (u || '').trim(); if (!isUrl(u) || u === metaFor) return; metaFor = u;
+    u = (u || '').trim();
+    const em = embedFrom(u);
+    if (em) { embedPending = em; pending = null; dropText.innerHTML = '\u266b ' + esc(em.kind) + ' player ready<br><small>it plays right in the garden</small>'; if (!em.url) { if (!document.getElementById('tTitle').value) document.getElementById('tTitle').value = em.kind; return; } u = em.url; }
+    else if (embedPending && u !== metaFor) embedPending = null; if (!isUrl(u) || u === metaFor) return; metaFor = u;
     const tT = document.getElementById('tTitle'), tN = document.getElementById('tNote');
     if (hint && hint.title && !tT.value) tT.value = hint.title.slice(0, 80);
     if (hint && hint.text && !tN.value) tN.value = hint.text.slice(0, 1200);
@@ -929,14 +962,14 @@ a.btn { text-decoration: none; display: inline-block; }
       tT.placeholder = 'Moth on the porch light';
     }
     if (!tT.value) tT.value = hostOf(u);
-    if (img && !pending) { try { const im = await loadImg(img); if (metaFor !== u || pending) return; pending = { img, ar: im.naturalHeight / im.naturalWidth }; dropText.innerHTML = ''; const pv = new Image(); pv.src = img; pv.alt = ''; dropText.appendChild(pv); } catch (e) {} }
+    if (img && !pending && !embedPending) { try { const im = await loadImg(img); if (metaFor !== u || pending) return; pending = { img, ar: im.naturalHeight / im.naturalWidth }; dropText.innerHTML = ''; const pv = new Image(); pv.src = img; pv.alt = ''; dropText.appendChild(pv); } catch (e) {} }
   }
   function plantLink(u, hint) { if (plantSheet.hidden) openPlant(); tUrl.value = u; lookUp(u, hint); }
   tUrl.addEventListener('change', () => lookUp(tUrl.value));
   tUrl.addEventListener('paste', () => setTimeout(() => lookUp(tUrl.value), 0));
   document.addEventListener('paste', e => {
     const txt = (e.clipboardData?.getData('text') || '').trim();
-    if (isUrl(txt) && !e.target.closest('input, textarea') && ![...(e.clipboardData?.items || [])].some(i => i.type.startsWith('image/'))) { e.preventDefault(); plantLink(txt); }
+    if ((isUrl(txt) || /^<iframe/i.test(txt)) && !e.target.closest?.('input, textarea') && ![...(e.clipboardData?.items || [])].some(i => i.type.startsWith('image/'))) { e.preventDefault(); plantLink(txt); }
   });
   const bm = document.getElementById('bm'), home = location.origin + location.pathname;
   bm.href = "javascript:(()=>{const m=n=>{const e=document.querySelector('meta[property=\"'+n+'\"],meta[name=\"'+n+'\"]');return e?e.content:''};let i=m('og:image');try{i=i?new URL(i,location.href).href:''}catch(x){i=''}const q=new URLSearchParams({url:location.href,title:m('og:title')||document.title,text:String(getSelection()).trim()||m('og:description')||m('description'),img:i});window.open('" + home + "?'+q,'_blank')})()";
@@ -953,9 +986,9 @@ a.btn { text-decoration: none; display: inline-block; }
   form.addEventListener('submit', e => {
     e.preventDefault();
     const title = document.getElementById('tTitle').value.trim(), note = document.getElementById('tNote').value.trim();
-    const link = isUrl(tUrl.value) ? tUrl.value.trim() : null;
-    if (!pending && !title && !note && !link) { toast('Add a link, an image, a title or some words first'); return; }
-    const p = plant({ title: title || (link ? hostOf(link) : ''), note, img: pending?.img, ar: pending?.ar, link, borrow: link && style && style.u === link ? style.b : null }, viewCentre(), true);
+    const em = embedPending, link = em ? em.url : isUrl(tUrl.value) ? tUrl.value.trim() : null;
+    if (!pending && !title && !note && !link && !em) { toast('Add a link, an image, a title or some words first'); return; }
+    const p = plant({ title: title || (em ? em.kind : link ? hostOf(link) : ''), note, img: em ? null : pending?.img, ar: pending?.ar, link, embed: em ? { kind: em.kind, src: em.src, h: em.h, ar: em.ar } : null, kind: em ? (em.ar ? '' : 'narrow') : undefined, span: em ? (em.ar ? 3 : 2) : undefined, borrow: !em && link && style && style.u === link ? style.b : null }, viewCentre(), true);
     save(); closeSheets(); resetForm(); setTimeout(() => centreOn(p), 60); toast('Planted');
     plantedSince++; if (wildOn() && plantedSince % 3 === 0) setTimeout(() => sprout(p), 2200);
   });
@@ -1175,7 +1208,7 @@ a.btn { text-decoration: none; display: inline-block; }
     const p = plants.find(q => q.id === id); if (!p) return;
     current = p; confirmPull = false; pullBtn.textContent = p.wild ? 'Pull it up as a weed' : 'Pull it up';
     const fig = document.getElementById('vFig');
-    fig.innerHTML = p.img ? duoPic(p.img, 500, Math.round(500 * (p.ar || 1))).replace(/width="500"/g, 'style="width:100%"') : '';
+    fig.innerHTML = p.embed ? playerHTML(p.embed) : p.img ? duoPic(p.img, 500, Math.round(500 * (p.ar || 1))).replace(/width="500"/g, 'style="width:100%"') : '';
     fig.style.setProperty('--dx', '2px'); fig.style.setProperty('--dy', '1.2px');
     document.getElementById('vNo').textContent = p.wild ? wildTag(p) : 'Piece ' + fmtNo(p.no) + (p.example ? ' · Example' : '');
     document.getElementById('vTitle').textContent = p.title || 'Untitled';
@@ -1208,6 +1241,7 @@ a.btn { text-decoration: none; display: inline-block; }
   const studio = (() => { try { const s = JSON.parse(localStorage.getItem(STUDIO_KEY)); if (s) return s; } catch (e) {} return { on: !reduceMotion, likes: {} }; })();
   const saveStudio = () => { try { localStorage.setItem(STUDIO_KEY, JSON.stringify(studio)); } catch (e) {} };
   function setsFor(p) {
+    if (p.embed) return ['plain']; // re-setting a player would stop the music
     const mine = p.borrow ? ['borrowed'] : [];
     if (p.img) return [...mine, 'under', ...(p.title ? ['over', 'plate'] : []), ...(p.title && p.w >= 560 ? ['beside'] : []), ...(!p.wild ? ['bleed'] : [])];
     const text = p.title || p.note || '', ws = text.trim().split(/\s+/);
@@ -1259,7 +1293,7 @@ a.btn { text-decoration: none; display: inline-block; }
     const busy = document.hidden || drag || !plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden || !document.getElementById('weedSheet').hidden || !document.getElementById('lovesSheet').hidden;
     if (!busy) {
       const now = Date.now(), hover = tw && tw.el && tw.el.dataset.id;
-      const cands = plants.filter(p => !p.setPinned && p.id !== hover && inView(p) && now - (lastSet.get(p.id) || 0) > 20000);
+      const cands = plants.filter(p => !p.setPinned && !p.embed && p.id !== hover && inView(p) && now - (lastSet.get(p.id) || 0) > 20000);
       if (cands.length) for (const p of cands.sort(() => Math.random() - .5).slice(0, 4)) if (resetPiece(p)) break;
     }
     studioSoon();
