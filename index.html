@@ -130,7 +130,8 @@ body { background: var(--paper); color: var(--ink); font-family: var(--mono); ov
 .pair input { position: absolute; top: 8px; right: 8px; accent-color: var(--F); }
 .pair.off { opacity: .35; }
 .inkBright { display: flex; gap: 10px; align-items: center; text-transform: none; letter-spacing: 0; font: 400 13px/1.4 var(--mono); color: var(--ink); cursor: pointer; }
-.inkBright input { width: 18px; height: 18px; accent-color: var(--blue); }
+.inkBright input { flex: 1; accent-color: var(--blue); }
+.inkBright output { min-width: 4ch; text-align: right; }
 .fontTry { display: grid; gap: 10px; font: 400 12px/1.5 var(--mono); }
 .fontTry summary { cursor: pointer; font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--blue); }
 .fontTry[open] { padding-bottom: 6px; }
@@ -259,7 +260,7 @@ a.btn { text-decoration: none; display: inline-block; }
   <div id="world"><div class="marks"></div></div>
 </div>
 
-<div class="top"><span>Drift Garden <button class="reroll" id="lovesBtn" type="button">· Loves</button> <button class="reroll" id="weedBtn" type="button" hidden></button> <button class="reroll" id="studioBtn" type="button" title="The studio keeps re-setting pieces in new layouts"></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
+<div class="top"><span><button class="reroll" id="nameBtn" type="button" title="Rename your garden">Drift Garden</button> <button class="reroll" id="lovesBtn" type="button">· Loves</button> <button class="reroll" id="weedBtn" type="button" hidden></button> <button class="reroll" id="studioBtn" type="button" title="The studio keeps re-setting pieces in new layouts"></button></span><button class="r reroll" id="reroll" type="button" title="Ink the whole garden from a word">Print run ↻</button></div>
 
 <div class="bottom">
   <button class="btn" id="plantBtn" type="button">Plant something</button>
@@ -286,6 +287,17 @@ a.btn { text-decoration: none; display: inline-block; }
       <button class="link" type="button" id="cancelPlant">Cancel</button>
       <button class="btn" type="submit" id="doPlant">Plant it</button>
     </div>
+  </form>
+</div>
+
+<div class="scrim" id="nameSheet" hidden>
+  <form class="sheet" id="nameForm" aria-labelledby="nameTitle">
+    <span class="kick">Your garden</span>
+    <h2 id="nameTitle">Name it</h2>
+    <label for="nameInput">Its name</label>
+    <input type="text" id="nameInput" maxlength="40" autocomplete="off" placeholder="Drift Garden">
+    <p class="hint">It goes on the masthead and the browser tab. Kept in this browser only, like everything else here.</p>
+    <div class="row"><button class="link" type="button" id="nameCancel">Cancel</button><button class="btn" type="submit">Name it</button></div>
   </form>
 </div>
 
@@ -319,7 +331,7 @@ a.btn { text-decoration: none; display: inline-block; }
     <div class="drop inkDrop" id="inkDrop"><span id="inkDropText">Or drop, paste or choose a picture<br>for a scheme of several pairings</span><input type="file" id="inkFile" accept="image/*" aria-label="Choose a picture for the print run"></div>
     <div class="pairs" id="inkPairs" hidden></div>
     <div class="inkPreview" id="inkPreview"><b id="inkSample">pansies</b><span id="inkHex"></span></div>
-    <label class="inkBright" id="inkBrightRow" hidden><input type="checkbox" id="inkBright"> Push the colours brighter (same hues, acid strength)</label>
+    <label class="inkBright" id="inkBrightRow" hidden><span>True</span><input type="range" id="inkBright" min="0" max="100" step="5" value="0" aria-label="Acidity: from the picture's true colours to acid strength"><span>Acid</span><output id="inkAcidVal">0%</output></label>
     <div class="inkFound" id="inkFound" hidden><div class="inkThumbs" id="inkThumbs"></div><div class="inkBar" id="inkBar"></div></div>
     <ul class="inkWhy" id="inkWhy"></ul>
     <details class="fontTry">
@@ -585,11 +597,16 @@ a.btn { text-decoration: none; display: inline-block; }
     for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 9; }
     g.putImageData(d, 0, 0); document.documentElement.style.setProperty('--grain', `url(${c.toDataURL()})`); })();
 
+  const NAME_KEY = 'drift-garden-name';
+  const gardenName = (() => { try { return (localStorage.getItem(NAME_KEY) || '').trim() || 'Drift Garden'; } catch (e) { return 'Drift Garden'; } })();
+  // break the name over two lines at the space nearest the middle, as the masthead always was
+  const mastLines = n => { const sp = [...n.matchAll(/ /g)].map(m => m.index); if (!sp.length) return n; const mid = n.length / 2, at = sp.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid))[0]; return n.slice(0, at) + '\n' + n.slice(at + 1); };
+  document.title = gardenName; document.getElementById('nameBtn').textContent = gardenName; document.getElementById('view').setAttribute('aria-label', gardenName + '. Drag to wander.');
   const mast = document.createElement('div'); mast.className = 'mast';
   mast.style.left = (CELL + GUT / 2) + 'px'; mast.style.top = (ROW * 5) + 'px';
   mast.className = 'mast' + (runLight ? ' lightF' : '');
   ['A', 'B', 'F'].forEach(k => mast.style.setProperty('--' + k, (k === 'A' ? RUN.B : k === 'B' ? RUN.A : RUN.F)));
-  mast.innerHTML = `<div class="card">${duoText('h1', jitter('Drift\nGarden', 11), 'scr')}<div class="sub"><span id="mastNote">Everything here landed wherever it liked</span><span>Hover a picture and wait</span></div></div>`;
+  mast.innerHTML = `<div class="card">${duoText('h1', jitter(mastLines(gardenName), 11), 'scr')}<div class="sub"><span id="mastNote">Everything here landed wherever it liked</span><span>Hover a picture and wait</span></div></div>`;
   world.appendChild(mast);
   let reserved = [];
 
@@ -704,8 +721,8 @@ a.btn { text-decoration: none; display: inline-block; }
     } else {
       el.className = 'plant word ' + (p.embed ? 'has-embed ' : '') + (p.kind || '') + light + (p.wild ? ' wild' + (p.wild.kept ? ' kept' : '') : '') + ' set-' + p.set;
       const by = p.wild ? `<span class="by">${esc(p.wild.query ? 'a plain web search' : p.wild.by)}</span>` : '';
-      const head = p.set === 'rule' ? `<span class="kicker">Drift Garden \u00b7 No. ${fmtNo(p.no)}</span>` : p.set === 'numeral' ? `<span class="numeral" aria-hidden="true">${p.no}</span>` : '';
-      const body = p.embed ? playerHTML(p.embed) + duoText('h3', jitter(p.title || p.embed.kind, seedOf(p.id)), sc) + (p.note ? `<p>${esc(p.note)}</p>` : '') : p.set === 'quote'
+      const head = p.set === 'rule' ? `<span class="kicker">${esc(gardenName)} \u00b7 No. ${fmtNo(p.no)}</span>` : p.set === 'numeral' ? `<span class="numeral" aria-hidden="true">${p.no}</span>` : '';
+      const body = p.embed ? playerHTML(p.embed) + duoText('h3', jitter(p.title || p.embed.kind, seedOf(p.id)), sc) + by + (p.note ? `<p>${esc(p.note)}</p>` : '') : p.set === 'quote'
         ? duoText('span', '<span class="mark">\u201c</span>' + jitter(p.note, seedOf(p.id)), 'pull ' + sc) + `<span class="src">${esc(p.title)}</span>` + by
         : duoText('h3', jitter(p.title || p.note, seedOf(p.id), p.set === 'drop'), sc) + by + (p.title && p.note ? `<p>${esc(p.note)}</p>` : '');
       el.innerHTML = '<span class="card">' + (p.wild ? `<span class="wildtag">${esc(wildTag(p))}</span>` : '') + head + ownNote + body + (p.set === 'side' ? `<span class="folio" aria-hidden="true">No. ${fmtNo(p.no)}</span>` : '') + `<span class="meta"><span class="n">${fmtNo(p.no)}</span>${p.embed ? `<span class="host">\u266b ${esc(p.embed.kind)}</span>` : p.link ? `<span class="host">↗ ${esc(hostOf(p.link))}</span>` : ''}</span></span>`;
@@ -810,7 +827,7 @@ a.btn { text-decoration: none; display: inline-block; }
 
   const plantSheet = document.getElementById('plantSheet'), viewSheet = document.getElementById('viewSheet'), inkSheet = document.getElementById('inkSheet');
   addEventListener('keydown', e => {
-    if (!plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden || !document.getElementById('weedSheet').hidden || !document.getElementById('lovesSheet').hidden) { if (e.key === 'Escape') closeSheets(); return; }
+    if (!plantSheet.hidden || !viewSheet.hidden || !inkSheet.hidden || !document.getElementById('weedSheet').hidden || !document.getElementById('lovesSheet').hidden || !document.getElementById('nameSheet').hidden) { if (e.key === 'Escape') closeSheets(); return; }
     const k = { ArrowLeft: [-80, 0], ArrowRight: [80, 0], ArrowUp: [0, -80], ArrowDown: [0, 80] }[e.key];
     if (k) { e.preventDefault(); cam.x += k[0]; cam.y += k[1]; applyCam(); }
   });
@@ -826,7 +843,7 @@ a.btn { text-decoration: none; display: inline-block; }
   const DROP_TEXT = dropText.innerHTML;
   let pending = null, style = null;
   function openPlant() { document.getElementById('nextNo').textContent = 'Piece ' + fmtNo(nextNo()); plantSheet.hidden = false; document.getElementById('tTitle').focus(); }
-  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; document.getElementById('weedSheet').hidden = true; document.getElementById('lovesSheet').hidden = true; }
+  function closeSheets() { plantSheet.hidden = true; viewSheet.hidden = true; inkSheet.hidden = true; document.getElementById('weedSheet').hidden = true; document.getElementById('lovesSheet').hidden = true; document.getElementById('nameSheet').hidden = true; }
   function resetForm() { form.reset(); pending = null; style = null; embedPending = null; metaFor = ''; dropText.innerHTML = DROP_TEXT; }
   function readImage(f) {
     if (!f || !f.type.startsWith('image/')) return;
@@ -1103,7 +1120,26 @@ a.btn { text-decoration: none; display: inline-block; }
       return ((d.response && d.response.docs) || []).filter(x => x.title).map(x => ({
         title: String(x.title).slice(0, 120), note: [kind[x.mediatype], [].concat(x.creator || [])[0], x.year].filter(Boolean).join(', '),
         img: 'https://archive.org/services/img/' + x.identifier, href: 'https://archive.org/details/' + x.identifier })); } },
+    // songs: Apple's open song search (no key); the one that grows is turned into a Spotify player when song.link can match it, otherwise an Apple Music player
+    { name: 'songs', async find(q) {
+      const url = 'https://itunes.apple.com/search?media=music&entity=song&limit=15&term=' + encodeURIComponent(q);
+      let d; try { d = await getJSON(url); } catch (e) { d = await jsonp(url); }
+      return (d.results || []).filter(x => x.trackViewUrl && x.trackName).map(x => ({
+        title: x.trackName, note: [x.artistName, x.collectionName, (x.releaseDate || '').slice(0, 4)].filter(Boolean).join(', '),
+        href: x.trackViewUrl.replace(/[?&]uo=\d+/, ''), song: true })); } },
   ];
+  function jsonp(url, ms = 8000) {
+    return new Promise((ok, no) => {
+      const cb = 'dg' + Math.random().toString(36).slice(2), sc = document.createElement('script');
+      const done = () => { clearTimeout(t); delete window[cb]; sc.remove(); }, t = setTimeout(() => { done(); no(new Error('timeout')); }, ms);
+      window[cb] = d => { done(); ok(d); }; sc.onerror = () => { done(); no(new Error('jsonp')); };
+      sc.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb; document.head.appendChild(sc);
+    });
+  }
+  async function songPlayer(r) {
+    try { const d = await getJSON('https://api.song.link/v1-alpha.1/links?url=' + encodeURIComponent(r.href)); const sp = d.linksByPlatform && d.linksByPlatform.spotify && d.linksByPlatform.spotify.url; const e = sp && embedFrom(sp); if (e) return e; } catch (e) {}
+    return embedFrom(r.href);
+  }
   // sources that fail this session (blocked, down) are tried last
   const failed = {};
   const loadImg = src => new Promise((ok, no) => { const im = new Image(); if (CORS_IMG.test(src)) im.crossOrigin = 'anonymous'; im.onload = () => ok(im); im.onerror = no; im.src = src; setTimeout(no, 9000); });
@@ -1186,7 +1222,8 @@ a.btn { text-decoration: none; display: inline-block; }
         : 'Because you ' + words.map((w, i) => (i && verb(i) === verb(0) ? '' : verb(i) + ' ') + '\u201c' + w + '\u201d').join(' and ');
       const near = bed ? pick(beds[bed]) : (nearPlant || from[0]);
       const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words, bed, from: from.map(name) } };
-      if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
+      if (r.song) { const e = await songPlayer(r); if (e) Object.assign(data, { embed: { kind: e.kind, src: e.src, h: e.h, ar: e.ar }, kind: 'narrow', span: 2 }); else data.kind = 'narrow'; }
+      else if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
       const p = plant(data, { x: near.x + near.w / 2, y: near.y + near.h / 2 }, true);
       save(); try { localStorage.setItem('wander-wild', 'on'); } catch (e) {}
       setTimeout(() => centreOn(p), 60); toast('A wildflower sprouted from ' + src.name);
@@ -1321,6 +1358,11 @@ a.btn { text-decoration: none; display: inline-block; }
     save(); pinLabel(); toast(current.setPinned ? 'Pinned. The studio will try ' + SET_NAMES[current.set] + ' more often' : 'Unpinned');
   });
 
+  // ---------- naming the garden ----------
+  document.getElementById('nameBtn').addEventListener('click', () => { const i = document.getElementById('nameInput'); i.value = gardenName === 'Drift Garden' ? '' : gardenName; document.getElementById('nameSheet').hidden = false; i.focus(); });
+  document.getElementById('nameCancel').addEventListener('click', closeSheets);
+  document.getElementById('nameForm').addEventListener('submit', e => { e.preventDefault(); const v = document.getElementById('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 40); try { v ? localStorage.setItem(NAME_KEY, v) : localStorage.removeItem(NAME_KEY); } catch (err) {} location.reload(); });
+
   // ---------- loves, and echoes of your first plantings ----------
   const LOVES_KEY = 'drift-garden-loves';
   let loves = (() => { try { return JSON.parse(localStorage.getItem(LOVES_KEY)) || []; } catch (e) { return []; } })();
@@ -1376,7 +1418,8 @@ a.btn { text-decoration: none; display: inline-block; }
         : 'You love \u201c' + t + '\u201d. ' + (exact ? 'Here it is' : 'Here\u2019s something close');
       const data = { title: r.title, note: r.note, wild: { kind: 'from ' + src.name, by, source: src.name, href: r.href, words: wordsOf({ title: t }) } };
       if (from) data.wild.echo = from.title.trim(); else data.wild.love = t;
-      if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
+      if (r.song) { const e = await songPlayer(r); if (e) Object.assign(data, { embed: { kind: e.kind, src: e.src, h: e.h, ar: e.ar }, kind: 'narrow', span: 2 }); else data.kind = 'narrow'; }
+      else if (r.img) Object.assign(data, { img: r.img, ar: r.ar || 1, span: pick([1, 2, 2]) }); else data.kind = r.title.length > 70 ? '' : 'narrow';
       const near = from || nearPlant || (plants.length ? pick(plants) : null), at = near ? { x: near.x + near.w / 2, y: near.y + near.h / 2 } : viewCentre();
       const p = plant(data, at, true);
       save(); try { localStorage.setItem('wander-wild', 'on'); } catch (e) {}
@@ -1462,7 +1505,7 @@ a.btn { text-decoration: none; display: inline-block; }
     const box = document.getElementById('inkPairs'); box.hidden = !scheme;
     document.getElementById('inkBrightRow').hidden = !scheme && document.getElementById('inkBrightRow').hidden;
     if (!scheme) return;
-    const pairs = scheme.pairs.map(p => inkBright.checked ? brighten(p) : p);
+    const pairs = scheme.pairs.map(p => brighten(p));
     box.innerHTML = pairs.map((p, i) => `<label class="pair${scheme.on[i] ? '' : ' off'}" style="--A:${p.A};--B:${p.B};--F:${p.F}"><input type="checkbox" data-i="${i}"${scheme.on[i] ? ' checked' : ''} aria-label="Use pairing ${i + 1}"><b>Aa</b><span>${p.A}<br>${p.B}<br>${p.F}</span></label>`).join('');
     const first = pairs.find((p, i) => scheme.on[i]) || pairs[0];
     ['A', 'B', 'F'].forEach(k => inkPreview.style.setProperty('--' + k, first[k]));
@@ -1501,18 +1544,20 @@ a.btn { text-decoration: none; display: inline-block; }
   }
   // "brighter": each ink keeps its hue, moves into the acid lightness band (0.6 to 0.8), and takes nearly the strongest colour a screen can show there.
   // The anchor stays if it still reads on both, otherwise it is pushed darker or lighter until it does.
-  function brighten(ink) {
-    if (!ink || ink.from !== 'pictures') return ink;
-    const up = hx => { let [L, C, h] = labLch(hexLab(hx)); L = Math.max(.6, Math.min(.8, L)); return lchHex(L, Math.max(C, maxC(L, h) * .95), h); };
+  // acidity 0 keeps the counted colours; 100 lifts both inks into the acid band at nearly full strength; in between is a straight mix
+  const acid = () => +inkBright.value / 100;
+  function brighten(ink, t = acid()) {
+    if (!ink || ink.from !== 'pictures' || !t) return ink;
+    const up = hx => { const [L0, C0, h] = labLch(hexLab(hx)), L = L0 + (Math.max(.6, Math.min(.8, L0)) - L0) * t; return lchHex(L, C0 + (Math.max(C0, maxC(L, h) * .95) - C0) * t, h); };
     const A = up(ink.A), B = up(ink.B); let F = ink.F;
     if (contrast(A, F) < 4.5 || contrast(B, F) < 4.5) { const [L, C, h] = labLch(hexLab(F)), dir = -1; for (let l = L; l >= 0 && l <= 1; l += dir * .02) { const T = lchHex(l, C, h); F = T; if (contrast(A, T) >= 4.5 && contrast(B, T) >= 4.5) break; } }
-    return { ...ink, A, B, F, why: [...ink.why, 'Then both inks kept their hues but were lifted into the acid band, as strong as a screen can show them'] };
+    return { ...ink, A, B, F, why: [...ink.why, t >= 1 ? 'Then both inks kept their hues but were lifted into the acid band, as strong as a screen can show them' : `Then both inks kept their hues and moved ${Math.round(t * 100)}% of the way to acid strength`] };
   }
   const inkBright = document.getElementById('inkBright');
-  inkBright.addEventListener('change', () => { if (scheme) { paintScheme(); return; } const w = inkWant || inkWord.value.trim(); const c = picInks.get((w || '').toLowerCase()); if (c) c.then(ink => ink && paintInk(w, ink)); });
+  inkBright.addEventListener('input', () => { document.getElementById('inkAcidVal').textContent = inkBright.value + '%'; if (scheme) { paintScheme(); return; } const w = inkWant || inkWord.value.trim(); const c = picInks.get((w || '').toLowerCase()); if (c) c.then(ink => ink && paintInk(w, ink)); });
   function paintInk(w, ink, note) {
     document.getElementById('inkBrightRow').hidden = !ink || ink.from !== 'pictures';
-    if (inkBright.checked) ink = brighten(ink);
+    ink = brighten(ink);
     const why = document.getElementById('inkWhy'); why.innerHTML = '';
     document.getElementById('inkSample').textContent = w;
     if (!ink) { document.getElementById('inkHex').textContent = note || 'Try a word with letters in it'; showFound(null); return; }
@@ -1535,21 +1580,21 @@ a.btn { text-decoration: none; display: inline-block; }
   }
   const inkFallback = new Map();
   async function inkFor(w) { return (await inksFromPictures(w)) || inkFallback.get(w.toLowerCase()) || wordInks(w); }
-  document.getElementById('reroll').addEventListener('click', () => { scheme = null; document.getElementById('inkPairs').hidden = true; document.getElementById('inkDropText').innerHTML = 'Or drop, paste or choose a picture<br>for a scheme of several pairings'; inkWord.value = RUN.from === 'picture' ? '' : RUN.word || ''; inkBright.checked = !!RUN.bright; showInk(); inkSheet.hidden = false; inkWord.focus(); });
+  document.getElementById('reroll').addEventListener('click', () => { scheme = null; document.getElementById('inkPairs').hidden = true; document.getElementById('inkDropText').innerHTML = 'Or drop, paste or choose a picture<br>for a scheme of several pairings'; inkWord.value = RUN.from === 'picture' ? '' : RUN.word || ''; inkBright.value = RUN.acid != null ? RUN.acid : RUN.bright ? 100 : 0; document.getElementById('inkAcidVal').textContent = inkBright.value + '%'; showInk(); inkSheet.hidden = false; inkWord.focus(); });
   inkWord.addEventListener('input', showInk);
   document.getElementById('inkCancel').addEventListener('click', closeSheets);
   document.getElementById('inkForm').addEventListener('submit', async e => {
     e.preventDefault();
     if (scheme) {
-      const pairs = scheme.pairs.filter((p, i) => scheme.on[i]).map(p => inkBright.checked ? brighten(p) : p).map(({ A, B, F }) => ({ A, B, F }));
-      try { localStorage.setItem(RUN_KEY, JSON.stringify({ ...pairs[0], pairs, word: 'a picture', from: 'picture', bright: inkBright.checked })); } catch (err) { toast('Couldn\u2019t keep that scheme'); return; }
+      const pairs = scheme.pairs.filter((p, i) => scheme.on[i]).map(p => brighten(p)).map(({ A, B, F }) => ({ A, B, F }));
+      try { localStorage.setItem(RUN_KEY, JSON.stringify({ ...pairs[0], pairs, word: 'a picture', from: 'picture', acid: +inkBright.value })); } catch (err) { toast('Couldn\u2019t keep that scheme'); return; }
       location.reload(); return;
     }
     const w = inkWord.value.trim() || inkWord.placeholder, btn = e.target.querySelector('.btn[type=submit]');
     btn.textContent = 'Inking\u2026'; let ink = await inkFor(w); btn.textContent = 'Ink it';
-    if (inkBright.checked) ink = brighten(ink);
+    ink = brighten(ink);
     if (!ink) { toast('Try a word with letters in it'); return; }
-    try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word || w, from: ink.from || 'letters', bright: inkBright.checked })); } catch (e) {}
+    try { localStorage.setItem(RUN_KEY, JSON.stringify({ A: ink.A, B: ink.B, F: ink.F, word: ink.word || w, from: ink.from || 'letters', acid: +inkBright.value })); } catch (e) {}
     location.reload();
   });
   // ---------- trying a font from the viewer's own device (kept in this browser only) ----------
@@ -1571,7 +1616,7 @@ a.btn { text-decoration: none; display: inline-block; }
   }));
   document.getElementById('fontReset').addEventListener('click', () => { Object.values(FONT_KEYS).forEach(k => localStorage.removeItem(k)); location.reload(); });
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  [plantSheet, viewSheet, inkSheet, document.getElementById('weedSheet'), document.getElementById('lovesSheet')].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
+  [plantSheet, viewSheet, inkSheet, document.getElementById('weedSheet'), document.getElementById('lovesSheet'), document.getElementById('nameSheet')].forEach(s => s.addEventListener('click', e => { if (e.target === s) closeSheets(); }));
 })();
 </script>
 
