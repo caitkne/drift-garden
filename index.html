@@ -13,179 +13,164 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<meta name="theme-color" content="#e3e5c9">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Federant&family=Grenze+Gotisch:wght@400;700&family=Handjet:wght@300;600&family=Bonbon&family=Coral+Pixels&family=Faster+One&family=Ballet&family=Fraunces:ital,opsz,wght,SOFT,WONK@1,9..144,300..600,0..100,0..1&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#d8ff3c">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=Martian+Mono:wdth,wght@75..112.5,100..600&display=swap">
 <style>
-@font-face { font-family: "Blush"; src: url(fonts/blush.woff2) format("woff2"); font-display: swap; }
-:root { --paper: #fbf5e8; --ink: #24121e; --mono: "Spline Sans Mono", ui-monospace, monospace; --soft: "Fraunces", Georgia, serif; color-scheme: light; }
+:root { --sky: #d8ff3c; --field: #1d34d8; --wire: #8d9696; --i1: #1d34d8; --i2: #ff3b1f; --i3: #111; --bag: rgba(255,255,255,.55);
+  --mark: "Major Mono Display", ui-monospace, monospace; --mono: "Martian Mono", ui-monospace, monospace; color-scheme: light; }
 [hidden] { display: none !important; }
 * { box-sizing: border-box; }
-html { background: var(--ground, #f4a7bf); }
-body { margin: 0; color: var(--ink); font: 400 12px/1.5 var(--mono); letter-spacing: .02em; overflow-x: hidden; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--sky); color: #111; font: 300 11px/1.45 var(--mono); font-stretch: 87%; letter-spacing: .01em; overflow: hidden; }
 a { color: inherit; }
-:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+:focus-visible { outline: 1.5px solid currentColor; outline-offset: 3px; }
 
-/* the paste-up: everything below is cut and stuck down by the script */
-.board { position: relative; height: max(1400px, 190svh); overflow: hidden; background: var(--ground, #f4a7bf); cursor: crosshair; touch-action: pan-y; }
-.bit { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; cursor: grab; user-select: none; -webkit-user-select: none; }
-.bit.held { cursor: grabbing; }
-.bit > i { position: absolute; inset: 0; background: var(--bg, transparent); clip-path: var(--cut, none); }
-.bit > i::after { content: ""; position: absolute; inset: var(--pad, 0); background: var(--c); -webkit-mask: var(--img) var(--mp) / var(--ms) no-repeat; mask: var(--img) var(--mp) / var(--ms) no-repeat; }
-.bit.multiply { mix-blend-mode: multiply; }
-.word { position: absolute; left: 0; top: 0; white-space: nowrap; line-height: .95; padding: .08em .22em .12em; transform-origin: 0 0; cursor: grab; user-select: none; -webkit-user-select: none; clip-path: var(--cut, none); }
+/* sky, a low horizon, a field */
+.land { position: fixed; inset: 0; perspective: 1100px; perspective-origin: 30% 55%; overflow: hidden; }
+.land::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: var(--field); }
+/* the fence runs off into the distance */
+.fence { position: absolute; z-index: 2; left: -12%; width: 300%; bottom: 24%; height: 52%; transform: rotateY(32deg); transform-origin: 0 50%; transform-style: preserve-3d; }
+.mesh { position: absolute; inset: 0; background:
+  repeating-linear-gradient(60deg, var(--wire) 0 1.1px, transparent 1.1px 19px),
+  repeating-linear-gradient(-60deg, var(--wire) 0 1.1px, transparent 1.1px 19px); opacity: .9; }
+.rail { position: absolute; left: 0; right: 0; top: -3px; height: 5px; background: var(--wire); }
+.post { position: absolute; top: -6px; bottom: -24px; width: 6px; background: var(--wire); }
+/* what the wind leaves */
+.snag { position: absolute; left: 0; top: 0; transform-origin: var(--ox, 0) var(--oy, 0); animation: flap var(--d, 3s) ease-in-out var(--dl, 0s) infinite alternate; filter: var(--age, none); }
+@keyframes flap { from { transform: translate(var(--x), var(--y)) rotate(var(--r)) skewY(0deg); } to { transform: translate(var(--x), var(--y)) rotate(calc(var(--r) + var(--a))) skewY(var(--s)); } }
+.snag > i { position: absolute; inset: 0; background: var(--bg, transparent); clip-path: var(--cut, none); }
+.snag > i::after { content: ""; position: absolute; inset: var(--pad, 0); background: var(--c); -webkit-mask: var(--img) var(--mp) / var(--ms) no-repeat; mask: var(--img) var(--mp) / var(--ms) no-repeat; }
+.snag.bagged > i { background: var(--bag); backdrop-filter: blur(1.5px); }
+.snag.label { padding: 3px 6px 4px; background: #fff; white-space: nowrap; font: 400 10px/1.2 var(--mono); font-stretch: 75%; letter-spacing: .14em; text-transform: uppercase; }
+/* blowing in */
+.loose { position: fixed; z-index: 3; left: 0; top: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .snag { animation: none; transform: translate(var(--x), var(--y)) rotate(var(--r)); } }
 
-/* the bits that do things sit on top, on plain scraps */
-.ui { position: absolute; z-index: 9000; }
-.name { left: clamp(10px, 5vw, 70px); top: clamp(24px, 6vh, 70px); display: flex; flex-wrap: wrap; align-items: flex-end; max-width: 92vw; pointer-events: none; }
-.name span { display: inline-block; padding: .02em .08em .06em; line-height: .9; }
-.say { left: clamp(14px, 6vw, 90px); top: clamp(300px, 38vh, 400px); max-width: 26ch; background: var(--paper); padding: 8px 11px; font: italic 400 19px/1.25 var(--soft); font-variation-settings: "SOFT" 100, "WONK" 1; transform: rotate(-2deg); }
-.go { right: clamp(14px, 8vw, 140px); top: clamp(330px, 46vh, 460px); background: var(--ink); color: var(--paper); text-decoration: none; font: 400 clamp(36px, 5vw, 64px)/1 "Blush", var(--soft); padding: 10px 22px 14px; transform: rotate(4deg); transition: transform .2s; }
-.go:hover { transform: rotate(-3deg) scale(1.05); }
-.tag { left: clamp(14px, 12vw, 200px); top: clamp(470px, 64vh, 640px); width: 250px; background: var(--paper); padding: 12px 14px; transform: rotate(1.5deg); }
-.tag form { display: flex; gap: 6px; margin: 0 0 6px; }
-.tag input { flex: 1; min-width: 0; font: 400 12px/1.2 var(--mono); padding: 7px 8px; border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; }
-.tag button { background: var(--ink); color: var(--paper); border: 0; padding: 0 9px; cursor: pointer; font: 500 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-.tag small { display: block; margin-top: 4px; opacity: .75; }
-#acctIn p { margin: 0 0 6px; font: italic 17px/1.3 var(--soft); }
-#keyLine { display: block; font: 500 15px/1.35 var(--mono); }
+/* the few words */
+.say { position: fixed; z-index: 10; left: clamp(16px, 4vw, 48px); top: clamp(16px, 4vh, 40px); display: grid; gap: 14px; justify-items: start; }
+.mark { margin: 0; font: 400 clamp(26px, 3.4vw, 46px)/1 var(--mark); letter-spacing: -.02em; }
+#goGarden { text-decoration: none; font: 500 12px/1 var(--mono); font-stretch: 112%; letter-spacing: .06em; border-bottom: 1.5px solid; padding-bottom: 3px; }
+#acct { display: grid; gap: 6px; }
+#acct form { display: flex; align-items: center; gap: 6px; margin: 0; }
+#acct input { width: 200px; font: 300 12px/1.2 var(--mono); padding: 5px 0; border: 0; border-bottom: 1px solid; background: transparent; color: inherit; border-radius: 0; }
+#acct input::placeholder { color: inherit; opacity: .55; }
+#acct button { background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+#acct .swap { opacity: .6; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
+#keyLine { font: 500 12px/1.4 var(--mono); }
+#acctIn small { opacity: .7; }
 #acctIn:not(.fresh) .fresh-only { display: none; }
-.shuffle { right: 12px; bottom: 12px; position: absolute; z-index: 9000; background: var(--paper); border: 0; padding: 6px 9px; font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
-.moving { left: 50%; top: 40px; transform: translateX(-50%); background: var(--paper); padding: 14px 16px; text-align: center; max-width: 320px; }
-.moving h2 { margin: 0 0 4px; font: 400 34px/1 "Blush", serif; }
-.moving p { margin: 0 0 8px; }
-.moving button { background: var(--ink); color: var(--paper); border: 0; padding: 8px 12px; font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
-
-.catalogue { background: var(--paper); padding: 46px 16px 30px; }
-.catalogue > * { max-width: 600px; margin-left: auto; margin-right: auto; }
-.catalogue h2 { margin: 0 auto 10px; font: 500 10px/1.5 var(--mono); letter-spacing: .14em; text-transform: uppercase; text-align: center; }
-.clip { display: flex; gap: 8px; align-items: baseline; width: 100%; background: none; border: 0; padding: 7px 0; cursor: pointer; color: inherit; font: inherit; text-align: left; }
-.clip b { font: italic 400 20px/1.2 var(--soft); font-variation-settings: "SOFT" 100, "WONK" 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62%; }
-.clip::after { content: ""; order: 2; flex: 1; border-bottom: 1px dotted var(--ink); transform: translateY(-4px); }
-.clip small { order: 3; white-space: nowrap; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-.clip .pics, .clip ul { display: none; }
-.empty { text-align: center; font: italic 17px/1.4 var(--soft); margin: 0; }
-footer { background: var(--paper); text-align: center; padding: 30px 16px 26px; font: 500 10px/1.6 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
-.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; font: 500 12px/1.4 var(--mono); max-width: calc(100% - 32px); z-index: 9999; }
+.moving { position: fixed; z-index: 11; right: 16px; top: 16px; max-width: 220px; display: grid; gap: 6px; justify-items: start; }
+.moving h2, .moving p { margin: 0; font: inherit; }
+.moving button { background: none; border: 0; border-bottom: 1.5px solid; padding: 0 0 2px; color: inherit; font: 500 11px/1 var(--mono); cursor: pointer; }
+/* public gardens hang on the fence like tags */
+#public { position: absolute; left: 9%; bottom: 4%; width: 20%; display: block; transform: translateZ(1px); }
+#gardens { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.clip { background: #fff; color: #111; border: 0; padding: 5px 8px 6px; cursor: pointer; font: 400 10px/1.2 var(--mono); font-stretch: 75%; letter-spacing: .1em; text-transform: uppercase; transform: rotate(var(--t, -4deg)); transform-origin: 0 0; animation: tagflap 2.6s ease-in-out infinite alternate; }
+.clip:nth-child(2n) { --t: 5deg; animation-duration: 3.4s; }
+@keyframes tagflap { to { transform: rotate(calc(var(--t, -4deg) + 9deg)); } }
+.clip b { font-weight: 500; } .clip small, .clip .pics, .clip ul { display: none; }
+.credit { position: fixed; z-index: 10; right: 14px; bottom: 12px; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; opacity: .7; color: var(--sky); }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #111; color: #fff; padding: 8px 14px; font: 400 11px/1.4 var(--mono); max-width: calc(100% - 32px); z-index: 99; }
 @media (max-width: 640px) {
-  .board { height: max(1250px, 170svh); }
-  .say { top: 190px; font-size: 17px; }
-  .go { top: 300px; right: 14px; }
-  .tag { top: 410px; left: 14px; }
-  .tag input { font-size: 16px; }
+  .fence { left: -30%; width: 360%; bottom: 26%; height: 44%; transform: rotateY(38deg); }
+  #public { left: 16%; width: 18%; }
+  .land { perspective-origin: 10% 55%; }
+  #acct input { width: 170px; font-size: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .go { transition: none; } }
 </style>
 </head>
 <body>
 
-<main class="board" id="board">
-  <h1 class="ui name" id="name" aria-label="Selvedge Garden"></h1>
-  <p class="ui say">Drop in what you love. Come back later and see what grew.</p>
-  <a class="ui go" href="garden/" id="goGarden">go to your garden</a>
-  <div class="ui tag" id="acct" hidden>
+<div class="land" aria-hidden="false">
+  <div class="fence" id="fence">
+    <div class="mesh"></div><div class="rail"></div>
+    <section id="public" hidden aria-label="Other people’s gardens"><div id="gardens"></div></section>
+  </div>
+</div>
+
+<main class="say">
+  <h1 class="mark">selvedge</h1>
+  <a href="garden/" id="goGarden">start a garden →</a>
+  <div id="acct" hidden>
     <div id="acctOut">
-      <form id="keyForm"><input type="text" id="keyIn" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="your garden key" aria-label="Your garden key, four words"><button type="submit">In</button></form>
-      <form id="signUp"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="new? your name" aria-label="Your name, as friends will see it"><button type="submit">Make</button></form>
-      <small>A garden key is four words. No passwords, no email.</small>
+      <form id="keyForm"><input type="text" id="keyIn" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="four-word key" aria-label="Your garden key, four words"><button type="submit">in</button></form>
+      <form id="signUp" hidden><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="a name" aria-label="Your name, as friends will see it"><button type="submit">make</button></form>
+      <button type="button" class="swap" id="swap">new?</button>
     </div>
     <div id="acctIn" hidden>
-      <p>Hello, <span id="meName"></span>. Your key:</p>
+      <span id="meName"></span>
       <span id="keyLine"></span>
-      <small class="fresh-only">Write it down. It’s how you get back in anywhere.</small>
-      <form style="margin-top:6px"><button type="button" id="signOut">Sign out</button></form>
+      <small class="fresh-only">keep these four words</small>
+      <button type="button" id="signOut" style="justify-self:start">out</button>
     </div>
   </div>
-  <section class="ui moving" id="moving" hidden>
-    <h2>Moving house</h2>
-    <p>Selvedge now lives at selvedge.garden.</p>
-    <button type="button" id="carry">Carry it over</button>
-    <p id="carryNote" style="margin:8px 0 0">Hands your garden across, in this browser.</p>
-  </section>
-  <button class="shuffle" type="button" id="again">paste it up again</button>
 </main>
 
-<section class="catalogue" id="public" hidden>
-  <h2>Other people’s gardens</h2>
-  <div id="gardens"></div>
+<section class="moving" id="moving" hidden>
+  <h2>moved to selvedge.garden</h2>
+  <button type="button" id="carry">carry it over</button>
+  <p id="carryNote"></p>
 </section>
-<footer>love · change · unity &nbsp;·&nbsp; <a href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">pictures: public domain &amp; CC0</a></footer>
+
+<a class="credit" href="https://github.com/caitkne/drift-garden/blob/main/assets/zine/CREDITS.md">pictures: public domain</a>
 <script>
-// The paste-up. Scraps of every picture and word, cut by hand (well, by dice), stuck down anywhere.
-// Click the ground or press "paste it up again" for a fresh one. Drag any scrap.
+// A fence on a windy field. Whatever blows in snags on the wire; the old stuff bleaches and blows away.
 (() => {
-  const R = Math.random, pick = a => a[Math.floor(R() * a.length)], between = (a, b) => a + R() * (b - a);
-  const PICS = [['astronaut',1.00],['cat-eyes',3.16],['coffee',1.12],['crowd',1.79],['dancers',1.76],['deep-field',1.15],['eye-macro',1.43],['haircut',0.76],['heavens',1.17],['hippies',1.24],['hopper',0.74],['horse',1.22],['lac',0.64],['lash-strip',2.65],['lashes',0.63],['marnac',0.44],['model',0.36],['porthole',1.00],['portrait',0.85],['profile',1.06],['providence',0.97],['radiant',1.47],['retina',1.00],['rings',1.41],['wig',1.00],['gen-3',1],['gen-6',1]];
-  const INKS = ['#24121e', '#24121e', '#24121e', '#e0245e', '#2a3fb0', '#d23b1f', '#3d7a3a', '#7a2a9e'];
-  const PAPERS = ['#fbf5e8', '#fbf5e8', '#f4a7bf', '#c6e36b', '#f6d34f', '#9fd3c7', '#ff7a59', '#b8b2f0', '#ffffff', '#24121e'];
-  const GROUNDS = ['#f4a7bf', '#c6e36b', '#f6d34f', '#ff7a59', '#9fd3c7', '#b8b2f0', '#efe7d6'];
-  const NAME_FONTS = [['Federant', 400], ['Grenze Gotisch', 700], ['Handjet', 600], ['Bonbon', 400], ['Faster One', 400], ['Blush', 400], ['Fraunces', 400]];
-  const FONTS = [['Federant', 400], ['Grenze Gotisch', 700], ['Handjet', 600], ['Bonbon', 400], ['Coral Pixels', 400], ['Faster One', 400], ['Ballet', 400], ['Blush', 400], ['Fraunces', 400]];
-  const WORDS = ['selvedge', 'garden', 'sow', 'later', 'wander', 'wildflowers', 'cuttings', 'allotment', 'perennial', 'come back', 'love', 'moth', 'seed', 'free', 'grow', 'what grew', 'library stacks', 'not muck', 'randomness', 'friends', 'drop it in', 'by hand', 'clunky', 'bloom', 'spores', 'compost', 'nothing working on your attention', 'pressed', 'germinate', 'feral', 'velvet', 'leave it', 'unity', 'change', 'O', '&', '*', '✿', '♥', 'no.', '?'];
-  const board = document.getElementById('board');
-  // a hand-cut edge: wobbly points round a rectangle
-  const cut = () => { const p = [], j = () => between(0, 4).toFixed(1), n = 3 + Math.floor(R() * 5);
-    for (let i = 0; i < n; i++) p.push(`${(i / n * 100).toFixed(1)}% ${j()}%`);
-    for (let i = 0; i < n; i++) p.push(`${100 - j()}% ${(i / n * 100).toFixed(1)}%`);
-    for (let i = 0; i < n; i++) p.push(`${(100 - i / n * 100).toFixed(1)}% ${100 - j()}%`);
-    for (let i = 0; i < n; i++) p.push(`${j()}% ${(100 - i / n * 100).toFixed(1)}%`);
-    return R() < .12 ? 'ellipse(49% 49%)' : R() < .1 ? 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' : `polygon(${p.join(',')})`; };
-  const ink = () => pick(INKS), paper = () => pick(PAPERS);
-  function scrap(W, H) {
-    const [img, ar] = pick(PICS), big = R(), w = big < .04 ? between(.45, .9) * W : big < .45 ? between(.12, .32) * W : big < .85 ? between(.05, .13) * W : between(.02, .05) * W;
-    const crop = R() < .5 ? 1 : between(1.2, 4), h = w / (crop > 1 ? between(.5, 2.2) : ar);
-    const el = document.createElement('div'); el.className = 'bit' + (R() < .45 ? ' multiply' : '');
-    if (w > .4 * W) el.classList.add('multiply');
-    const bare = el.classList.contains('multiply') || R() < .2, bg = bare ? 'transparent' : paper(); let c = w > .3 * W ? pick(INKS.slice(3)) : ink(); if (c === bg) c = '#fbf5e8';
-    el.style.cssText = `width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;--img:url(assets/zine/z-${img}.png);--c:${c};--bg:${bg};--pad:${bare ? 0 : between(3, 9).toFixed(0)}px;--cut:${cut()};--ms:${crop > 1 ? (crop * 100).toFixed(0) + '% auto' : 'cover'};--mp:${between(0, 100).toFixed(0)}% ${between(0, 100).toFixed(0)}%`;
-    el.innerHTML = '<i></i>';
-    return [el, w, h];
-  }
-  function repeat(W) {
-    const [img] = pick(PICS), n = 3 + Math.floor(R() * 5), s = between(.05, .12) * W, row = document.createElement('div'), mp = `${between(0, 100).toFixed(0)}% ${between(0, 100).toFixed(0)}%`, ms = (between(1, 3) * 100).toFixed(0) + '% auto', bg = paper();
-    row.className = 'bit'; row.style.cssText = `width:${(s * n).toFixed(0)}px;height:${s.toFixed(0)}px;display:flex`;
-    for (let k = 0; k < n; k++) { const t = document.createElement('i'); t.style.cssText = `position:relative;flex:1;--img:url(assets/zine/z-${img}.png);--c:${k === n - 2 && R() < .6 ? '#e0245e' : ink()};--bg:${bg};--pad:3px;--ms:${ms};--mp:${mp};${k % 2 && R() < .5 ? 'transform:scaleX(-1)' : ''}`; row.appendChild(t); }
-    return [row, s * n, s];
-  }
-  function word(W) {
-    const [f, wt] = pick(FONTS), t = pick(WORDS), size = R() < .1 ? between(.12, .26) * W : R() < .5 ? between(28, 80) : between(12, 26);
-    const el = document.createElement('span'); el.className = 'word'; el.textContent = t;
-    const bg = R() < .55 ? paper() : 'transparent'; let c = ink(); if (c === bg) c = '#fbf5e8';
-    el.style.cssText = `font:${wt} ${size.toFixed(0)}px/${'.95'} "${f}";color:${c};background:${bg};${R() < .5 ? '--cut:' + cut() : ''}`;
-    return [el, size * t.length * .55, size];
-  }
-  let pieces = [];
-  function pasteUp() {
-    pieces.forEach(p => p.remove()); pieces = [];
-    const ground = pick(GROUNDS); board.style.setProperty('--ground', ground); document.documentElement.style.setProperty('--ground', ground);
-    const W = board.clientWidth, H = board.clientHeight, n = Math.round(W < 700 ? 46 : 84);
-    for (let k = 0; k < n; k++) {
-      const r = R(), [el, w, h] = r < .62 ? scrap(W, H) : r < .72 ? repeat(W) : word(W);
-      const x = between(-.15 * w, W - .85 * w), y = between(-.1 * h, H - .9 * h), rot = R() < .15 ? pick([90, -90, 180]) + between(-4, 4) : between(-28, 28), flip = R() < .25 ? -1 : 1;
-      el.dataset.x = x; el.dataset.y = y; el.dataset.r = rot; el.dataset.f = flip;
-      place(el); el.style.zIndex = Math.floor(R() * 900);
-      board.insertBefore(el, board.firstChild); pieces.push(el);
+  const R = Math.random, pick = a => a[Math.floor(R() * a.length)], btw = (a, b) => a + R() * (b - a);
+  const SCHEMES = [
+    { sky: '#d8ff3c', field: '#1d34d8', wire: '#7c8585', inks: ['#1d34d8', '#ff3b1f', '#111'], ui: '#111' },
+    { sky: '#c9b8ff', field: '#5b0a1a', wire: '#8a8592', inks: ['#5b0a1a', '#ff2e7a', '#1a1a1a'], ui: '#2a0710' },
+    { sky: '#b9f3d8', field: '#ff2a1a', wire: '#7d8a86', inks: ['#ff2a1a', '#0e3b2e', '#111'], ui: '#0e3b2e' },
+    { sky: '#ff6a13', field: '#141110', wire: '#3b3533', inks: ['#141110', '#f4f0e8', '#2b44ff'], ui: '#141110' },
+    { sky: '#e8eae6', field: '#002fa7', wire: '#9ea3a0', inks: ['#002fa7', '#ff4f00', '#111'], ui: '#002fa7' },
+  ];
+  const S = pick(SCHEMES), root = document.documentElement.style;
+  root.setProperty('--sky', S.sky); root.setProperty('--field', S.field); root.setProperty('--wire', S.wire); document.body.style.color = S.ui;
+  const PICS = [['astronaut',1.00],['cat-eyes',3.16],['coffee',1.12],['crowd',1.79],['dancers',1.76],['deep-field',1.15],['eye-macro',1.43],['haircut',0.76],['heavens',1.17],['hippies',1.24],['hopper',0.74],['horse',1.22],['lac',0.64],['lash-strip',2.65],['lashes',0.63],['marnac',0.44],['model',0.36],['porthole',1.00],['portrait',0.85],['profile',1.06],['providence',0.97],['radiant',1.47],['retina',1.00],['rings',1.41],['wig',1.00],['gen-2',1],['gen-5',1],['gen-8',1]];
+  const LABELS = ['sow', 'later', 'come back', 'perennial', 'wildflower', 'cutting', 'allotment', 'no. ' + Math.floor(btw(1, 9999)), 'keep', 'net wt. —', 'do not compost', 'lot 4', 'spores', 'moth', 'seed', 'sell by: never'];
+  const fence = document.getElementById('fence');
+  const torn = () => { const p = [], n = 5 + Math.floor(R() * 6), j = () => btw(0, 9).toFixed(1);
+    for (let i = 0; i < n; i++) p.push(`${(i / n * 100).toFixed(0)}% ${j()}%`);
+    for (let i = 0; i < n; i++) p.push(`${100 - j()}% ${(i / n * 100).toFixed(0)}%`);
+    for (let i = 0; i < n; i++) p.push(`${(100 - i / n * 100).toFixed(0)}% ${100 - j()}%`);
+    for (let i = 0; i < n; i++) p.push(`${j()}% ${(100 - i / n * 100).toFixed(0)}%`);
+    return `polygon(${p.join(',')})`; };
+  // posts
+  for (let x = 1; x < 100; x += 6) { const p = document.createElement('div'); p.className = 'post'; p.style.left = x + '%'; fence.appendChild(p); }
+  const snags = [];
+  function make(gen) {
+    const W = fence.clientWidth, H = fence.clientHeight, el = document.createElement('div'), kind = R();
+    let w, h;
+    if (kind < .12) { el.className = 'snag label'; el.textContent = pick(LABELS); w = 80; h = 18; }
+    else {
+      const [img, ar] = pick(PICS), crop = R() < .5 ? 1 : btw(1.3, 3.5);
+      w = (R() < .08 ? btw(.05, .09) : btw(.012, .04)) * W; h = w / (crop > 1 ? btw(.5, 1.8) : ar);
+      const bag = R() < .3, bg = bag ? '' : pick(['#fff', '#fff', 'transparent', S.sky, '#f2efe8']);
+      el.className = 'snag' + (bag ? ' bagged' : '');
+      el.style.cssText = `width:${w.toFixed(0)}px;height:${h.toFixed(0)}px;--img:url(assets/zine/z-${img}.png);--c:${pick(S.inks)};${bag ? '' : '--bg:' + bg + ';'}--pad:${bg === 'transparent' ? 0 : btw(2, 6).toFixed(0)}px;--cut:${torn()};--ms:${crop > 1 ? (crop * 100).toFixed(0) + '% auto' : 'cover'};--mp:${btw(0, 100).toFixed(0)}% ${btw(0, 100).toFixed(0)}%`;
+      el.innerHTML = '<i></i>';
     }
-    // the name: each letter cut from somewhere else
-    document.getElementById('name').innerHTML = [...'selvedge'].map(ch => { const [f, wt] = pick(NAME_FONTS), bg = R() < .7 ? paper() : 'transparent'; let c = ink(); if (c === bg) c = '#fbf5e8';
-      return `<span aria-hidden="true" style="font:${wt} ${(between(.1, .16) * Math.min(W, 1400)).toFixed(0)}px '${f}';color:${c};background:${bg};transform:rotate(${between(-12, 12).toFixed(1)}deg) translateY(${between(-10, 10).toFixed(0)}px)">${ch}</span>`; }).join('');
+    // most things end up low on the wire, pushed by the wind
+    const y = H * (1 - Math.pow(R(), 2.4)) - h * .6, x = btw(W * .05, W * .42);
+    const st = el.style; st.setProperty('--x', x.toFixed(0) + 'px'); st.setProperty('--y', y.toFixed(0) + 'px'); st.setProperty('--r', btw(-30, 30).toFixed(0) + 'deg');
+    st.setProperty('--a', btw(4, 16).toFixed(0) + 'deg'); st.setProperty('--s', btw(-10, 10).toFixed(0) + 'deg'); st.setProperty('--d', btw(.5, 2.4).toFixed(2) + 's'); st.setProperty('--dl', (-btw(0, 2)).toFixed(2) + 's');
+    st.setProperty('--ox', btw(0, 30).toFixed(0) + '%'); st.setProperty('--oy', btw(0, 20).toFixed(0) + '%');
+    el.gen = gen; age(el, gen); fence.appendChild(el); snags.push(el); return el;
   }
-  const place = el => { el.style.transform = `translate(${(+el.dataset.x).toFixed(0)}px, ${(+el.dataset.y).toFixed(0)}px) rotate(${(+el.dataset.r).toFixed(1)}deg) scaleX(${el.dataset.f})`; };
-  // drag a scrap about
-  let held = null, sx = 0, sy = 0, top = 1000;
-  board.addEventListener('pointerdown', e => { const el = e.target.closest('.bit, .word'); if (!el) return; held = el; sx = e.clientX; sy = e.clientY; el.classList.add('held'); el.style.zIndex = top++; el.setPointerCapture(e.pointerId); e.preventDefault(); });
-  board.addEventListener('pointermove', e => { if (!held) return; held.dataset.x = +held.dataset.x + e.clientX - sx; held.dataset.y = +held.dataset.y + e.clientY - sy; sx = e.clientX; sy = e.clientY; place(held); held.moved = true; });
-  board.addEventListener('pointerup', () => { if (held) held.classList.remove('held'); setTimeout(() => { if (held) held.moved = false; held = null; }, 0); });
-  board.addEventListener('click', e => { if (e.target === board) pasteUp(); });
-  document.getElementById('again').addEventListener('click', pasteUp);
-  document.fonts && document.fonts.ready.then(() => {});
-  pasteUp();
-  // now and then one scrap is swapped for another, like something growing
+  // older generations bleach, go see-through and get tatty
+  const age = (el, g) => { el.style.setProperty('--age', g <= 0 ? 'none' : `saturate(${Math.max(0, 1 - g * .28).toFixed(2)}) contrast(${Math.max(.45, 1 - g * .12).toFixed(2)}) opacity(${Math.max(.25, 1 - g * .17).toFixed(2)})`); };
+  const n = innerWidth < 640 ? 46 : 90;
+  for (let k = 0; k < n; k++) make(Math.floor(R() * 5));
+  // the wind: every few seconds something blows in and snags; the oldest lets go
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => {
-    if (held || document.hidden) return; const old = pick(pieces); if (!old) return;
-    const W = board.clientWidth, H = board.clientHeight, [el, w, h] = R() < .75 ? scrap(W, H) : word(W);
-    el.dataset.x = old.dataset.x; el.dataset.y = old.dataset.y; el.dataset.r = between(-28, 28); el.dataset.f = 1; place(el); el.style.zIndex = old.style.zIndex;
-    old.replaceWith(el); pieces[pieces.indexOf(old)] = el;
-  }, 2600);
+    if (document.hidden) return;
+    snags.forEach(el => { if (R() < .08) { el.gen++; age(el, el.gen); } });
+    const old = snags.filter(el => el.gen >= 5); if (old.length) { const o = pick(old); o.style.transition = 'opacity 1.2s'; o.style.opacity = 0; setTimeout(() => o.remove(), 1300); snags.splice(snags.indexOf(o), 1); }
+    const el = make(0); el.animate([{ opacity: 0, translate: '-60vw -20vh', rotate: '-200deg' }, { opacity: 1, translate: '0 0', rotate: '0deg' }], { duration: btw(1400, 2600), easing: 'cubic-bezier(.2,.7,.3,1)' });
+  }, 2200);
+  // a gust when you tap the sky
+  document.querySelector('.land').addEventListener('click', e => { if (e.target.closest('.clip')) return; snags.forEach(el => el.animate([{ translate: '0 0' }, { translate: `${btw(6, 26).toFixed(0)}px ${btw(-8, 4).toFixed(0)}px` }, { translate: '0 0' }], { duration: btw(500, 1100), easing: 'ease-out' })); });
+  document.getElementById('swap').addEventListener('click', () => { const k = document.getElementById('keyForm'), u = document.getElementById('signUp'), b = document.getElementById('swap'); const toNew = !k.hidden; k.hidden = toNew; u.hidden = !toNew; b.textContent = toNew ? 'have a key?' : 'new?'; (toNew ? document.getElementById('signUpName') : document.getElementById('keyIn')).focus(); });
 })();
 </script>
 <script>
@@ -202,7 +187,7 @@ footer { background: var(--paper); text-align: center; padding: 30px 16px 26px; 
   // your own print run colours, if you have one
   const name = (() => { try { return (localStorage.getItem('drift-garden-name') || '').trim(); } catch (e) { return ''; } })();
   const mine = jget('drift-garden') || [];
-  $('goGarden').textContent = mine.length ? 'your garden' : 'start a garden';
+  $('goGarden').textContent = mine.length ? 'your garden →' : 'start a garden →';
   (() => { const c = document.createElement('canvas'); c.width = c.height = 200; const g = c.getContext('2d'), d = g.createImageData(200, 200);
     for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 16; }
     g.putImageData(d, 0, 0); document.body.style.setProperty('--grain', `url(${c.toDataURL()})`); })();
@@ -212,7 +197,7 @@ footer { background: var(--paper); text-align: center; padding: 30px 16px 26px; 
   const ours = k => /^(drift-garden|wander-)/.test(k) && !SKIP.has(k);
   if (location.origin === OLD) {
     $('moving').hidden = false;
-    $('goGarden').textContent = 'stay here for now';
+    $('goGarden').textContent = 'stay here →';
     $('carry').addEventListener('click', () => {
       const keys = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (ours(k)) keys[k] = localStorage.getItem(k); }
       const w = window.open(NEW + '/?arrive=1', '_blank');
@@ -269,7 +254,7 @@ footer { background: var(--paper); text-align: center; padding: 30px 16px 26px; 
       ${g.pics && g.pics.length ? `<span class="pics">${g.pics.slice(0, 4).map(p => `<span><img alt="" loading="lazy" src="${esc(p)}"></span>`).join('')}</span>` : ''}
       <b>${esc(g.name)}</b><small>${esc(g.owner)} \u00b7 ${g.count}</small>
       ${g.titles && g.titles.length ? `<ul>${g.titles.slice(0, 4).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</button>`).join('')
-      : '<p class="empty">None yet. Make yours public from inside your garden.</p>';
+      : '';
   })();
   $('gardens').addEventListener('click', async e => {
     const b = e.target.closest('.clip'); if (!b) return;
