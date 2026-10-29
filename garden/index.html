@@ -324,18 +324,17 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
     <div id="acctInvite" class="acctBox" hidden></div>
     <div id="acctOut">
       <p class="hint">Save your garden, share allotments with friends, take cuttings.</p>
-      <form class="acctBox" id="keyForm">
-        <label for="keyIn">Your garden key</label>
-        <div class="row"><input type="text" id="keyIn" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="four words"><button class="btn" type="submit">Sign in</button></div>
-      </form>
-      <form class="acctBox" id="signUpForm">
-        <label for="signUpName">New here? The name friends will see</label>
-        <div class="row"><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="Moth"><button class="link" type="submit">Make an account</button></div>
+      <form class="acctBox" id="pwForm">
+        <label for="pwName">Name</label>
+        <input type="text" id="pwName" maxlength="40" autocomplete="username" autocapitalize="none" placeholder="Moth">
+        <label for="pwPass">Password</label>
+        <input type="password" id="pwPass" autocomplete="current-password" placeholder="at least 8 characters">
+        <div class="row"><button class="btn" type="submit" data-act="in">Sign in</button><button class="link" type="submit" data-act="new">Make an account</button></div>
       </form>
       <div class="row"><button class="link" type="button" id="signIn">Older account? Use a passkey</button></div>
     </div>
     <div id="acctIn" hidden>
-      <div class="acctBox" id="keyShow" hidden></div>
+      <form class="acctBox" id="setPw" hidden><label for="newPw">Set a password, so you can sign in anywhere</label><div class="row"><input type="password" id="newPw" autocomplete="new-password" placeholder="at least 8 characters"><button class="link" type="submit">Save</button></div></form>
       <div class="acctBox">
         <span class="kick">This garden</span>
         <p class="hint" id="cloudState"></p>
@@ -347,7 +346,7 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
         <ul class="acctList" id="allotList"></ul>
         <form class="row" id="allotForm"><input type="text" id="allotName" maxlength="60" autocomplete="off" placeholder="Name a new allotment"><button class="link" type="submit">Start it</button></form>
       </div>
-      <div class="row"><button class="link" type="button" id="addKey">Show my garden key</button><button class="link" type="button" id="signOut">Sign out</button></div>
+      <div class="row"><button class="link" type="button" id="addKey">Set a password</button><button class="link" type="button" id="signOut">Sign out</button></div>
     </div>
     <div class="row"><button class="btn" type="button" id="acctClose">Done</button></div>
   </div>
@@ -1947,22 +1946,15 @@ body.visiting #plantBtn, body.visiting #wildBtn, body.visiting #reroll, body.vis
   acctBtn.addEventListener('click', openAcct);
   $('acctClose').addEventListener('click', closeSheets);
   $('signIn').addEventListener('click', async () => { try { signedIn(await passkeyUse()); toast('Welcome back, ' + account.name); showAcct(); } catch (e) { toast(passkeyErr(e)); } });
-  // garden keys: four words, written down, typed in anywhere
-  function showKey(key, fresh) {
-    const el = $('keyShow'); el.hidden = false;
-    el.innerHTML = `<span class="kick">Your garden key</span><p class="gkey">${esc(key)}</p><p class="hint">${fresh ? 'Write it down. It’s how you get back in on any device.' : 'Type it in to sign in on another device.'}</p><div class="row"><button class="link" type="button" id="keyCopy">Copy</button><button class="link" type="button" id="keyHide">Hide</button></div>`;
-    $('keyCopy').onclick = () => { try { navigator.clipboard.writeText(key); toast('Copied'); } catch (e) {} };
-    $('keyHide').onclick = () => { el.hidden = true; };
-  }
-  $('keyForm').addEventListener('submit', async e => { e.preventDefault(); const k = $('keyIn').value.trim(); if (!k) { $('keyIn').focus(); return; }
-    try { const d = await api('/auth/key', { method: 'POST', body: { key: k } }); signedIn(d); account.key = k.toLowerCase().replace(/[^a-z]+/g, ' ').trim(); jset(ACCT_KEY, account); $('keyIn').value = ''; toast('Welcome back, ' + account.name); showAcct(); } catch (err) { toast(err.message); } });
-  $('signUpForm').addEventListener('submit', async e => { e.preventDefault(); const n = $('signUpName').value.trim(); if (!n) { $('signUpName').focus(); return; }
-    try { const d = await api('/auth/key/new', { method: 'POST', body: { name: n } }); signedIn(d); account.key = d.key; jset(ACCT_KEY, account); await showAcct(); showKey(d.key, true); } catch (err) { toast(err.message); } });
-  $('addKey').addEventListener('click', async () => {
-    if (account.key) return showKey(account.key);
-    if (!confirm('Make a garden key for this account? You can sign in with it on any device.')) return;
-    try { const d = await api('/me/key', { method: 'POST', body: {} }); account.key = d.key; jset(ACCT_KEY, account); showKey(d.key, true); } catch (e) { toast(e.message); } });
-  $('signOut').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST', body: {} }); } catch (e) {} account = null; jset(ACCT_KEY, null); showAcct(); toast('Signed out. Your garden key gets you back in'); });
+  // name and password
+  $('pwForm').addEventListener('submit', async e => { e.preventDefault();
+    const fresh = e.submitter && e.submitter.dataset.act === 'new', n = $('pwName').value.trim(), pw = $('pwPass').value;
+    if (!n) { $('pwName').focus(); return; } if (!pw) { $('pwPass').focus(); return; }
+    try { signedIn(await api(fresh ? '/auth/pw/new' : '/auth/pw', { method: 'POST', body: { name: n, password: pw } })); $('pwPass').value = ''; toast((fresh ? 'Welcome, ' : 'Welcome back, ') + account.name); showAcct(); } catch (err) { toast(err.message); } });
+  $('addKey').addEventListener('click', () => { $('setPw').hidden = !$('setPw').hidden; if (!$('setPw').hidden) $('newPw').focus(); });
+  $('setPw').addEventListener('submit', async e => { e.preventDefault(); const pw = $('newPw').value; if (!pw) return;
+    try { const d = await api('/me/password', { method: 'POST', body: { password: pw } }); $('newPw').value = ''; $('setPw').hidden = true; toast('Password saved. Sign in as ' + d.login + ' anywhere'); } catch (err) { toast(err.message); } });
+  $('signOut').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST', body: {} }); } catch (e) {} account = null; jset(ACCT_KEY, null); showAcct(); toast('Signed out. This garden stays in this browser'); });
   $('allotForm').addEventListener('submit', async e => { e.preventDefault(); const n = $('allotName').value.trim(); if (!n) return;
     try { await api('/allotments', { method: 'POST', body: { name: n } }); $('allotName').value = ''; toast('Started ' + n + '. Plant a garden there and invite friends'); showAcct(); } catch (err) { toast(err.message); } });
   let openSure = null;

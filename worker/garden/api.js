@@ -18,7 +18,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS invites (code TEXT PRIMARY KEY, allotment_id TEXT NOT NULL, made_by TEXT NOT NULL, expires INTEGER NOT NULL, uses_left INTEGER NOT NULL)`,
 ];
 // columns added after the first version; adding one that's already there just fails quietly
-const LATER = [`ALTER TABLE gardens ADD COLUMN public INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE gardens ADD COLUMN summary TEXT`, `ALTER TABLE users ADD COLUMN key_hash TEXT`, `CREATE INDEX IF NOT EXISTS users_key ON users (key_hash)`, `CREATE TABLE IF NOT EXISTS tries (ip TEXT PRIMARY KEY, n INTEGER NOT NULL, reset INTEGER NOT NULL)`];
+const LATER = [`ALTER TABLE gardens ADD COLUMN public INTEGER NOT NULL DEFAULT 0`, `ALTER TABLE gardens ADD COLUMN summary TEXT`, `ALTER TABLE users ADD COLUMN key_hash TEXT`, `CREATE INDEX IF NOT EXISTS users_key ON users (key_hash)`, `CREATE TABLE IF NOT EXISTS tries (ip TEXT PRIMARY KEY, n INTEGER NOT NULL, reset INTEGER NOT NULL)`, `ALTER TABLE users ADD COLUMN login TEXT`, `ALTER TABLE users ADD COLUMN pw TEXT`, `CREATE UNIQUE INDEX IF NOT EXISTS users_login ON users (login)`];
 let ready = null;
 const DAY = 86400000, SESSION_DAYS = 60, MAX_GARDEN = 20 * 1024 * 1024;
 
@@ -29,6 +29,19 @@ const clean = (s, max) => String(s || '').replace(/[\u0000-\u001f\u007f]/g, '').
 const pickWord = () => { const r = new Uint32Array(1); const lim = Math.floor(2 ** 32 / WORDS.length) * WORDS.length; do crypto.getRandomValues(r); while (r[0] >= lim); return WORDS[r[0] % WORDS.length]; };
 const newKey = () => [0, 1, 2, 3].map(pickWord).join(' ');
 const tidyKey = k => String(k || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+// passwords: PBKDF2-SHA256 with a random salt, stored as iterations$salt$hash
+const PBKDF2_ROUNDS = 100000;
+async function pwHash(password, salt = rand(16), rounds = PBKDF2_ROUNDS) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(salt), iterations: rounds }, k, 256);
+  return `${rounds}$${salt}$${isoBase64URL.fromBuffer(new Uint8Array(bits))}`;
+}
+async function pwCheck(password, stored) {
+  const [rounds, salt] = String(stored || '').split('$'); if (!salt) return false;
+  const a = await pwHash(password, salt, +rounds); if (a.length !== stored.length) return false;
+  let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ stored.charCodeAt(i); return d === 0;
+}
+const loginOf = n => clean(n, 40).toLowerCase();
 class Oops extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 
 export default {
@@ -91,6 +104,34 @@ async function route(req, env, ctx) {
     if (!t || t.reset <= now) await run('INSERT OR REPLACE INTO tries (ip, n, reset) VALUES (?, 1, ?)', ip, now + 10 * 60000);
     else await run('UPDATE tries SET n = n + 1 WHERE ip = ?', ip);
   };
+  // ---------- name and password ----------
+  if (m === 'POST' && path === '/auth/pw/new') {
+    const { name, password } = await body(); const n = clean(name, 40), pw = String(password || '');
+    if (!n) throw new Oops(400, 'Choose a name');
+    if (pw.length < 8) throw new Oops(400, 'Make the password at least 8 characters');
+    if (pw.length > 200) throw new Oops(400, 'That password is too long');
+    if (await one('SELECT 1 AS x FROM users WHERE login = ?', loginOf(n))) throw new Oops(409, 'That name’s taken. Try another');
+    const user = { id: rand(16), name: n };
+    await run('INSERT INTO users (id, name, created, login, pw) VALUES (?, ?, ?, ?, ?)', user.id, user.name, now, loginOf(n), await pwHash(pw));
+    return startSession(user);
+  }
+  if (m === 'POST' && path === '/auth/pw') {
+    const { name, password } = await body();
+    await slow();
+    const user = await one('SELECT * FROM users WHERE login = ?', loginOf(name));
+    if (!user || !(await pwCheck(String(password || ''), user.pw))) throw new Oops(400, 'That name and password don’t match');
+    return startSession(user);
+  }
+  // an older account (passkey or key) gets a password
+  if (m === 'POST' && path === '/me/password') {
+    need(); const { password } = await body(); const pw = String(password || '');
+    if (pw.length < 8) throw new Oops(400, 'Make the password at least 8 characters');
+    const taken = await one('SELECT id FROM users WHERE login = ?', loginOf(me.name));
+    if (taken && taken.id !== me.id) throw new Oops(409, 'Someone else signs in as “' + me.name + '”. Ask Claude to rename you');
+    await run('UPDATE users SET login = ?, pw = ? WHERE id = ?', loginOf(me.name), await pwHash(pw), me.id);
+    return { ok: true, login: me.name };
+  }
+
   if (m === 'POST' && path === '/auth/key/new') {
     const { name } = await body(); const n = clean(name, 40);
     if (!n) throw new Oops(400, 'Choose a name your friends will see');

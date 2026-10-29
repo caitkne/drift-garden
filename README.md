@@ -60,7 +60,7 @@ The studio has one more layout: **its own style**. A picture lends its own colou
 
 ## Accounts, allotments and cuttings
 
-Once the garden's account server is running (see [worker/README.md](worker/README.md)), a **Sign in** button appears at the top. Sign in with a **garden key**: four random words you're given when you make an account (no passwords, no email), save your garden to your account (changes follow it there), and open it on another device. Start an **allotment**, plant your garden in it and send friends an invite link. **Visit** shows every garden planted there, one under another with its sign. While visiting, nothing you do touches your own garden. Open any of their plants and **take a cutting**: a copy goes home with you and is planted when you get back, marked with whose garden it came from.
+Once the garden's account server is running (see [worker/README.md](worker/README.md)), a **Sign in** button appears at the top. Sign in with a name and password (no email), save your garden to your account (changes follow it there), and open it on another device. Start an **allotment**, plant your garden in it and send friends an invite link. **Visit** shows every garden planted there, one under another with its sign. While visiting, nothing you do touches your own garden. Open any of their plants and **take a cutting**: a copy goes home with you and is planted when you get back, marked with whose garden it came from.
 
 ## eBay wildflowers
 

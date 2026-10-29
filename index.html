@@ -51,7 +51,7 @@ a { color: inherit; }
 .mark { margin: 0; font: 400 clamp(26px, 3.4vw, 46px)/1 var(--mark); letter-spacing: -.02em; }
 #goGarden { text-decoration: none; font: 500 12px/1 var(--mono); font-stretch: 112%; letter-spacing: .06em; border-bottom: 1.5px solid; padding-bottom: 3px; }
 #acct { display: grid; gap: 6px; }
-#acct form { display: flex; align-items: center; gap: 6px; margin: 0; }
+#acct form { display: grid; gap: 6px; justify-items: start; margin: 0; }
 #acct input { width: 200px; font: 300 12px/1.2 var(--mono); padding: 5px 0; border: 0; border-bottom: 1px solid; background: transparent; color: inherit; border-radius: 0; }
 #acct input::placeholder { color: inherit; opacity: .55; }
 #acct button { background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
@@ -93,14 +93,14 @@ a { color: inherit; }
   <a href="garden/" id="goGarden">start a garden →</a>
   <div id="acct" hidden>
     <div id="acctOut">
-      <form id="keyForm"><input type="text" id="keyIn" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="four-word key" aria-label="Your garden key, four words"><button type="submit">in</button></form>
-      <form id="signUp" hidden><input type="text" id="signUpName" maxlength="40" autocomplete="nickname" placeholder="a name" aria-label="Your name, as friends will see it"><button type="submit">make</button></form>
-      <button type="button" class="swap" id="swap">new?</button>
+      <form id="pwForm">
+        <input type="text" id="pwName" maxlength="40" autocomplete="username" autocapitalize="none" placeholder="name" aria-label="Name">
+        <input type="password" id="pwPass" autocomplete="current-password" placeholder="password" aria-label="Password">
+        <div><button type="submit" data-act="in">in</button> <button type="submit" data-act="new" class="swap">new</button></div>
+      </form>
     </div>
     <div id="acctIn" hidden>
       <span id="meName"></span>
-      <span id="keyLine"></span>
-      <small class="fresh-only">keep these four words</small>
       <button type="button" id="signOut" style="justify-self:start">out</button>
     </div>
   </div>
@@ -170,7 +170,6 @@ a { color: inherit; }
   }, 2200);
   // a gust when you tap the sky
   document.querySelector('.land').addEventListener('click', e => { if (e.target.closest('.clip')) return; snags.forEach(el => el.animate([{ translate: '0 0' }, { translate: `${btw(6, 26).toFixed(0)}px ${btw(-8, 4).toFixed(0)}px` }, { translate: '0 0' }], { duration: btw(500, 1100), easing: 'ease-out' })); });
-  document.getElementById('swap').addEventListener('click', () => { const k = document.getElementById('keyForm'), u = document.getElementById('signUp'), b = document.getElementById('swap'); const toNew = !k.hidden; k.hidden = toNew; u.hidden = !toNew; b.textContent = toNew ? 'have a key?' : 'new?'; (toNew ? document.getElementById('signUpName') : document.getElementById('keyIn')).focus(); });
 })();
 </script>
 <script>
@@ -232,15 +231,15 @@ a { color: inherit; }
     if (!r.ok) throw new Error(d.error || 'The garden server didn’t answer');
     return d;
   }
-  const signedIn = (d, key) => { account = { token: d.token, id: d.user.id, name: d.user.name, key }; jset('drift-garden-account', account); showAcct(); };
+  const signedIn = d => { account = { token: d.token, id: d.user.id, name: d.user.name }; jset('drift-garden-account', account); showAcct(); };
   function showAcct() {
     $('acct').hidden = false; $('acctOut').hidden = !!account; $('acctIn').hidden = !account;
-    if (account) { $('meName').textContent = account.name; $('keyLine').textContent = account.key || ''; }
+    if (account) $('meName').textContent = account.name;
   }
-  $('keyForm').addEventListener('submit', async e => { e.preventDefault(); const k = $('keyIn').value.toLowerCase().replace(/[^a-z]+/g, ' ').trim(); if (!k) { $('keyIn').focus(); return; }
-    try { signedIn(await api('/auth/key', { method: 'POST', body: { key: k } }), k); toast('Welcome back, ' + account.name); } catch (err) { toast(err.message); } });
-  $('signUp').addEventListener('submit', async e => { e.preventDefault(); const n = $('signUpName').value.trim(); if (!n) { $('signUpName').focus(); return; }
-    try { const d = await api('/auth/key/new', { method: 'POST', body: { name: n } }); signedIn(d, d.key); $('acctIn').classList.add('fresh'); } catch (err) { toast(err.message); } });
+  $('pwForm').addEventListener('submit', async e => { e.preventDefault();
+    const fresh = e.submitter && e.submitter.dataset.act === 'new', n = $('pwName').value.trim(), pw = $('pwPass').value;
+    if (!n) { $('pwName').focus(); return; } if (!pw) { $('pwPass').focus(); return; }
+    try { signedIn(await api(fresh ? '/auth/pw/new' : '/auth/pw', { method: 'POST', body: { name: n, password: pw } })); $('pwPass').value = ''; toast(fresh ? 'Welcome, ' + account.name : 'Welcome back, ' + account.name); } catch (err) { toast(err.message); } });
   $('signOut').addEventListener('click', async () => { try { await api('/auth/logout', { method: 'POST', body: {} }); } catch (e) {} account = null; jset('drift-garden-account', null); showAcct(); toast('Signed out'); });
   showAcct();
 
