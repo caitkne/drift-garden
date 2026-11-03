@@ -302,6 +302,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   // ---------- state ----------
   let issues = [];
   try { issues = JSON.parse(store && store.getItem(STORE_KEY)) || []; } catch (e) { issues = []; }
+  // colour pages saved before the fix, whose colour couldn't be read, were really tag pages
+  issues.forEach(i => (i.pages || []).forEach(p => { if (p.rule === 'C' && (!p.extra || p.extra.hue == null)) { p.rule = 'T'; if (p.note) p.note = p.note.replace(/(so instead )([A-Z])/, (_, a, b) => a + b.toLowerCase()); } }));
   let pattern = (store && store.getItem(STORE_KEY + '-pattern')) || DEFAULT_PATTERN;
   if (!/^[NLYCTOPWV]{4,14}$/.test(pattern)) pattern = DEFAULT_PATTERN;
   const save = () => { if (!store) return; try { store.setItem(STORE_KEY, JSON.stringify(issues)); } catch (e) { issues.length > 3 && issues.shift(); } };
@@ -426,7 +428,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     if (rule === 'C') {
       let h = cur.hue;
       if (h == null && cur.img) h = await hueFromImage(cur.img);
-      if (h == null) return step('T', ctx).then(r => { if (r) r.note = 'Its colour couldn’t be read, so instead ' + r.note; return r; });
+      // no colour to show, so the page becomes a tag page, laid out as one
+      if (h == null) return step('T', ctx).then(r => { if (r) { r.rule = 'T'; r.note = 'Its colour couldn’t be read, so instead ' + r.note.charAt(0).toLowerCase() + r.note.slice(1); } return r; });
       const name = hueName(h);
       // first, the Art Institute's own colour index; then the colour's name as words
       try {
@@ -538,8 +541,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       if (!r || !r.item) { status((RULES[rule] || 'planting') + ' led nowhere'); continue; }
       avoid.add(r.item.href); recent.push(r.item);
       if (r.item.next) used.delete(r.item.next);
-      cell = placeFrom(cell, DIRS[rule] || [1, 0], occ);
-      const page = { rule, cell, item: r.item, alsos: r.alsos || [], note: r.note, extra: r.extra || {}, at: r.at };
+      const ran = r.rule || rule;
+      cell = placeFrom(cell, DIRS[ran] || [1, 0], occ);
+      const page = { rule: ran, cell, item: r.item, alsos: r.alsos || [], note: r.note, extra: r.extra || {}, at: r.at };
       issue.pages.push(page);
       if (!issue.ink) issue.ink = inkFrom(r.item);
       cur = r.item.src === 'wiki' && r.item.next ? { ...r.item, title: r.item.next, text: '' } : r.item;
