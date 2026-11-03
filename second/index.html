@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Second Selvedge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Martian+Mono:wght@200;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --field: #161616; --grid: #262626; --paper: #f3f1ea; --type: #121212; --dim: #8a877f;
+  --ink: #e2401b; --serif: 'Instrument Serif', 'Times New Roman', serif; --mono: 'Martian Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--field); color: var(--paper); font-family: var(--mono); }
+a { color: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+
+/* ---------- the field ---------- */
+#field { position: fixed; inset: 0; touch-action: none; cursor: grab;
+  background-color: var(--field);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 58px 40px; }
+#field.dragging { cursor: grabbing; }
+#world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+#threads { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.cellno { position: absolute; font-size: 22px; color: #555; letter-spacing: .1em; pointer-events: none; white-space: nowrap; }
+
+/* ---------- a spread (1000 x 640, two pages) ---------- */
+.spread { position: absolute; width: 1000px; height: 640px; background: var(--paper); color: var(--type); overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,0,0,.45); cursor: pointer; display: grid; grid-template-columns: 1fr 1fr; }
+.spread::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 60px; margin-left: -30px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,.09) 46%, rgba(0,0,0,.16) 50%, rgba(0,0,0,.05) 54%, transparent); z-index: 9; }
+.spread.new { animation: arrive .9s cubic-bezier(.2,.8,.2,1); }
+@keyframes arrive { from { opacity: 0; transform: translateY(40px) rotate(-1.5deg); } }
+.pg { position: relative; overflow: hidden; }
+.rh { position: absolute; top: 22px; font-size: 9px; letter-spacing: .22em; text-transform: uppercase; z-index: 5; }
+.pg.l .rh { left: 28px; } .pg.r .rh { right: 28px; text-align: right; }
+.folio { position: absolute; bottom: 20px; font-size: 10px; z-index: 5; }
+.pg.l .folio { left: 28px; } .pg.r .folio { right: 28px; }
+.why { position: absolute; z-index: 6; font-size: 9.5px; line-height: 1.55; max-width: 230px; color: inherit; opacity: .85; }
+.why b { font-weight: 700; color: var(--ink); }
+.cap { position: absolute; z-index: 6; font-size: 9.5px; line-height: 1.5; max-width: 300px; }
+.cap .t { font-family: var(--serif); font-style: italic; font-size: 21px; line-height: 1.05; display: block; margin-bottom: 6px; letter-spacing: -.01em; }
+.cap .src { display: inline-block; margin-top: 6px; border-bottom: 1px solid currentColor; text-decoration: none; }
+.also { position: absolute; z-index: 6; display: flex; gap: 8px; align-items: flex-end; font-size: 8px; letter-spacing: .14em; text-transform: uppercase; }
+.also a { display: block; width: 46px; height: 46px; background: #ddd center/cover no-repeat; filter: grayscale(1) contrast(1.1); text-decoration: none; }
+.also a:hover { filter: none; }
+.also span { writing-mode: vertical-rl; transform: rotate(180deg); opacity: .7; }
+.img { position: absolute; background: #e4e1d8 center/cover no-repeat; }
+.img.contain { background-size: contain; background-color: transparent; }
+.img.none { display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-style: italic; font-size: 30px; color: #9a968c; background: transparent; }
+.huge { position: absolute; z-index: 4; line-height: .8; white-space: nowrap; }
+
+/* rule templates */
+.t-N .num { position: absolute; left: 24px; bottom: 54px; font-size: 92px; font-weight: 200; letter-spacing: -.04em; color: var(--ink); }
+.t-N dl { position: absolute; left: 28px; top: 80px; right: 40px; margin: 0; display: grid; grid-template-columns: 90px 1fr; gap: 9px 12px; font-size: 10px; line-height: 1.4; }
+.t-N dt { opacity: .5; text-transform: uppercase; letter-spacing: .14em; font-size: 8.5px; padding-top: 2px; }
+.t-N dd { margin: 0; }
+.t-N dd.t { font-family: var(--serif); font-size: 26px; line-height: 1.02; font-style: italic; }
+.t-L .huge, .t-S .huge { font-family: var(--serif); color: #fff; mix-blend-mode: difference; left: 18px; top: 50%; transform: translateY(-50%); letter-spacing: -.03em; }
+.t-Y .pg.l { background: var(--ink); color: var(--paper); }
+.t-Y .pg.l .why b, .t-C .why b { color: inherit; text-decoration: underline; }
+.t-Y .huge { font-weight: 700; left: 14px; bottom: 70px; font-size: 230px; letter-spacing: -.07em; }
+.t-C { color: #fff; }
+.t-C .pg.r .cap, .t-C .pg.r .rh, .t-C .pg.r .folio { color: #fff; }
+.t-C .huge { font-family: var(--serif); font-style: italic; left: 28px; top: 110px; white-space: normal; width: 440px; font-size: 96px; line-height: .86; }
+.t-C .hval { position: absolute; left: 28px; bottom: 60px; font-size: 11px; letter-spacing: .1em; }
+.t-T .tags { position: absolute; left: 28px; top: 80px; right: 28px; font-size: 11px; line-height: 2; list-style: none; padding: 0; margin: 0; }
+.t-T .tags li { border-bottom: 1px solid #c9c5ba; text-decoration: line-through; opacity: .45; display: flex; justify-content: space-between; }
+.t-T .tags li.k { text-decoration: none; opacity: 1; color: var(--ink); font-weight: 700; }
+.t-T .huge { font-family: var(--serif); left: 24px; bottom: 60px; font-size: 76px; color: var(--type); white-space: normal; width: 460px; line-height: .9; }
+.t-O { background: var(--type); color: var(--paper); }
+.t-O .said { position: absolute; left: 28px; right: 34px; top: 74px; font-family: var(--serif); font-size: 33px; line-height: 1.08; letter-spacing: -.005em; }
+.t-O .said u { text-decoration-color: var(--ink); text-decoration-thickness: 3px; text-underline-offset: 5px; }
+.t-O .from { position: absolute; left: 28px; bottom: 56px; font-size: 10px; }
+.t-O .img { filter: grayscale(1) contrast(1.15); mix-blend-mode: screen; opacity: .85; }
+.t-W .words { position: absolute; left: 22px; top: 70px; right: 20px; }
+.t-W .words div { line-height: .9; letter-spacing: -.03em; overflow: hidden; text-overflow: clip; white-space: nowrap; }
+.t-W .words div:nth-child(odd) { font-family: var(--serif); font-style: italic; font-size: 96px; }
+.t-W .words div:nth-child(even) { font-size: 52px; font-weight: 200; color: var(--ink); margin: 8px 0 12px; }
+.t-V .mirror { transform: scaleX(-1); }
+.t-V .love { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 10; background: var(--paper); padding: 10px 16px; font-family: var(--serif); font-style: italic; font-size: 30px; white-space: nowrap; }
+.t-cover .pg.l { background: var(--paper); }
+.t-cover .mast { position: absolute; left: 24px; top: 46px; font-family: var(--serif); font-size: 128px; line-height: .78; letter-spacing: -.045em; }
+.t-cover .mast i { display: block; padding-left: 70px; }
+.t-cover .no { position: absolute; left: 28px; top: 270px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; line-height: 1.8; }
+.t-cover .no b { color: var(--ink); }
+.t-cover ol { position: absolute; left: 28px; right: 28px; bottom: 52px; margin: 0; padding: 0; list-style: none; font-size: 9px; line-height: 1.75; }
+.t-cover ol li { display: grid; grid-template-columns: 22px 16px 1fr 26px; gap: 6px; border-top: 1px solid #d3cfc4; }
+.t-cover ol li span:nth-child(3) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-cover ol li b { color: var(--ink); }
+.t-cover .pg.r { background: var(--ink); }
+.t-cover .pg.r .img { mix-blend-mode: multiply; filter: grayscale(1) contrast(1.4); }
+.t-colo .pg.l { background: var(--type); color: var(--paper); }
+.t-colo .chart { position: absolute; left: 28px; top: 80px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(1, 46px); gap: 4px; }
+.t-colo .chart div { width: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid #555; font-size: 14px; }
+.t-colo .chart div.on { background: var(--ink); border-color: var(--ink); color: var(--type); font-weight: 700; }
+.t-colo .rules { position: absolute; left: 28px; top: 160px; right: 28px; font-size: 10px; line-height: 1.9; margin: 0; padding: 0; list-style: none; }
+.t-colo .rules b { color: var(--ink); display: inline-block; width: 22px; }
+.t-colo .pg.r .says { position: absolute; left: 28px; right: 40px; top: 80px; font-family: var(--serif); font-size: 44px; line-height: .98; letter-spacing: -.02em; }
+.t-colo .swatch { position: absolute; left: 28px; bottom: 60px; width: 160px; height: 96px; background: var(--ink); color: var(--paper); font-size: 9px; padding: 8px; letter-spacing: .1em; }
+.t-colo .srcs { position: absolute; left: 210px; right: 28px; bottom: 60px; font-size: 9px; line-height: 1.7; }
+
+/* ---------- chrome ---------- */
+.ui { position: fixed; z-index: 20; }
+#mast { left: 18px; top: 14px; font-family: var(--serif); font-size: 26px; letter-spacing: -.02em; line-height: 1; pointer-events: none; }
+#mast small { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); margin-top: 6px; }
+#zoom { right: 16px; top: 14px; display: flex; gap: 6px; }
+#zoom button { width: 34px; height: 34px; border: 1px solid #444; background: var(--field); font-size: 14px; }
+#zoom button:hover { border-color: var(--paper); }
+#bar { left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; justify-content: center; width: min(760px, calc(100vw - 32px)); }
+#plant { display: flex; flex: 1 1 300px; background: var(--paper); color: var(--type); }
+#words { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 13px; padding: 12px 14px; outline: none; color: var(--type); }
+#words::placeholder { color: #9a968c; }
+#go { background: var(--ink); color: var(--paper); padding: 0 18px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+#go:disabled { opacity: .5; cursor: wait; }
+#pattern { display: flex; gap: 3px; align-items: center; background: var(--field); border: 1px solid #333; padding: 5px; }
+#pattern button { width: 26px; height: 32px; border: 1px solid #444; font-size: 12px; }
+#pattern button:hover { border-color: var(--paper); }
+#pattern button.now { background: var(--ink); border-color: var(--ink); color: var(--field); animation: blink .6s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .4; } }
+#pattern .lbl { font-size: 8px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); writing-mode: vertical-rl; transform: rotate(180deg); padding: 0 2px; }
+#garden { font-size: 10px; letter-spacing: .1em; color: var(--dim); text-decoration: underline; text-underline-offset: 3px; align-self: center; }
+#status { left: 50%; bottom: 82px; transform: translateX(-50%); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); white-space: nowrap; pointer-events: none; }
+#key { right: 16px; top: 58px; width: 230px; background: var(--field); border: 1px solid #333; padding: 12px 14px; font-size: 10px; line-height: 1.75; display: none; }
+#key.open { display: block; }
+#key b { color: var(--ink); display: inline-block; width: 18px; }
+#key p { margin: 0 0 8px; color: var(--dim); }
+
+/* ---------- the reader ---------- */
+#reader { position: fixed; inset: 0; z-index: 40; background: rgba(12,12,12,.94); display: none; }
+#reader.open { display: block; }
+#reader .stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+#reader .stage .spread { cursor: default; position: relative; box-shadow: 0 40px 90px rgba(0,0,0,.6); }
+#reader .nav { position: absolute; left: 0; right: 0; bottom: 16px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 16px; }
+#reader .nav button, #reader .nav a { border: 1px solid #555; padding: 9px 14px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; background: var(--field); }
+#reader .nav button:hover, #reader .nav a:hover { border-color: var(--paper); }
+#reader .nav .walk { background: var(--ink); border-color: var(--ink); }
+@media (max-width: 640px) {
+  #mast { font-size: 20px; }
+  #pattern button { width: 22px; }
+  #status { bottom: 128px; }
+}
+@media (prefers-reduced-motion: reduce) { .spread.new { animation: none; } #pattern button.now { animation: none; } }
+</style>
+</head>
+<body>
+<div id="field"><div id="world"><svg id="threads" width="1" height="1"></svg></div></div>
+
+<div id="mast" class="ui">Second Selvedge<small>an issue for every walk</small></div>
+<div id="zoom" class="ui">
+  <button id="zin" aria-label="Closer">+</button><button id="zout" aria-label="Further">&minus;</button><button id="zfit" aria-label="See everything">&#9633;</button><button id="zkey" aria-label="House rules">?</button>
+</div>
+<div id="key" class="ui"></div>
+<div id="status" class="ui" role="status"></div>
+<form id="bar" class="ui" autocomplete="off">
+  <div id="plant"><input id="words" placeholder="plant one to three words" aria-label="Words to walk from" maxlength="80"><button id="go" type="submit">walk</button></div>
+  <div id="pattern" title="The house rules, in order. Tap one to change it."><span class="lbl">rules</span></div>
+  <button id="garden" type="button" hidden>from my garden</button>
+</form>
+
+<div id="reader" aria-modal="true" role="dialog">
+  <div class="stage"></div>
+  <div class="nav">
+    <button data-r="prev">&larr;</button>
+    <a class="src" href="#" target="_blank" rel="noopener">go to it &nearr;</a>
+    <button data-r="walk" class="walk">walk from here</button>
+    <button data-r="close">back to the field</button>
+    <button data-r="next">&rarr;</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  // ======================================================================
+  //  The house rules. Each one is a small, clumsy procedure a person could
+  //  carry out by hand in a library. Nothing here learns or guesses.
+  // ======================================================================
+  const RULES = {
+    N: 'the neighbour', L: 'the longest word', Y: 'the same year', C: 'the same colour',
+    T: 'the rarest tag', O: 'overheard', W: 'wildflower', V: 'a love returns'
+  };
+  const RULE_HOW = {
+    N: 'open the drawer filed next to the last thing',
+    L: 'search the longest word on the last page',
+    Y: 'find something made in the same year, somewhere else',
+    C: 'find something the same colour',
+    T: 'follow its least-used tag',
+    O: 'look it up and keep one sentence',
+    W: 'one word from each of the last three pages, searched together',
+    V: 'one of your loves comes back, close but never exact'
+  };
+  const DEFAULT_PATTERN = 'NLYCNTOLWV';
+  const SRC = {
+    aic: 'the Art Institute of Chicago', met: 'the Met', vam: 'the V&A', cma: 'the Cleveland Museum of Art',
+    commons: 'Wikimedia Commons', wiki: 'Wikipedia'
+  };
+  const ROTATION = ['aic', 'vam', 'met', 'cma', 'commons'];
+  const CELL_W = 1240, CELL_H = 880, SW = 1000, SH = 640;
+  const DIRS = { S: [1, 0], N: [1, 0], L: [0, 1], Y: [-1, 1], C: [1, 1], T: [1, -1], O: [0, 1], W: [2, 0], V: [-1, 0], colo: [1, 0] };
+  const STORE_KEY = 'second-selvedge';
+  const STOP = new Set('about above after again against along among another around because before being below between beyond could during either every first from have having here into itself might other others over same should since some such than that their theirs them then there these they this those through under until upon very were what when where which while with within without would your yours untitled unknown object objects possibly probably made with work works part parts style after attributed manner circle workshop period century early late design designs various'.split(' '));
+  const ORD = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] || 'th');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const strip = h => String(h || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const cssUrl = u => "url('" + String(u).replace(/['\\\n]/g, encodeURIComponent) + "')";
+  function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const hash = s => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
+  const store = (() => { try { const k = '__ss'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return localStorage; } catch (e) { return null; } })();
+
+  // ---------- fetching ----------
+  const cache = new Map();
+  async function getJSON(url) {
+    if (cache.has(url)) return cache.get(url);
+    const p = (async () => {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 9000);
+      try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+      finally { clearTimeout(t); }
+    })();
+    cache.set(url, p); p.catch(() => cache.delete(url));
+    return p;
+  }
+
+  // ---------- the archives, all made to look alike ----------
+  const AIC_FIELDS = 'id,title,artist_title,artist_display,date_display,date_start,medium_display,place_of_origin,classification_title,subject_titles,term_titles,style_titles,color,image_id,is_public_domain,thumbnail';
+  const aicItem = x => x && x.image_id ? ({
+    src: 'aic', id: x.id, title: x.title, maker: x.artist_title || strip(x.artist_display).split('\n')[0], date: x.date_display,
+    year: x.date_start || null, place: x.place_of_origin, kind: x.classification_title, medium: x.medium_display,
+    tags: [...(x.subject_titles || []), ...(x.style_titles || []), ...(x.term_titles || [])],
+    hue: x.color && x.color.s > 15 ? x.color.h : null,
+    img: 'https://www.artic.edu/iiif/2/' + x.image_id + '/full/' + (x.is_public_domain ? '843' : '400') + ',/0/default.jpg',
+    href: 'https://www.artic.edu/artworks/' + x.id,
+    ar: x.thumbnail && x.thumbnail.width ? x.thumbnail.height / x.thumbnail.width : 0
+  }) : null;
+  const metItem = o => o && o.primaryImageSmall && o.title ? ({
+    src: 'met', id: o.objectID, title: o.title, maker: o.artistDisplayName, date: o.objectDate, year: o.objectBeginDate || null,
+    place: o.culture || o.country, kind: o.classification || o.objectName, medium: o.medium,
+    tags: (o.tags || []).map(t => t.term), img: o.primaryImageSmall,
+    href: o.objectURL || ('https://www.metmuseum.org/art/collection/search/' + o.objectID)
+  }) : null;
+  const vamItem = x => x && x._images && x._images._iiif_image_base_url ? ({
+    src: 'vam', id: x.systemNumber, title: x._primaryTitle || x.objectType, maker: x._primaryMaker && x._primaryMaker.name,
+    date: x._primaryDate, year: parseInt(x._primaryDate, 10) || null, place: x._primaryPlace, kind: x.objectType, medium: '',
+    tags: [x.objectType].filter(Boolean), img: x._images._iiif_image_base_url + 'full/!800,800/0/default.jpg',
+    href: 'https://collections.vam.ac.uk/item/' + x.systemNumber + '/'
+  }) : null;
+  const cmaItem = x => x && x.images && x.images.web && x.images.web.url ? ({
+    src: 'cma', id: x.id, title: x.title, maker: ((x.creators || [])[0] || {}).description, date: x.creation_date,
+    year: x.creation_date_earliest || null, place: (x.culture || [])[0], kind: x.type, medium: x.technique,
+    tags: [x.type, x.department, ...(x.culture || [])].filter(Boolean), img: x.images.web.url,
+    href: x.url || ('https://www.clevelandart.org/art/' + x.accession_number),
+    ar: x.images.web.width ? x.images.web.height / x.images.web.width : 0
+  }) : null;
+  const commonsItem = p => {
+    const ii = p.imageinfo && p.imageinfo[0]; if (!ii || !ii.thumburl) return null;
+    const m = ii.extmetadata || {}, v = k => m[k] ? strip(m[k].value) : '';
+    const title = v('ObjectName') || p.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ');
+    const date = v('DateTimeOriginal');
+    return { src: 'commons', id: p.pageid, title, maker: v('Artist').slice(0, 80), date: date.slice(0, 40), year: parseInt((date.match(/\b(1\d{3}|20\d{2})\b/) || [])[1], 10) || null,
+      place: '', kind: '', medium: v('ImageDescription').slice(0, 160), tags: (v('Categories') || '').split('|').filter(Boolean).slice(0, 8),
+      img: ii.thumburl, href: ii.descriptionurl || ('https://commons.wikimedia.org/?curid=' + p.pageid), ar: ii.thumbheight && ii.thumbwidth ? ii.thumbheight / ii.thumbwidth : 0 };
+  };
+  const SEARCH = {
+    async aic(q) { const d = await getJSON('https://api.artic.edu/api/v1/artworks/search?q=' + encodeURIComponent(q) + '&limit=24&fields=' + AIC_FIELDS); return (d.data || []).map(aicItem).filter(Boolean); },
+    async met(q) {
+      const d = await getJSON('https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=' + encodeURIComponent(q));
+      const ids = (d.objectIDs || []).slice(0, 10);
+      const objs = await Promise.all(ids.map(id => getJSON('https://collectionapi.metmuseum.org/public/collection/v1/objects/' + id).catch(() => null)));
+      return objs.map(metItem).filter(Boolean);
+    },
+    async vam(q, extra = '') { const d = await getJSON('https://api.vam.ac.uk/v2/objects/search?images_exist=1&page_size=24' + (q ? '&q=' + encodeURIComponent(q) : '') + extra); return (d.records || []).map(vamItem).filter(Boolean); },
+    async cma(q, extra = '') { const d = await getJSON('https://openaccess-api.clevelandart.org/api/artworks/?has_image=1&limit=24' + (q ? '&q=' + encodeURIComponent(q) : '') + extra); return (d.data || []).map(cmaItem).filter(Boolean); },
+    async commons(q) {
+      const d = await getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20&gsrsearch=' + encodeURIComponent(q + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=900');
+      return Object.values((d.query && d.query.pages) || {}).sort((a, b) => a.index - b.index).map(commonsItem).filter(Boolean);
+    },
+    async wiki(q) {
+      const d = await getJSON('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=0&gsrlimit=8&gsrsearch=' + encodeURIComponent(q) + '&prop=pageimages|extracts|info&inprop=url&exintro=1&explaintext=1&exsentences=6&pithumbsize=800');
+      return Object.values((d.query && d.query.pages) || {}).sort((a, b) => a.index - b.index).filter(p => p.extract && !/may refer to/.test(p.extract)).map(p => ({
+        src: 'wiki', id: p.pageid, title: p.title, maker: '', date: '', year: null, place: '', kind: 'article', medium: '', tags: [], text: p.extract,
+        img: p.thumbnail ? p.thumbnail.source : null, href: p.fullurl || ('https://en.wikipedia.org/?curid=' + p.pageid)
+      }));
+    }
+  };
+
+  // ---------- state ----------
+  let issues = [];
+  try { issues = JSON.parse(store && store.getItem(STORE_KEY)) || []; } catch (e) { issues = []; }
+  let pattern = (store && store.getItem(STORE_KEY + '-pattern')) || DEFAULT_PATTERN;
+  if (!/^[NLYCTOWV]{4,14}$/.test(pattern)) pattern = DEFAULT_PATTERN;
+  const save = () => { if (!store) return; try { store.setItem(STORE_KEY, JSON.stringify(issues)); } catch (e) { issues.length > 3 && issues.shift(); } };
+  const seen = () => new Set(issues.flatMap(i => i.pages.map(p => p.item && p.item.href)));
+  const occupied = () => { const s = new Set(); issues.forEach(i => i.pages.forEach(p => s.add(p.cell.join(',')))); return s; };
+  // the garden on this same site keeps its loves and plantings in this browser
+  const gardenLoves = (() => { try { return (JSON.parse(localStorage.getItem('drift-garden-loves')) || []).filter(x => typeof x === 'string'); } catch (e) { return []; } })();
+  const gardenWords = (() => { try { return (JSON.parse(localStorage.getItem('drift-garden')) || []).map(p => p && (p.seed || p.title || p.text)).filter(x => typeof x === 'string' && x.length < 40); } catch (e) { return []; } })();
+
+  // ---------- words ----------
+  const wordsOf = s => (String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').match(/[a-z]{5,}/g) || []).filter(w => !STOP.has(w));
+  const textOf = it => [it.title, it.medium, it.kind, it.place, it.text].filter(Boolean).join(' ');
+  function longestWord(it, used) {
+    const ws = [...new Set(wordsOf(textOf(it)))].filter(w => !used.has(w));
+    ws.sort((a, b) => b.length - a.length || (a < b ? -1 : 1));
+    return ws[0] || null;
+  }
+  // when a page runs out of long words, look at its tags, then at the pages before it
+  function someWord(it, used, recent) {
+    for (const x of [it, { title: (it.tags || []).join(' ') }, ...recent.slice().reverse()]) { const w = x && longestWord(x, used); if (w) return w; }
+    return null;
+  }
+  // hue to an old-fashioned colour name, so a colour can also be searched as words
+  const HUES = [[0, 'vermilion'], [12, 'brick red'], [22, 'rust'], [32, 'orange'], [42, 'ochre'], [50, 'saffron'], [58, 'lemon yellow'], [72, 'olive'], [95, 'pistachio'], [122, 'emerald'], [150, 'verdigris'], [172, 'teal'], [192, 'turquoise'], [208, 'cerulean'], [224, 'prussian blue'], [240, 'ultramarine'], [258, 'indigo'], [274, 'violet'], [292, 'amethyst'], [312, 'magenta'], [332, 'rose'], [346, 'crimson'], [360, 'vermilion']];
+  const hueName = h => HUES.reduce((best, x) => Math.abs(x[0] - h) < Math.abs(best[0] - h) ? x : best)[1];
+  function hueFromImage(url) {
+    return new Promise(res => {
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      const t = setTimeout(() => res(null), 7000);
+      im.onload = () => {
+        clearTimeout(t);
+        try {
+          const c = document.createElement('canvas'), w = c.width = 40, h = c.height = 40, g = c.getContext('2d');
+          g.drawImage(im, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data;
+          const bins = new Array(24).fill(0);
+          for (let i = 0; i < d.length; i += 4) {
+            const r = d[i] / 255, gg = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), s = mx - mn;
+            if (s < .18 || mx < .15) continue;
+            let hh = mx === r ? ((gg - b) / s) % 6 : mx === gg ? (b - r) / s + 2 : (r - gg) / s + 4; hh = (hh * 60 + 360) % 360;
+            bins[Math.floor(hh / 15)] += s;
+          }
+          const top = bins.indexOf(Math.max(...bins)); res(bins[top] > 2 ? top * 15 + 7 : null);
+        } catch (e) { res(null); }
+      };
+      im.onerror = () => { clearTimeout(t); res(null); };
+      im.src = url;
+    });
+  }
+
+  // ---------- one step of the walk ----------
+  // "the Nth result" is always the page number: page 4 takes the 4th thing found. Clunky on purpose.
+  function choose(list, n, avoid) {
+    const fresh = list.filter(x => x && x.href && !avoid.has(x.href));
+    if (!fresh.length) return null;
+    const i = (n - 1) % fresh.length;
+    return { item: fresh[i], pos: list.indexOf(fresh[i]) + 1, alsos: fresh.filter((_, j) => j !== i).slice(0, 3).map(x => ({ title: x.title, img: x.img, href: x.href })) };
+  }
+  async function searchAround(q, startAt, n, avoid, only) {
+    const order = only || ROTATION.slice(startAt % ROTATION.length).concat(ROTATION.slice(0, startAt % ROTATION.length));
+    for (const s of order) {
+      let list = [];
+      try { list = await SEARCH[s](q); } catch (e) { continue; }
+      const c = choose(list, n, avoid);
+      if (c) return { ...c, at: s, q };
+    }
+    return null;
+  }
+  const said = (pos, q, at) => `the ${ORD(pos)} result for <b>“${esc(q)}”</b> at ${esc(SRC[at])}`;
+
+  async function step(rule, ctx) {
+    const { cur, n, avoid, used, recent, rng, issue } = ctx;
+    const fallback = async (why) => { const r = await step('L', ctx); if (r) r.note = why + ' ' + r.note; return r; };
+    if (rule === 'S') {
+      const q = issue.words;
+      const r = await searchAround(q, n + rng() * 5 | 0, 1, avoid);
+      if (!r) return null;
+      wordsOf(q).forEach(w => used.add(w));
+      return { ...r, extra: { word: q }, note: `Planted: ${said(r.pos, q, r.at)}.` };
+    }
+    if (!cur) return null;
+    if (rule === 'N') {
+      let list = [], what = '';
+      try {
+        if (cur.src === 'aic') {
+          const ids = Array.from({ length: 16 }, (_, i) => cur.id + i + 1).join(',');
+          const d = await getJSON('https://api.artic.edu/api/v1/artworks?ids=' + ids + '&fields=' + AIC_FIELDS);
+          list = (d.data || []).map(aicItem).filter(Boolean).sort((a, b) => a.id - b.id); what = 'drawer';
+        } else if (cur.src === 'met') {
+          const objs = await Promise.all(Array.from({ length: 8 }, (_, i) => getJSON('https://collectionapi.metmuseum.org/public/collection/v1/objects/' + (cur.id + i + 1)).catch(() => null)));
+          list = objs.map(metItem).filter(Boolean); what = 'drawer';
+        } else if (cur.src === 'cma' && cur.kind) {
+          list = await SEARCH.cma('', '&type=' + encodeURIComponent(cur.kind) + '&skip=' + (cur.id % 400)); what = 'shelf';
+        }
+      } catch (e) { list = []; }
+      const fresh = list.filter(x => !avoid.has(x.href));
+      if (!fresh.length) return fallback('No drawer next to it would open, so instead');
+      const item = fresh[0], gap = cur.src === 'cma' ? 0 : (item.id - cur.id);
+      return { item, pos: 1, at: item.src, alsos: fresh.slice(1, 4).map(x => ({ title: x.title, img: x.img, href: x.href })), extra: { num: item.id, from: cur.id, gap },
+        note: gap ? `Filed <b>${gap} ${gap === 1 ? 'drawer' : 'drawers'} along</b> from the last page, at catalogue no. ${esc(cur.id)}.` : `Kept on the same <b>${esc(cur.kind)}</b> shelf as the last page.` };
+    }
+    if (rule === 'L') {
+      const w = someWord(cur, used, ctx.recent);
+      if (!w) return null;
+      used.add(w);
+      const r = await searchAround(w, n, n, avoid);
+      if (!r) return null;
+      return { ...r, extra: { word: w }, note: `The longest word not yet followed was <b>“${esc(w)}”</b>. This is ${said(r.pos, w, r.at).replace(/<b>.*?<\/b>/, 'it')}.` };
+    }
+    if (rule === 'Y') {
+      const y = cur.year;
+      if (!y || y < -3000 || y > 2030) return fallback('It had no year, so instead');
+      const tries = cur.src === 'vam' ? ['cma', 'vam'] : ['vam', 'cma'];
+      for (const s of tries) {
+        let list = [];
+        try { list = s === 'vam' ? await SEARCH.vam('', '&year_made_from=' + y + '&year_made_to=' + y + '&page=' + (1 + (n % 3))) : await SEARCH.cma('', '&created_after=' + y + '&created_before=' + y + '&skip=' + (n * 7)); } catch (e) { continue; }
+        list = list.filter(x => x.place !== cur.place);
+        const c = choose(list, n, avoid);
+        if (c) return { ...c, at: s, extra: { year: y }, note: `Made in <b>${y}</b>, like the last page, but kept at ${esc(SRC[s])}${c.item.place ? ' and from ' + esc(c.item.place) : ''}.` };
+      }
+      return fallback(`Nothing else from ${y} turned up, so instead`);
+    }
+    if (rule === 'C') {
+      let h = cur.hue;
+      if (h == null && cur.img) h = await hueFromImage(cur.img);
+      if (h == null) return step('T', ctx).then(r => { if (r) r.note = 'Its colour couldn’t be read, so instead ' + r.note; return r; });
+      const name = hueName(h);
+      // first, the Art Institute's own colour index; then the colour's name as words
+      try {
+        const params = { query: { bool: { must: [{ range: { 'color.h': { gte: Math.max(0, h - 4), lte: Math.min(360, h + 4) } } }, { range: { 'color.s': { gte: 45 } } }, { exists: { field: 'image_id' } }], must_not: cur.kind ? [{ term: { 'classification_title.keyword': cur.kind } }] : [] } },
+          fields: AIC_FIELDS.split(','), limit: 30, from: (n * 13) % 300 };
+        const d = await getJSON('https://api.artic.edu/api/v1/artworks/search?params=' + encodeURIComponent(JSON.stringify(params)));
+        const c = choose((d.data || []).map(aicItem).filter(x => x && x.hue != null && Math.abs(x.hue - h) <= 6), n, avoid);
+        if (c) return { ...c, at: 'aic', extra: { hue: h, name }, note: `The last page was mostly <b>${esc(name)}</b> (hue ${h}°). The Art Institute files colours by number; this is filed within four degrees of it.` };
+      } catch (e) {}
+      const r = await searchAround(name, n + 1, n, avoid);
+      if (!r) return null;
+      return { ...r, extra: { hue: h, name }, note: `The last page was mostly <b>${esc(name)}</b> (hue ${h}°), so the colour’s name was searched: ${said(r.pos, name, r.at)}.` };
+    }
+    if (rule === 'T') {
+      const tags = [...new Set((cur.tags || []).map(t => String(t).trim()).filter(t => t && t.length < 40))].slice(0, 6);
+      if (!tags.length) return fallback('It had no tags, so instead');
+      const counts = await Promise.all(tags.map(t => getJSON('https://api.artic.edu/api/v1/artworks/search?limit=0&q=' + encodeURIComponent('"' + t + '"')).then(d => (d.pagination && d.pagination.total) || 0).catch(() => 0)));
+      let k = -1; counts.forEach((c, i) => { if (c > 0 && (k < 0 || c < counts[k])) k = i; });
+      if (k < 0) k = tags.length - 1;
+      const tag = tags[k];
+      const r = await searchAround(tag, n + 2, 1 + (n % 3), avoid);
+      if (!r) return fallback(`Nothing else was tagged “${esc(tag)}”, so instead`);
+      return { ...r, extra: { tag, count: counts[k], tags, counts },
+        note: `Of its ${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}, <b>“${esc(tag)}”</b> is used least (${counts[k] || 'a few'} times at the Art Institute). This is ${said(r.pos, tag, r.at).replace(/<b>.*?<\/b>/, 'it')}.` };
+    }
+    if (rule === 'O') {
+      const w = someWord(cur, used, recent) || (cur.kind || '').toLowerCase();
+      if (!w) return null;
+      used.add(w);
+      let list = []; try { list = await SEARCH.wiki(w); } catch (e) {}
+      const c = choose(list, 1, avoid);
+      if (!c) return fallback(`No one had written up “${esc(w)}”, so instead`);
+      const sentences = c.item.text.replace(/\s+/g, ' ').match(/[^.!?]+[.!?]+/g) || [c.item.text];
+      const pickS = sentences.filter(s => s.length < 300).sort((a, b) => wordsOf(b).length - wordsOf(a).length)[0] || sentences[0];
+      const next = longestWord({ title: pickS }, used);
+      c.item.text = pickS.trim(); c.item.next = next;
+      return { ...c, at: 'wiki', extra: { word: w, sentence: pickS.trim(), next }, note: `Looked up <b>“${esc(w)}”</b> and kept the sentence with the most long words in it.` };
+    }
+    if (rule === 'W') {
+      const pool = recent.slice(-3).map(it => longestWord(it, new Set())).filter(Boolean);
+      const ws = [...new Set(pool)];
+      if (ws.length < 2) return fallback('Too few words had grown yet, so instead');
+      for (let k = ws.length; k >= 2; k--) {
+        const q = ws.slice(0, k).join(' ');
+        const r = await searchAround(q, n, 1, avoid);
+        if (r) return { ...r, extra: { words: ws.slice(0, k) }, note: `One word from each of the last ${k} pages, searched together: ${said(r.pos, q, r.at)}.` };
+      }
+      return fallback('The words wouldn’t grow together, so instead');
+    }
+    if (rule === 'V') {
+      const loves = gardenLoves.length ? gardenLoves : [];
+      if (!loves.length) return fallback('You haven’t kept any loves yet, so instead');
+      const love = loves[rng() * loves.length | 0];
+      const r = await searchAround(love, n, 2, avoid);
+      if (!r) return fallback('That love was hiding, so instead');
+      return { ...r, extra: { love }, note: `One of your loves, <b>“${esc(love)}”</b>, came back. Never the first result, only the ${ORD(r.pos)}: close, not exact.` };
+    }
+    return null;
+  }
+
+  // ---------- placing pages on the field ----------
+  function placeFrom(cell, dir, occ) {
+    let [x, y] = cell, guard = 0;
+    do { x += dir[0]; y += dir[1]; guard++; } while (occ.has(x + ',' + y) && guard < 60);
+    if (occ.has(x + ',' + y)) { // still crowded: walk downward until free
+      while (occ.has(x + ',' + y)) y++;
+    }
+    occ.add(x + ',' + y);
+    return [x, y];
+  }
+  function originFor(parent, occ) {
+    if (parent) return placeFrom(parent.cell, [0, 1], occ);
+    if (!issues.length) { occ.add('0,0'); return [0, 0]; }
+    const maxY = Math.max(...issues.flatMap(i => i.pages.map(p => p.cell[1])));
+    const c = [0, maxY + 2]; while (occ.has(c.join(','))) c[1]++;
+    occ.add(c.join(',')); return c;
+  }
+
+  // ---------- a walk becomes an issue ----------
+  let walking = false;
+  async function walk(words, parent) {
+    if (walking) return; walking = true; goBtn.disabled = true;
+    const no = issues.reduce((m, i) => Math.max(m, i.no), 0) + 1;
+    const rng = mulberry(hash(words + '|' + no));
+    const occ = occupied();
+    const issue = { no, words, pattern, date: new Date().toISOString().slice(0, 10), parent: parent ? { issue: parent.issue, page: parent.page } : null, ink: null, pages: [] };
+    issue.pages.push({ rule: 'cover', cell: originFor(parent && parent.pageObj, occ) });
+    issues.push(issue);
+    renderIssue(issue); flyTo(issue.pages[0].cell, .42);
+    const avoid = seen(), used = new Set(), recent = [];
+    let cur = parent ? parent.pageObj.item : null;
+    const plan = (parent ? '' : 'S') + pattern;
+    let cell = issue.pages[0].cell;
+    for (let k = 0; k < plan.length; k++) {
+      const rule = plan[k];
+      markPattern(parent ? k : k - 1);
+      status((rule === 'S' ? 'planting “' + words + '”' : RULES[rule]) + '…');
+      let r = null;
+      try { r = await step(rule, { cur, n: issue.pages.length, avoid, used, recent, rng, issue }); } catch (e) { console.warn('step failed', rule, e); r = null; }
+      if (!r || !r.item) { status((RULES[rule] || 'planting') + ' led nowhere'); continue; }
+      avoid.add(r.item.href); recent.push(r.item);
+      if (r.item.next) used.delete(r.item.next);
+      cell = placeFrom(cell, DIRS[rule] || [1, 0], occ);
+      const page = { rule, cell, item: r.item, alsos: r.alsos || [], note: r.note, extra: r.extra || {}, at: r.at };
+      issue.pages.push(page);
+      if (!issue.ink) issue.ink = inkFrom(r.item);
+      cur = r.item.src === 'wiki' && r.item.next ? { ...r.item, title: r.item.next, text: '' } : r.item;
+      renderIssue(issue, page); save();
+      flyTo(cell, null, true);
+    }
+    issue.pages.push({ rule: 'colo', cell: placeFrom(cell, DIRS.colo, occ) });
+    if (!issue.ink) issue.ink = inkFrom(null);
+    renderIssue(issue); save();
+    markPattern(-1); status(issue.pages.length > 2 ? 'Nº ' + String(no).padStart(3, '0') + ' is bound' : 'the archives didn’t answer. Try again soon?');
+    if (issue.pages.length <= 2) { issues.pop(); save(); renderAll(); }
+    walking = false; goBtn.disabled = false;
+  }
+  // the issue's ink is taken from page one: its hue, pushed loud
+  function inkFrom(item) {
+    const h = item && item.hue != null ? item.hue : (hash((item && item.title) || String(Date.now())) % 360);
+    return `hsl(${Math.round(h)} 78% 47%)`;
+  }
+
+  // ---------- drawing spreads ----------
+  const pad = n => String(n).padStart(3, '0');
+  const fitSize = (s, width, max) => Math.max(40, Math.min(max, Math.floor(width / (Math.max(s.length, 1) * .56))));
+  function imgBox(it, style, cls = '') {
+    if (!it || !it.img) return `<div class="img none" style="${style}">${esc((it && it.title) || '')}</div>`;
+    return `<div class="img ${cls}" style="${style};background-image:${cssUrl(it.img)}"></div>`;
+  }
+  function capBox(it, style) {
+    if (!it) return '';
+    const bits = [it.maker, it.date, it.place].filter(Boolean).map(esc).join(' · ');
+    return `<div class="cap" style="${style}"><span class="t">${esc(it.title)}</span>${bits}<br><a class="src" href="${esc(it.href)}" target="_blank" rel="noopener">${esc(SRC[it.src] || '')} &nearr;</a></div>`;
+  }
+  function alsoBox(alsos, style) {
+    if (!alsos || !alsos.length) return '';
+    return `<div class="also" style="${style}"><span>also found</span>${alsos.map(a => `<a href="${esc(a.href)}" target="_blank" rel="noopener" title="${esc(a.title)}" style="${a.img ? 'background-image:' + cssUrl(a.img) : ''}"></a>`).join('')}</div>`;
+  }
+  function spreadHTML(issue, page, idx) {
+    const it = page.item, ex = page.extra || {}, f0 = idx * 2, rh = `Second Selvedge — Nº ${pad(issue.no)}`;
+    const heads = (rname, light) => `<div class="rh">${rh}</div><div class="folio">${f0}</div>`;
+    const headsR = rname => `<div class="rh">${esc(rname)}</div><div class="folio">${f0 + 1}</div>`;
+    const why = (style) => `<div class="why" style="${style}">${page.note || ''}</div>`;
+    const R = RULES[page.rule] || '';
+    switch (page.rule) {
+      case 'cover': {
+        const first = issue.pages.find(p => p.item && p.item.img);
+        const list = issue.pages.filter(p => p.item).map((p, i) => `<li><span>${pad(i + 1).slice(1)}</span><b>${esc(p.rule === 'S' ? '·' : p.rule)}</b><span>${esc(p.item.title)}</span><span>${(issue.pages.indexOf(p)) * 2}</span></li>`).join('');
+        return `<div class="pg l"><div class="mast">Second<i>Selvedge</i></div>
+          <div class="no">Nº <b>${pad(issue.no)}</b> · ${esc(issue.date)}<br>walked from <b>“${esc(issue.words)}”</b>${issue.parent ? '<br>a branch of Nº ' + pad(issue.parent.issue) : ''}</div>
+          <ol>${list}</ol></div>
+          <div class="pg r">${first ? imgBox(first.item, 'inset:0') : ''}<div class="folio" style="color:var(--paper)">${pad(issue.no)}</div></div>`;
+      }
+      case 'colo': {
+        const used = [...new Set(issue.pages.filter(p => p.at).map(p => p.at))];
+        const chart = issue.pattern.split('').map(c => `<div class="${issue.pages.some(p => p.rule === c) ? 'on' : ''}">${c}</div>`).join('');
+        const rules = [...new Set(issue.pattern.split(''))].map(c => `<li><b>${c}</b>${esc(RULE_HOW[c])}</li>`).join('');
+        return `<div class="pg l">${heads()}<div class="chart">${chart}</div><ul class="rules">${rules}</ul></div>
+          <div class="pg r">${headsR('colophon')}<div class="says">Nothing here is ours. Every page points back to where it lives.</div>
+          <div class="swatch">INK<br>taken from page one</div><div class="srcs">Found at<br>${used.map(s => esc(SRC[s])).join('<br>')}</div></div>`;
+      }
+      case 'S':
+      case 'L': {
+        const w = ex.word || '';
+        return `<div class="pg l">${heads()}${why('left:28px;bottom:56px')}</div>
+          <div class="pg r">${imgBox(it, 'inset:0')}${headsR(page.rule === 'S' ? 'planted' : R).replace('class="rh"', 'class="rh" style="color:#fff;mix-blend-mode:difference"')}${capBox(it, 'left:26px;bottom:52px;color:#fff;mix-blend-mode:difference')}</div>
+          <div class="huge" style="font-size:${fitSize(w, 960, 300)}px">${esc(w)}</div>${alsoBox(page.alsos, 'left:28px;top:60px')}`;
+      }
+      case 'N':
+        return `<div class="pg l">${heads()}<dl><dt>title</dt><dd class="t">${esc(it.title)}</dd><dt>maker</dt><dd>${esc(it.maker || '—')}</dd><dt>date</dt><dd>${esc(it.date || '—')}</dd><dt>from</dt><dd>${esc(it.place || '—')}</dd><dt>kind</dt><dd>${esc(it.kind || '—')}</dd><dt>kept at</dt><dd><a href="${esc(it.href)}" target="_blank" rel="noopener">${esc(SRC[it.src])} &nearr;</a></dd></dl>
+          <div class="num">${esc(ex.num != null ? String(ex.num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : '')}</div></div>
+          <div class="pg r">${headsR(R)}${imgBox(it, 'left:60px;right:60px;top:70px;bottom:150px', 'contain')}${why('left:60px;bottom:56px')}${alsoBox(page.alsos, 'right:28px;bottom:50px')}</div>`;
+      case 'Y':
+        return `<div class="pg l">${heads()}<div class="huge">${esc(ex.year)}</div>${why('left:28px;top:70px;color:var(--paper)')}</div>
+          <div class="pg r">${headsR(R)}${imgBox(it, 'left:40px;right:40px;top:60px;bottom:170px', 'contain')}${capBox(it, 'left:40px;bottom:50px')}${alsoBox(page.alsos, 'right:28px;bottom:50px')}</div>`;
+      case 'C': {
+        const bg = `hsl(${ex.hue} 62% 46%)`;
+        return `<div class="pg l" style="background:${bg}">${heads()}<div class="huge">${esc(ex.name)}</div><div class="hval">H ${esc(ex.hue)}° · S 62 · L 46</div></div>
+          <div class="pg r" style="background:${bg}">${headsR(R)}${imgBox(it, 'left:50px;right:50px;top:60px;bottom:210px', 'contain')}${capBox(it, 'left:50px;bottom:56px;max-width:220px')}${why('right:28px;bottom:56px;max-width:170px;color:#fff')}</div>`;
+      }
+      case 'T': {
+        const tl = (ex.tags || []).map((t, i) => `<li class="${t === ex.tag ? 'k' : ''}"><span>${esc(t)}</span><span>${esc((ex.counts || [])[i] || '')}</span></li>`).join('');
+        return `<div class="pg l">${heads()}<ul class="tags">${tl}</ul><div class="huge" style="font-size:${fitSize(ex.tag || '', 900, 84)}px">${esc(ex.tag)}</div></div>
+          <div class="pg r">${headsR(R)}${imgBox(it, 'left:170px;right:40px;top:60px;bottom:250px')}${capBox(it, 'left:40px;bottom:56px')}${why('left:40px;top:70px;max-width:120px')}${alsoBox(page.alsos, 'right:40px;bottom:56px')}</div>`;
+      }
+      case 'O': {
+        let s = esc(it.text || '');
+        if (ex.next) s = s.replace(new RegExp('\\b(' + ex.next + ')', 'i'), '<u>$1</u>');
+        return `<div class="pg l">${heads()}<div class="said">${s}</div></div>
+          <div class="pg r">${headsR(R)}${it.img ? imgBox(it, 'left:40px;right:40px;top:60px;bottom:220px', 'contain') : ''}<div class="from" style="left:40px">from <a href="${esc(it.href)}" target="_blank" rel="noopener">“${esc(it.title)}”, ${esc(SRC.wiki)} &nearr;</a></div>${why('left:40px;bottom:90px;max-width:260px')}</div>`;
+      }
+      case 'W': {
+        const ws = (ex.words || []).map(w => `<div>${esc(w)}</div>`).join('');
+        const tiles = (page.alsos || []).slice(0, 3);
+        return `<div class="pg l">${heads()}<div class="words">${ws}</div>${why('left:28px;bottom:56px')}</div>
+          <div class="pg r">${headsR(R)}${imgBox(it, 'left:40px;right:150px;top:60px;bottom:200px')}${tiles.map((a, i) => `<a href="${esc(a.href)}" target="_blank" rel="noopener" class="img" style="right:40px;width:96px;top:${60 + i * 128}px;height:112px;${a.img ? 'background-image:' + cssUrl(a.img) : ''}"></a>`).join('')}${capBox(it, 'left:40px;bottom:50px')}</div>`;
+      }
+      case 'V':
+        return `<div class="pg l">${heads()}${imgBox(it, 'inset:60px 40px 120px 40px')}${why('left:40px;bottom:50px')}</div>
+          <div class="pg r">${headsR(R)}${imgBox(it, 'inset:60px 40px 120px 40px', 'mirror')}${capBox(it, 'right:40px;bottom:46px;text-align:right')}</div>
+          <div class="love">${esc(ex.love)}</div>`;
+    }
+    return '';
+  }
+
+  // ---------- the field: pan and zoom ----------
+  const field = document.getElementById('field'), world = document.getElementById('world'), svg = document.getElementById('threads');
+  const goBtn = document.getElementById('go'), wordsIn = document.getElementById('words');
+  let view = { x: innerWidth / 2, y: innerHeight / 2, z: .4 };
+  const apply = () => { world.style.transform = `translate(${view.x}px,${view.y}px) scale(${view.z})`; field.style.backgroundPosition = `${view.x}px ${view.y}px`; field.style.backgroundSize = `${58 * view.z * 2.5}px ${40 * view.z * 2.5}px`; };
+  const cellXY = c => [c[0] * CELL_W, c[1] * CELL_H];
+  let anim = null;
+  function flyTo(cell, z, gentle) {
+    const [x, y] = cellXY(cell), tz = z || view.z, tx = innerWidth / 2 - (x + SW / 2) * tz, ty = innerHeight / 2 - 40 - (y + SH / 2) * tz;
+    const from = { ...view }, t0 = performance.now(), dur = gentle ? 1100 : 700;
+    cancelAnimationFrame(anim);
+    const tick = t => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      view = { x: from.x + (tx - from.x) * e, y: from.y + (ty - from.y) * e, z: from.z + (tz - from.z) * e }; apply();
+      if (k < 1) anim = requestAnimationFrame(tick); };
+    anim = requestAnimationFrame(tick);
+  }
+  function fitAll() {
+    const cells = issues.flatMap(i => i.pages.map(p => p.cell)); if (!cells.length) return;
+    const xs = cells.map(c => c[0] * CELL_W), ys = cells.map(c => c[1] * CELL_H);
+    const minX = Math.min(...xs), maxX = Math.max(...xs) + SW, minY = Math.min(...ys), maxY = Math.max(...ys) + SH;
+    const z = Math.min(.6, Math.max(.04, Math.min((innerWidth - 60) / (maxX - minX), (innerHeight - 200) / (maxY - minY))));
+    const from = { ...view }, tx = innerWidth / 2 - (minX + maxX) / 2 * z, ty = innerHeight / 2 - 40 - (minY + maxY) / 2 * z;
+    cancelAnimationFrame(anim); const t0 = performance.now();
+    const tick = t => { const k = Math.min(1, (t - t0) / 700), e = 1 - Math.pow(1 - k, 3); view = { x: from.x + (tx - from.x) * e, y: from.y + (ty - from.y) * e, z: from.z + (z - from.z) * e }; apply(); if (k < 1) anim = requestAnimationFrame(tick); };
+    anim = requestAnimationFrame(tick);
+  }
+  function zoomAt(f, cx, cy) {
+    const z = Math.min(1.6, Math.max(.04, view.z * f)); const k = z / view.z;
+    view = { x: cx - (cx - view.x) * k, y: cy - (cy - view.y) * k, z }; apply();
+  }
+  const ptrs = new Map(); let moved = 0, pinch = null;
+  field.addEventListener('pointerdown', e => { cancelAnimationFrame(anim); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0; field.setPointerCapture(e.pointerId); field.classList.add('dragging');
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) }; } });
+  field.addEventListener('pointermove', e => {
+    const p = ptrs.get(e.pointerId); if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+    if (ptrs.size === 2 && pinch) { const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y); zoomAt(d / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2); pinch.d = d; moved += 10; return; }
+    moved += Math.abs(dx) + Math.abs(dy); view.x += dx; view.y += dy; apply();
+  });
+  const up = e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (!ptrs.size) field.classList.remove('dragging'); };
+  field.addEventListener('pointerup', e => {
+    const wasClick = moved < 6 && ptrs.size === 1; up(e);
+    if (!wasClick) return;
+    const el = document.elementsFromPoint(e.clientX, e.clientY).find(x => x.classList && x.classList.contains('spread'));
+    if (el) openReader(+el.dataset.issue, +el.dataset.idx);
+  });
+  field.addEventListener('pointercancel', up);
+  field.addEventListener('wheel', e => { e.preventDefault(); cancelAnimationFrame(anim);
+    const asZoom = e.ctrlKey || e.deltaMode !== 0 || (Math.abs(e.deltaY) >= 50 && e.deltaX === 0);
+    if (asZoom) zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0018)), e.clientX, e.clientY);
+    else { view.x -= e.deltaX; view.y -= e.deltaY; apply(); } }, { passive: false });
+  document.getElementById('zin').onclick = () => zoomAt(1.4, innerWidth / 2, innerHeight / 2);
+  document.getElementById('zout').onclick = () => zoomAt(1 / 1.4, innerWidth / 2, innerHeight / 2);
+  document.getElementById('zfit').onclick = fitAll;
+  const key = document.getElementById('key');
+  key.innerHTML = '<p>Each walk follows the house rules in order, one page per rule. Page 4 takes the 4th thing it finds.</p>' + Object.keys(RULES).map(c => `<div><b>${c}</b>${esc(RULE_HOW[c])}</div>`).join('');
+  document.getElementById('zkey').onclick = () => key.classList.toggle('open');
+
+  // ---------- rendering ----------
+  const els = new Map();
+  function renderIssue(issue, fresh) {
+    issue.pages.forEach((p, idx) => {
+      const id = issue.no + ':' + idx;
+      let el = els.get(id);
+      if (!el) { el = document.createElement('div'); el.className = 'spread'; el.dataset.issue = issue.no; el.dataset.idx = idx; world.appendChild(el); els.set(id, el); if (p === fresh) el.classList.add('new'); }
+      el.className = el.className.replace(/\bt-\S+/g, '') + ' t-' + p.rule;
+      el.style.left = p.cell[0] * CELL_W + 'px'; el.style.top = p.cell[1] * CELL_H + 'px';
+      el.style.setProperty('--ink', issue.ink || '#e2401b');
+      el.innerHTML = spreadHTML(issue, p, idx);
+      el.querySelectorAll('a').forEach(a => a.addEventListener('click', ev => { if (!ev.target.closest('#reader')) ev.preventDefault(); }));
+    });
+    drawThreads();
+  }
+  function drawThreads() {
+    const cx = c => c[0] * CELL_W + SW / 2, cy = c => c[1] * CELL_H + SH / 2;
+    let out = '';
+    const byNo = new Map(issues.map(i => [i.no, i]));
+    issues.forEach(i => {
+      const pts = i.pages.map(p => cx(p.cell) + ',' + cy(p.cell));
+      const ink = i.ink || '#e2401b';
+      if (i.parent && byNo.get(i.parent.issue)) { const pp = byNo.get(i.parent.issue).pages[i.parent.page]; if (pp) out += `<polyline points="${cx(pp.cell)},${cy(pp.cell)} ${pts[0]}" fill="none" stroke="${ink}" stroke-width="6" stroke-dasharray="4 18" stroke-linecap="round"/>`; }
+      out += `<polyline points="${pts.join(' ')}" fill="none" stroke="${ink}" stroke-width="10" stroke-linejoin="round"/>`;
+      i.pages.forEach((p, k) => { if (k && p.rule !== 'colo') { const a = i.pages[k - 1].cell, b = p.cell, mx = (cx(a) + cx(b)) / 2, my = (cy(a) + cy(b)) / 2;
+        out += `<circle cx="${mx}" cy="${my}" r="34" fill="#161616" stroke="${ink}" stroke-width="4"/><text x="${mx}" y="${my + 12}" text-anchor="middle" font-family="Martian Mono, monospace" font-size="32" fill="${ink}">${p.rule === 'S' ? '·' : p.rule}</text>`; } });
+    });
+    svg.innerHTML = out;
+  }
+  function renderAll() { world.querySelectorAll('.spread').forEach(e => e.remove()); els.clear(); issues.forEach(i => renderIssue(i)); }
+
+  // ---------- the pattern (house rules) bar ----------
+  const patEl = document.getElementById('pattern'), ORDER = Object.keys(RULES);
+  function drawPattern() {
+    patEl.querySelectorAll('button').forEach(b => b.remove());
+    pattern.split('').forEach((c, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.title = RULES[c] + ': ' + RULE_HOW[c] + ' (tap to change)';
+      b.onclick = () => { if (walking) return; const nx = ORDER[(ORDER.indexOf(c) + 1) % ORDER.length]; pattern = pattern.slice(0, i) + nx + pattern.slice(i + 1); try { store && store.setItem(STORE_KEY + '-pattern', pattern); } catch (e) {} drawPattern(); };
+      patEl.appendChild(b);
+    });
+  }
+  function markPattern(i) { patEl.querySelectorAll('button').forEach((b, k) => b.classList.toggle('now', k === i)); }
+  drawPattern();
+  const statusEl = document.getElementById('status');
+  function status(a, b) { statusEl.textContent = a + (b || ''); }
+
+  // ---------- the reader ----------
+  const reader = document.getElementById('reader'), stage = reader.querySelector('.stage');
+  let at = null;
+  function openReader(no, idx) {
+    const issue = issues.find(i => i.no === no); if (!issue) return;
+    idx = Math.max(0, Math.min(issue.pages.length - 1, idx));
+    at = { no, idx };
+    const p = issue.pages[idx];
+    stage.innerHTML = `<div class="spread t-${p.rule}" style="--ink:${issue.ink || '#e2401b'}">${spreadHTML(issue, p, idx)}</div>`;
+    const z = Math.min((innerWidth - 32) / SW, (innerHeight - 110) / SH, 1.4);
+    stage.style.transform = `translate(${(innerWidth - SW * z) / 2}px,${Math.max(16, (innerHeight - 70 - SH * z) / 2)}px) scale(${z})`;
+    const src = reader.querySelector('.src');
+    src.hidden = !p.item; if (p.item) src.href = p.item.href;
+    reader.querySelector('[data-r=walk]').hidden = !p.item;
+    reader.classList.add('open');
+  }
+  const closeReader = () => { reader.classList.remove('open'); if (at) { const i = issues.find(x => x.no === at.no); i && flyTo(i.pages[at.idx].cell); } at = null; };
+  reader.addEventListener('click', e => {
+    const r = e.target.closest('[data-r]'); if (!r) { if (e.target === reader) closeReader(); return; }
+    const k = r.dataset.r;
+    if (k === 'close') closeReader();
+    if (k === 'prev' && at) openReader(at.no, at.idx - 1);
+    if (k === 'next' && at) openReader(at.no, at.idx + 1);
+    if (k === 'walk' && at) { const i = issues.find(x => x.no === at.no), p = i.pages[at.idx]; reader.classList.remove('open'); walk(i.words + ' / ' + (p.item.title || '').slice(0, 40), { issue: i.no, page: at.idx, pageObj: p }); at = null; }
+  });
+  addEventListener('keydown', e => {
+    if (!reader.classList.contains('open')) return;
+    if (e.key === 'Escape') closeReader();
+    if (e.key === 'ArrowLeft') openReader(at.no, at.idx - 1);
+    if (e.key === 'ArrowRight') openReader(at.no, at.idx + 1);
+  });
+  addEventListener('resize', () => { if (at) openReader(at.no, at.idx); });
+
+  // ---------- planting ----------
+  document.getElementById('bar').addEventListener('submit', e => {
+    e.preventDefault();
+    const w = wordsIn.value.trim().split(/\s+/).slice(0, 3).join(' ');
+    if (!w || walking) { wordsIn.focus(); return; }
+    walk(w, null); wordsIn.value = '';
+  });
+  const gardenBtn = document.getElementById('garden');
+  const pool = [...new Set([...gardenWords, ...gardenLoves])];
+  if (pool.length) { gardenBtn.hidden = false; gardenBtn.onclick = () => { const r = mulberry(Date.now()); const ws = []; for (let i = 0; i < 3 && pool.length; i++) ws.push(pool[r() * pool.length | 0]); wordsIn.value = [...new Set(ws.join(' ').split(/\s+/))].slice(0, 3).join(' '); wordsIn.focus(); }; }
+
+  apply(); renderAll();
+  if (issues.length) fitAll(); else wordsIn.focus();
+})();
+</script>
+</body>
+</html>
