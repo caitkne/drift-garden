@@ -14,11 +14,9 @@ const SITES = [
   { key: 'colossal', name: 'Colossal', host: 'www.thisiscolossal.com' },
   { key: 'dezeen', name: 'Dezeen', host: 'www.dezeen.com' },
   { key: 'designboom', name: 'designboom', host: 'www.designboom.com' },
-  { key: 'eyeondesign', name: 'Eye on Design', host: 'eyeondesign.aiga.org' },
   { key: 'creativereview', name: 'Creative Review', host: 'www.creativereview.co.uk' },
-  { key: 'hyperallergic', name: 'Hyperallergic', host: 'hyperallergic.com' },
   { key: 'marginalian', name: 'The Marginalian', host: 'www.themarginalian.org' },
-  { key: 'booooooom', name: 'Booooooom', host: 'www.booooooom.com' },
+  { key: 'booooooom', name: 'Booooooom', host: 'www.booooooom.com', wp: false, link: /https:\/\/www\.booooooom\.com\/20\d\d\/\d\d\/\d\d\/(?![a-z0-9-]*call-to-submit)[a-z0-9-]+/g },
   { key: 'ignant', name: 'Ignant', host: 'www.ignant.com' },
   { key: 'designassembly', name: 'Design Assembly', host: 'designassembly.org.nz' },
   { key: 'fontsinuse', name: 'Fonts In Use', host: 'fontsinuse.com', wp: false,
@@ -61,14 +59,15 @@ async function fromWordPress(site, q) {
   if (!Array.isArray(d)) throw new Error('not wordpress');
   return d.map(p => {
     const m = p._embedded && p._embedded['wp:featuredmedia'] && p._embedded['wp:featuredmedia'][0], sz = m && m.media_details && m.media_details.sizes;
-    return { title: decode(p.title && p.title.rendered), img: (sz && (sz.medium_large || sz.large || sz.full) || {}).source_url || (m && m.source_url) || null,
+    const og = p.yoast_head_json && p.yoast_head_json.og_image && p.yoast_head_json.og_image[0];
+    return { title: decode(p.title && p.title.rendered), img: (sz && (sz.medium_large || sz.large || sz.full) || {}).source_url || (m && m.source_url) || (og && og.url) || null,
       blurb: decode(p.excerpt && p.excerpt.rendered).slice(0, 400), date: (p.date || '').slice(0, 10), href: p.link, site: site.name, key: site.key };
   }).filter(x => x.title && x.href);
 }
 async function fromSearchPage(site, q) {
   const url = site.search ? site.search(q) : `https://${site.host}/?s=${q}`;
   const html = await get(url);
-  const re = site.link || new RegExp(`(?:https?://${site.host.replace(/\./g, '\\.')})?/(?!(?:tag|tags|category|author|page|search|wp-content|wp-json|feed)/)[a-z0-9][a-z0-9/-]*-[a-z0-9-]*-[a-z0-9-]+/?`, 'gi');
+  const re = site.link || new RegExp(`(?<=href=["'](?:https?://${site.host.replace(/\./g, '\\.')})?)/(?!(?:tag|tags|category|author|page|search|wp-content|wp-json|feed)/)[a-z0-9][a-z0-9/-]*-[a-z0-9-]*-[a-z0-9-]+/?(?=["'])`, 'gi');
   const seen = new Set(), links = [];
   for (const m of html.matchAll(re)) {
     const path = m[0].replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, '');
@@ -110,7 +109,7 @@ export default {
     const items = [];
     for (let i = 0; i < PER_SITE; i++) lists.forEach(l => l[i] && items.push(l[i]));
     const res = json({ items, asked: sites.map(s => s.name) }, {});
-    ctx.waitUntil(caches.default.put(cacheKey, new Response(res.clone().body, { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': `public, max-age=${TTL}` } })));
+    if (items.length) ctx.waitUntil(caches.default.put(cacheKey, new Response(res.clone().body, { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': `public, max-age=${TTL}` } })));
     Object.entries(h).forEach(([k, v]) => res.headers.set(k, v));
     return res;
   },
