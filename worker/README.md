@@ -34,3 +34,9 @@ A second worker holds accounts and saved gardens, so you can keep your garden in
 No secrets are needed for this one. Visiting the address in a browser tab says `not allowed`, which is right: it only answers the garden.
 
 `garden-api.js` is built from `garden/api.js` (run `npm install` then `npm run build` in `worker/garden`). It uses the SimpleWebAuthn library to check passkeys for older accounts, and `garden/words.js` (the EFF large wordlist, CC BY 3.0, eff.org/dice) for garden keys.
+
+# The magazine shelf (for Second Selvedge)
+
+Design and art magazines (It's Nice That, Dezeen, Colossal, Eye on Design and others, listed at the top of `shelf/shelf.js`) don't let a web page search them directly. This small worker does the search for Second Selvedge. It asks each magazine's own search, reads the article's preview tags (title, picture, standfirst), and passes back only those, with the link. Each answer is kept for 12 hours and nothing about anyone is stored. It lives at shelf.selvedge.garden and only answers selvedge.garden.
+
+Deploy with `npx wrangler deploy` from `worker/shelf`. No secrets needed. To add a magazine, add a line to `SITES`: WordPress magazines need only a name and host.

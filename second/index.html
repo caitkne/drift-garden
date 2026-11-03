@@ -80,6 +80,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .t-W .words div { line-height: .9; letter-spacing: -.03em; overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .t-W .words div:nth-child(odd) { font-family: var(--serif); font-style: italic; font-size: 96px; }
 .t-W .words div:nth-child(even) { font-size: 52px; font-weight: 200; color: var(--ink); margin: 8px 0 12px; }
+.t-P .mag { position: absolute; left: 24px; top: 58px; font-size: 44px; font-weight: 700; letter-spacing: -.05em; color: var(--ink); line-height: .9; }
+.t-P .head { position: absolute; left: 28px; right: 34px; top: 130px; font-family: var(--serif); line-height: .98; letter-spacing: -.02em; }
+.t-P .stand { position: absolute; left: 28px; right: 60px; bottom: 120px; font-size: 10px; line-height: 1.6; max-width: 360px; }
+.t-P .readit { position: absolute; right: 26px; bottom: 50px; z-index: 6; background: var(--paper); color: var(--type); padding: 8px 12px; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
 .t-V .mirror { transform: scaleX(-1); }
 .t-V .love { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 10; background: var(--paper); padding: 10px 16px; font-family: var(--serif); font-style: italic; font-size: 30px; white-space: nowrap; }
 .t-cover .pg.l { background: var(--paper); }
@@ -181,7 +185,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   // ======================================================================
   const RULES = {
     N: 'the neighbour', L: 'the longest word', Y: 'the same year', C: 'the same colour',
-    T: 'the rarest tag', O: 'overheard', W: 'wildflower', V: 'a love returns'
+    T: 'the rarest tag', O: 'overheard', P: 'in the press', W: 'wildflower', V: 'a love returns'
   };
   const RULE_HOW = {
     N: 'open the drawer filed next to the last thing',
@@ -190,17 +194,20 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     C: 'find something the same colour',
     T: 'follow its least-used tag',
     O: 'look it up and keep one sentence',
+    P: 'see what the design and art magazines said',
     W: 'one word from each of the last three pages, searched together',
     V: 'one of your loves comes back, close but never exact'
   };
-  const DEFAULT_PATTERN = 'NLYCNTOLWV';
+  const DEFAULT_PATTERN = 'NLPYCTOPWV';
   const SRC = {
     aic: 'the Art Institute of Chicago', met: 'the Met', vam: 'the V&A', cma: 'the Cleveland Museum of Art',
-    commons: 'Wikimedia Commons', wiki: 'Wikipedia'
+    commons: 'Wikimedia Commons', wiki: 'Wikipedia', mags: 'the magazines'
   };
-  const ROTATION = ['aic', 'vam', 'met', 'cma', 'commons'];
+  const ROTATION = ['aic', 'mags', 'vam', 'met', 'cma', 'mags', 'commons'];
+  // design and art magazines (It's Nice That, Dezeen, Colossal and others), searched for us by the shelf worker in worker/shelf
+  const SHELF = 'https://shelf.selvedge.garden/';
   const CELL_W = 1240, CELL_H = 880, SW = 1000, SH = 640;
-  const DIRS = { S: [1, 0], N: [1, 0], L: [0, 1], Y: [-1, 1], C: [1, 1], T: [1, -1], O: [0, 1], W: [2, 0], V: [-1, 0], colo: [1, 0] };
+  const DIRS = { S: [1, 0], N: [1, 0], L: [0, 1], Y: [-1, 1], C: [1, 1], T: [1, -1], O: [0, 1], P: [0, -1], W: [2, 0], V: [-1, 0], colo: [1, 0] };
   const STORE_KEY = 'second-selvedge';
   const STOP = new Set('about above after again against along among another around because before being below between beyond could during either every first from have having here into itself might other others over same should since some such than that their theirs them then there these they this those through under until upon very were what when where which while with within without would your yours untitled unknown object objects possibly probably made with work works part parts style after attributed manner circle workshop period century early late design designs various'.split(' '));
   const ORD = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] || 'th');
@@ -277,6 +284,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       const d = await getJSON('https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=20&gsrsearch=' + encodeURIComponent(q + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=900');
       return Object.values((d.query && d.query.pages) || {}).sort((a, b) => a.index - b.index).map(commonsItem).filter(Boolean);
     },
+    async mags(q) {
+      const d = await getJSON(SHELF + '?q=' + encodeURIComponent(q));
+      return (d.items || []).filter(x => x && x.href && x.title).map(x => ({
+        src: 'mags', srcName: x.site, id: x.href, title: x.title, maker: '', date: x.date || '', year: parseInt(x.date, 10) || null, place: '', kind: 'article',
+        medium: x.blurb || '', text: x.blurb || '', tags: [], img: x.img || null, href: x.href }));
+    },
     async wiki(q) {
       const d = await getJSON('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=0&gsrlimit=8&gsrsearch=' + encodeURIComponent(q) + '&prop=pageimages|extracts|info&inprop=url&exintro=1&explaintext=1&exsentences=6&pithumbsize=800');
       return Object.values((d.query && d.query.pages) || {}).sort((a, b) => a.index - b.index).filter(p => p.extract && !/may refer to/.test(p.extract)).map(p => ({
@@ -290,7 +303,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   let issues = [];
   try { issues = JSON.parse(store && store.getItem(STORE_KEY)) || []; } catch (e) { issues = []; }
   let pattern = (store && store.getItem(STORE_KEY + '-pattern')) || DEFAULT_PATTERN;
-  if (!/^[NLYCTOWV]{4,14}$/.test(pattern)) pattern = DEFAULT_PATTERN;
+  if (!/^[NLYCTOPWV]{4,14}$/.test(pattern)) pattern = DEFAULT_PATTERN;
   const save = () => { if (!store) return; try { store.setItem(STORE_KEY, JSON.stringify(issues)); } catch (e) { issues.length > 3 && issues.shift(); } };
   const seen = () => new Set(issues.flatMap(i => i.pages.map(p => p.item && p.item.href)));
   const occupied = () => { const s = new Set(); issues.forEach(i => i.pages.forEach(p => s.add(p.cell.join(',')))); return s; };
@@ -356,7 +369,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     }
     return null;
   }
-  const said = (pos, q, at) => `the ${ORD(pos)} result for <b>“${esc(q)}”</b> at ${esc(SRC[at])}`;
+  const said = (pos, q, at, it) => `the ${ORD(pos)} result for <b>“${esc(q)}”</b> at ${esc((it && it.srcName) || SRC[at])}`;
 
   async function step(rule, ctx) {
     const { cur, n, avoid, used, recent, rng, issue } = ctx;
@@ -366,7 +379,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       const r = await searchAround(q, n + rng() * 5 | 0, 1, avoid);
       if (!r) return null;
       wordsOf(q).forEach(w => used.add(w));
-      return { ...r, extra: { word: q }, note: `Planted: ${said(r.pos, q, r.at)}.` };
+      return { ...r, extra: { word: q }, note: `Planted: ${said(r.pos, q, r.at, r.item)}.` };
     }
     if (!cur) return null;
     if (rule === 'N') {
@@ -395,7 +408,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       used.add(w);
       const r = await searchAround(w, n, n, avoid);
       if (!r) return null;
-      return { ...r, extra: { word: w }, note: `The longest word not yet followed was <b>“${esc(w)}”</b>. This is ${said(r.pos, w, r.at).replace(/<b>.*?<\/b>/, 'it')}.` };
+      return { ...r, extra: { word: w }, note: `The longest word not yet followed was <b>“${esc(w)}”</b>. This is ${said(r.pos, w, r.at, r.item).replace(/<b>.*?<\/b>/, 'it')}.` };
     }
     if (rule === 'Y') {
       const y = cur.year;
@@ -425,7 +438,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       } catch (e) {}
       const r = await searchAround(name, n + 1, n, avoid);
       if (!r) return null;
-      return { ...r, extra: { hue: h, name }, note: `The last page was mostly <b>${esc(name)}</b> (hue ${h}°), so the colour’s name was searched: ${said(r.pos, name, r.at)}.` };
+      return { ...r, extra: { hue: h, name }, note: `The last page was mostly <b>${esc(name)}</b> (hue ${h}°), so the colour’s name was searched: ${said(r.pos, name, r.at, r.item)}.` };
     }
     if (rule === 'T') {
       const tags = [...new Set((cur.tags || []).map(t => String(t).trim()).filter(t => t && t.length < 40))].slice(0, 6);
@@ -437,7 +450,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       const r = await searchAround(tag, n + 2, 1 + (n % 3), avoid);
       if (!r) return fallback(`Nothing else was tagged “${esc(tag)}”, so instead`);
       return { ...r, extra: { tag, count: counts[k], tags, counts },
-        note: `Of its ${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}, <b>“${esc(tag)}”</b> is used least (${counts[k] || 'a few'} times at the Art Institute). This is ${said(r.pos, tag, r.at).replace(/<b>.*?<\/b>/, 'it')}.` };
+        note: `Of its ${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}, <b>“${esc(tag)}”</b> is used least (${counts[k] || 'a few'} times at the Art Institute). This is ${said(r.pos, tag, r.at, r.item).replace(/<b>.*?<\/b>/, 'it')}.` };
     }
     if (rule === 'O') {
       const w = someWord(cur, used, recent) || (cur.kind || '').toLowerCase();
@@ -452,6 +465,15 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       c.item.text = pickS.trim(); c.item.next = next;
       return { ...c, at: 'wiki', extra: { word: w, sentence: pickS.trim(), next }, note: `Looked up <b>“${esc(w)}”</b> and kept the sentence with the most long words in it.` };
     }
+    if (rule === 'P') {
+      const w = someWord(cur, used, recent);
+      if (!w) return null;
+      used.add(w);
+      let list = []; try { list = await SEARCH.mags(w); } catch (e) {}
+      const c = choose(list, n, avoid);
+      if (!c) return fallback(`The magazines hadn’t written about “${esc(w)}”, so instead`);
+      return { ...c, at: 'mags', extra: { word: w }, note: `Asked the magazines about <b>“${esc(w)}”</b> and took the ${ORD(c.pos)} answer, from ${esc(c.item.srcName || 'one of them')}.` };
+    }
     if (rule === 'W') {
       const pool = recent.slice(-3).map(it => longestWord(it, new Set())).filter(Boolean);
       const ws = [...new Set(pool)];
@@ -459,7 +481,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       for (let k = ws.length; k >= 2; k--) {
         const q = ws.slice(0, k).join(' ');
         const r = await searchAround(q, n, 1, avoid);
-        if (r) return { ...r, extra: { words: ws.slice(0, k) }, note: `One word from each of the last ${k} pages, searched together: ${said(r.pos, q, r.at)}.` };
+        if (r) return { ...r, extra: { words: ws.slice(0, k) }, note: `One word from each of the last ${k} pages, searched together: ${said(r.pos, q, r.at, r.item)}.` };
       }
       return fallback('The words wouldn’t grow together, so instead');
     }
@@ -547,7 +569,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   function capBox(it, style) {
     if (!it) return '';
     const bits = [it.maker, it.date, it.place].filter(Boolean).map(esc).join(' · ');
-    return `<div class="cap" style="${style}"><span class="t">${esc(it.title)}</span>${bits}<br><a class="src" href="${esc(it.href)}" target="_blank" rel="noopener">${esc(SRC[it.src] || '')} &nearr;</a></div>`;
+    return `<div class="cap" style="${style}"><span class="t">${esc(it.title)}</span>${bits}<br><a class="src" href="${esc(it.href)}" target="_blank" rel="noopener">${esc(it.srcName || SRC[it.src] || '')} &nearr;</a></div>`;
   }
   function alsoBox(alsos, style) {
     if (!alsos || !alsos.length) return '';
@@ -569,12 +591,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
           <div class="pg r">${first ? imgBox(first.item, 'inset:0') : ''}<div class="folio" style="color:var(--paper)">${pad(issue.no)}</div></div>`;
       }
       case 'colo': {
-        const used = [...new Set(issue.pages.filter(p => p.at).map(p => p.at))];
+        const used = [...new Set(issue.pages.filter(p => p.item).map(p => p.item.srcName || SRC[p.at] || SRC[p.item.src]))];
         const chart = issue.pattern.split('').map(c => `<div class="${issue.pages.some(p => p.rule === c) ? 'on' : ''}">${c}</div>`).join('');
         const rules = [...new Set(issue.pattern.split(''))].map(c => `<li><b>${c}</b>${esc(RULE_HOW[c])}</li>`).join('');
         return `<div class="pg l">${heads()}<div class="chart">${chart}</div><ul class="rules">${rules}</ul></div>
           <div class="pg r">${headsR('colophon')}<div class="says">Nothing here is ours. Every page points back to where it lives.</div>
-          <div class="swatch">INK<br>taken from page one</div><div class="srcs">Found at<br>${used.map(s => esc(SRC[s])).join('<br>')}</div></div>`;
+          <div class="swatch">INK<br>taken from page one</div><div class="srcs">Found at<br>${used.map(esc).join('<br>')}</div></div>`;
       }
       case 'S':
       case 'L': {
@@ -584,7 +606,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
           <div class="huge" style="font-size:${fitSize(w, 960, 300)}px">${esc(w)}</div>${alsoBox(page.alsos, 'left:28px;top:60px')}`;
       }
       case 'N':
-        return `<div class="pg l">${heads()}<dl><dt>title</dt><dd class="t">${esc(it.title)}</dd><dt>maker</dt><dd>${esc(it.maker || '—')}</dd><dt>date</dt><dd>${esc(it.date || '—')}</dd><dt>from</dt><dd>${esc(it.place || '—')}</dd><dt>kind</dt><dd>${esc(it.kind || '—')}</dd><dt>kept at</dt><dd><a href="${esc(it.href)}" target="_blank" rel="noopener">${esc(SRC[it.src])} &nearr;</a></dd></dl>
+        return `<div class="pg l">${heads()}<dl><dt>title</dt><dd class="t">${esc(it.title)}</dd><dt>maker</dt><dd>${esc(it.maker || '—')}</dd><dt>date</dt><dd>${esc(it.date || '—')}</dd><dt>from</dt><dd>${esc(it.place || '—')}</dd><dt>kind</dt><dd>${esc(it.kind || '—')}</dd><dt>kept at</dt><dd><a href="${esc(it.href)}" target="_blank" rel="noopener">${esc(it.srcName || SRC[it.src])} &nearr;</a></dd></dl>
           <div class="num">${esc(ex.num != null ? String(ex.num).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : '')}</div></div>
           <div class="pg r">${headsR(R)}${imgBox(it, 'left:60px;right:60px;top:70px;bottom:150px', 'contain')}${why('left:60px;bottom:56px')}${alsoBox(page.alsos, 'right:28px;bottom:50px')}</div>`;
       case 'Y':
@@ -605,6 +627,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
         if (ex.next) s = s.replace(new RegExp('\\b(' + ex.next + ')', 'i'), '<u>$1</u>');
         return `<div class="pg l">${heads()}<div class="said">${s}</div></div>
           <div class="pg r">${headsR(R)}${it.img ? imgBox(it, 'left:40px;right:40px;top:60px;bottom:220px', 'contain') : ''}<div class="from" style="left:40px">from <a href="${esc(it.href)}" target="_blank" rel="noopener">“${esc(it.title)}”, ${esc(SRC.wiki)} &nearr;</a></div>${why('left:40px;bottom:90px;max-width:260px')}</div>`;
+      }
+      case 'P': {
+        const head = it.title || '';
+        return `<div class="pg l">${heads()}<div class="mag">${esc(it.srcName || '')}</div><div class="head" style="font-size:${Math.max(34, Math.min(76, Math.floor(2600 / Math.max(head.length, 20))))}px">${esc(head)}</div>
+          <div class="stand">${esc((it.text || '').slice(0, 260))}</div>${why('left:28px;bottom:56px')}</div>
+          <div class="pg r">${imgBox(it, 'inset:0')}${headsR(R).replace('class="rh"', 'class="rh" style="color:#fff;mix-blend-mode:difference"')}<a class="readit" href="${esc(it.href)}" target="_blank" rel="noopener">read it at ${esc(it.srcName || 'the magazine')} &nearr;</a>${alsoBox(page.alsos, 'left:26px;bottom:52px')}</div>`;
       }
       case 'W': {
         const ws = (ex.words || []).map(w => `<div>${esc(w)}</div>`).join('');

@@ -1,0 +1,10 @@
+# Deploy with: npx wrangler deploy (from this folder). The magazine shelf for Second Selvedge, at shelf.selvedge.garden.
+name = "selvedge-shelf"
+main = "shelf.js"
+compatibility_date = "2026-10-01"
+routes = [
+  { pattern = "shelf.selvedge.garden", custom_domain = true },
+]
+
+[vars]
+ALLOWED_ORIGINS = "https://selvedge.garden,https://www.selvedge.garden,https://caitkne.github.io"
