@@ -16,9 +16,7 @@ const SITES = [
   { key: 'creativeboom', name: 'Creative Boom', host: 'www.creativeboom.com', wp: false, from: '<main',
     search: q => `https://www.creativeboom.com/search/?q=${q}`, link: /(?<=href=")\/(?:news|inspiration|tips|features)\/[a-z0-9-]{6,}(?=\/")/g },
   { key: 'colossal', name: 'Colossal', host: 'www.thisiscolossal.com' },
-  { key: 'dezeen', name: 'Dezeen', host: 'www.dezeen.com' },
   { key: 'designboom', name: 'designboom', host: 'www.designboom.com' },
-  { key: 'creativereview', name: 'Creative Review', host: 'www.creativereview.co.uk' },
   { key: 'marginalian', name: 'The Marginalian', host: 'www.themarginalian.org' },
   { key: 'booooooom', name: 'Booooooom', host: 'www.booooooom.com', wp: false, link: /https:\/\/www\.booooooom\.com\/20\d\d\/\d\d\/\d\d\/(?![a-z0-9-]*call-to-submit)[a-z0-9-]+/g },
   { key: 'ignant', name: 'Ignant', host: 'www.ignant.com' },
@@ -33,8 +31,6 @@ const SITES = [
   { key: 'messynessy', name: 'Messy Nessy Chic', host: 'www.messynessychic.com' },
   { key: 'yellowtrace', name: 'Yellowtrace', host: 'www.yellowtrace.com.au' },
   { key: 'artforum', name: 'Artforum', host: 'www.artforum.com' },
-  { key: 'atlasobscura', name: 'Atlas Obscura', host: 'www.atlasobscura.com', wp: false,
-    search: q => `https://www.atlasobscura.com/search?q=${q}`, link: /\/(?:places|articles)\/[a-z0-9][a-z0-9-]{4,}/g },
 ];
 const INT_DISCIPLINES = ['graphic-design', 'illustration', 'photography', 'art', 'animation', 'publication', 'digital', 'fashion', 'product-design', 'architecture', 'film'];
 const ALIAS = { typeface: 'font', typefaces: 'font', fonts: 'font', type: 'font', lettering: 'typography', posters: 'poster', graphic: 'graphic-design', photo: 'photography', photos: 'photography', books: 'book', zines: 'zine', magazines: 'magazine' };
