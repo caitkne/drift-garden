@@ -375,7 +375,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
   async function step(rule, ctx) {
     const { cur, n, avoid, used, recent, rng, issue } = ctx;
-    const fallback = async (why) => { const r = await step('L', ctx); if (r) r.note = why + ' ' + r.note; return r; };
+    const fallback = async (why) => { const r = await step('L', ctx); if (r) { r.note = why + ' ' + r.note.charAt(0).toLowerCase() + r.note.slice(1); r.rule = r.rule || 'L'; } return r; };
     if (rule === 'S') {
       const q = issue.words;
       const r = await searchAround(q, n + rng() * 5 | 0, 1, avoid);
