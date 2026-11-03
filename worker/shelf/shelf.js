@@ -9,8 +9,12 @@
 //   GET /sites               the list of magazines
 
 const SITES = [
+  // It's Nice That's own search only runs in the browser, so read its topic pages (/media/font, /tags/feminism…) named by the words
   { key: 'int', name: 'It’s Nice That', host: 'www.itsnicethat.com', wp: false,
-    search: q => `https://www.itsnicethat.com/search?q=${q}`, link: /\/(?:articles|news|features)\/[a-z0-9][a-z0-9-]{8,}/g },
+    pages: q => topics(q).flatMap(t => ['media/' + t, 'tags/' + t, ...(INT_DISCIPLINES.includes(t) ? [t] : [])]).map(p => `https://www.itsnicethat.com/${p}`),
+    link: /(?<=href=")\/(?:articles|news|features)\/[a-z0-9][a-z0-9-]{8,}(?=")/g },
+  { key: 'creativeboom', name: 'Creative Boom', host: 'www.creativeboom.com', wp: false, from: '<main',
+    search: q => `https://www.creativeboom.com/search/?q=${q}`, link: /(?<=href=")\/(?:news|inspiration|tips|features)\/[a-z0-9-]{6,}(?=\/")/g },
   { key: 'colossal', name: 'Colossal', host: 'www.thisiscolossal.com' },
   { key: 'dezeen', name: 'Dezeen', host: 'www.dezeen.com' },
   { key: 'designboom', name: 'designboom', host: 'www.designboom.com' },
@@ -21,9 +25,24 @@ const SITES = [
   { key: 'designassembly', name: 'Design Assembly', host: 'designassembly.org.nz' },
   { key: 'fontsinuse', name: 'Fonts In Use', host: 'fontsinuse.com', wp: false,
     search: q => `https://fontsinuse.com/search?terms=${q}`, link: /\/uses\/\d+\/[a-z0-9-]+/g },
+  { key: 'print', name: 'PRINT', host: 'www.printmag.com' },
+  { key: 'designweek', name: 'Design Week', host: 'www.designweek.co.uk' },
+  { key: 'designmilk', name: 'Design Milk', host: 'design-milk.com' },
+  { key: 'aperture', name: 'Aperture', host: 'www.aperture.org' },
+  { key: 'cooperhewitt', name: 'Cooper Hewitt', host: 'www.cooperhewitt.org' },
+  { key: 'messynessy', name: 'Messy Nessy Chic', host: 'www.messynessychic.com' },
+  { key: 'yellowtrace', name: 'Yellowtrace', host: 'www.yellowtrace.com.au' },
+  { key: 'artforum', name: 'Artforum', host: 'www.artforum.com' },
   { key: 'atlasobscura', name: 'Atlas Obscura', host: 'www.atlasobscura.com', wp: false,
     search: q => `https://www.atlasobscura.com/search?q=${q}`, link: /\/(?:places|articles)\/[a-z0-9][a-z0-9-]{4,}/g },
 ];
+const INT_DISCIPLINES = ['graphic-design', 'illustration', 'photography', 'art', 'animation', 'publication', 'digital', 'fashion', 'product-design', 'architecture', 'film'];
+const ALIAS = { typeface: 'font', typefaces: 'font', fonts: 'font', type: 'font', lettering: 'typography', posters: 'poster', graphic: 'graphic-design', photo: 'photography', photos: 'photography', books: 'book', zines: 'zine', magazines: 'magazine' };
+// the search words as topic names: the whole phrase, then each word (and its usual name, and without a plural s)
+function topics(q) {
+  const words = decodeURIComponent(q).toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2);
+  return [...new Set([words.join('-'), ...words.flatMap(w => [ALIAS[w] || w, w.replace(/s$/, '')])])].filter(Boolean).slice(0, 4);
+}
 const PER_SITE = 6, PICK = 4, TTL = 12 * 3600;
 const UA = 'SelvedgeShelf/1.0 (+https://selvedge.garden)';
 
@@ -51,7 +70,10 @@ async function preview(url, site) {
   const html = await get(url);
   const title = meta(html, 'og:title') || decode((html.match(/<title>([^<]*)<\/title>/i) || [])[1]);
   if (!title) return null;
-  return { title: title.replace(/\s*[|–—-]\s*[^|–—-]*$/, '') || title, img: meta(html, 'og:image') || null, blurb: meta(html, 'og:description').slice(0, 400),
+  // drop a trailing " | Magazine Name", but keep dashes that belong to the headline (A2-Type, "Paris – a walk")
+  const letters = x => x.toLowerCase().replace(/[^a-z0-9]/g, ''), tail = title.match(/\s+[|–—-]\s+([^|–—]+)$/);
+  const isName = tail && (letters(site.name).includes(letters(tail[1])) || letters(tail[1]).includes(letters(site.name)) || letters(site.host).includes(letters(tail[1])));
+  return { title: (isName && title.slice(0, tail.index).trim()) || title, img: meta(html, 'og:image') || null, blurb: meta(html, 'og:description').slice(0, 400),
     date: (meta(html, 'article:published_time') || '').slice(0, 10), href: url, site: site.name, key: site.key };
 }
 async function fromWordPress(site, q) {
@@ -65,13 +87,17 @@ async function fromWordPress(site, q) {
   }).filter(x => x.title && x.href);
 }
 async function fromSearchPage(site, q) {
-  const url = site.search ? site.search(q) : `https://${site.host}/?s=${q}`;
-  const html = await get(url);
+  const urls = site.pages ? site.pages(q) : [site.search ? site.search(q) : `https://${site.host}/?s=${q}`];
   const re = site.link || new RegExp(`(?<=href=["'](?:https?://${site.host.replace(/\./g, '\\.')})?)/(?!(?:tag|tags|category|author|page|search|wp-content|wp-json|feed)/)[a-z0-9][a-z0-9/-]*-[a-z0-9-]*-[a-z0-9-]+/?(?=["'])`, 'gi');
   const seen = new Set(), links = [];
-  for (const m of html.matchAll(re)) {
-    const path = m[0].replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, '');
-    if (seen.has(path)) continue; seen.add(path); links.push(`https://${site.host}${path}`);
+  for (const url of urls) {
+    let html; try { html = await get(url); } catch (e) { continue; }
+    if (site.from && html.includes(site.from)) html = html.slice(html.indexOf(site.from)); // skip menus that list the same stories on every page
+    for (const m of html.matchAll(re)) {
+      const path = m[0].replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, '');
+      if (seen.has(path)) continue; seen.add(path); links.push(`https://${site.host}${path}`);
+      if (links.length >= PER_SITE) break;
+    }
     if (links.length >= PER_SITE) break;
   }
   const got = await Promise.allSettled(links.slice(0, 5).map(u => preview(u, site)));
